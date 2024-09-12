@@ -1,0 +1,1 @@
+﻿TODO: KdSoft.FlatBuffers is not published by google and Author changed namespace in C#. Build and release FlatBuffers from googld source to Personizr.

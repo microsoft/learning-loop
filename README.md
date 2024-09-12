@@ -1,14 +1,21 @@
-# Project
+# Learning Loop
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+This repository contains the primary code for the Learning Loop service.
 
-As the maintainer of this project, please make a few updates:
+## Prerequisites
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+- Dotnet 8.0
+  - https://dotnet.microsoft.com/download
+- Ninja build
+  - https://ninja-build.org/
+
+## Building
+
+Clone this repository using --recurse-submodules.
+
+```sh
+dotnet build ./learning-loop.sln -c Release
+```
 
 ## Contributing
 

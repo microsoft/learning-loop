@@ -396,3 +396,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# learning-loop specific
+ext_libs/vcpkg
+ext_libs/reinforcement_learning
+ext_libs/build/

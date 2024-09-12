@@ -1,0 +1,3 @@
+cmake_minimum_required(VERSION 3.10)
+project(vw_binary_parser)
+add_subdirectory(reinforcement_learning/external_parser)

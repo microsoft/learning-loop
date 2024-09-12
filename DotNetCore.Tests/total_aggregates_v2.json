@@ -1,0 +1,112 @@
+{
+  "online": [
+    {
+      "slotId": "",
+      "expectedReward": 0.1363636364,
+      "confidenceInterval": [ 0.0344146673, 0.2383126054 ]
+    },
+    {
+      "slotId": "slot_0",
+      "expectedReward": 0.0,
+      "confidenceInterval": [ 0.0, 1.4e-09 ]
+    },
+    {
+      "slotId": "slot_1",
+      "expectedReward": 0.15,
+      "confidenceInterval": [ 0.0, 0.4055385009 ]
+    },
+    {
+      "slotId": "slot_2",
+      "expectedReward": 0.15,
+      "confidenceInterval": [ 0.0, 0.4055385009 ]
+    }
+  ],
+  "baseline1": [
+    {
+      "slotId": "",
+      "expectedReward": 0.1536257892,
+      "confidenceInterval": [ 0, 0.7220695474 ]
+    },
+    {
+      "slotId": "slot_0",
+      "expectedReward": 0.0,
+      "confidenceInterval": [ 0.0, 0.8852014007 ]
+    },
+    {
+      "slotId": "slot_1",
+      "expectedReward": 0.2550420293,
+      "confidenceInterval": [ 0.0, 0.8088099393 ]
+    },
+    {
+      "slotId": "slot_2",
+      "expectedReward": 0.0287976631,
+      "confidenceInterval": [ 0.0, 0.5347104304 ]
+    }
+  ],
+  "baselineRand": [
+    {
+      "slotId": "",
+      "expectedReward": 0.0849845249,
+      "confidenceInterval": [ 0, 0.5245811889 ]
+    },
+    {
+      "slotId": "slot_0",
+      "expectedReward": 0.0,
+      "confidenceInterval": [ 0.0, 0.3032011976 ]
+    },
+    {
+      "slotId": "slot_1",
+      "expectedReward": 0.0626050357,
+      "confidenceInterval": [ 0.0, 0.5877678506 ]
+    },
+    {
+      "slotId": "slot_2",
+      "expectedReward": 0.2392695497,
+      "confidenceInterval": [ 0.0, 0.7950274548 ]
+    }
+  ],
+  "custom1": [
+    {
+      "slotId": "",
+      "expectedReward": 0.1839384877,
+      "confidenceInterval": [ 0.0181639409, 0.4033120226 ]
+    },
+    {
+      "slotId": "slot_0",
+      "expectedReward": 0.0,
+      "confidenceInterval": [ 0.0, 0.046557129 ]
+    },
+    {
+      "slotId": "slot_1",
+      "expectedReward": 0.1680448238,
+      "confidenceInterval": [ 0.0, 0.6903729274 ]
+    },
+    {
+      "slotId": "slot_2",
+      "expectedReward": 0.3892440426,
+      "confidenceInterval": [ 0.0, 0.7943663532 ]
+    }
+  ],
+  "custom2": [
+    {
+      "slotId": "",
+      "expectedReward": 0.1589060391,
+      "confidenceInterval": [ 0.0029886863, 0.5175307063 ]
+    },
+    {
+      "slotId": "slot_0",
+      "expectedReward": 0.0,
+      "confidenceInterval": [ 0.0, 0.0829121408 ]
+    },
+    {
+      "slotId": "slot_1",
+      "expectedReward": 0.1780448238,
+      "confidenceInterval": [ 0.0, 0.7386990403 ]
+    },
+    {
+      "slotId": "slot_2",
+      "expectedReward": 0.3112440142,
+      "confidenceInterval": [ 0.0, 0.7891991485 ]
+    }
+  ]
+}
