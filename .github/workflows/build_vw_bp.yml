@@ -61,7 +61,7 @@ jobs:
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
-          vcpkgJsonGlob: "${{ github.workspace }}/vcpkg.json"
+          vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/vcpkg.json"
       - name: Configure
         run: >
           cd ext_libs/reinforcement_learning/external_parser;
