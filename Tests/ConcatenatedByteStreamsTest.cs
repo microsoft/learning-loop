@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.DecisionService.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;

@@ -18,7 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="App.Metrics.AspNetCore.Hosting" Version="4.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="11.2.3" />
+    <PackageReference Include="Microsoft.Azure.Storage.Common" Version="11.2.3" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.8.14">
       <PrivateAssets>all</PrivateAssets>
@@ -31,12 +34,63 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\CommonTest\CommonTest.csproj" />
+	  <ProjectReference Include="..\TestExeApp\TestExeApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="app.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\JoinerPipelineTests\CheckpointTest\20170814000000\checkpoint\current.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\JoinerPipelineTests\CheckpointTest\20170814000000\checkpoint\storage-checkpoint.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\JoinerPipelineTests\CheckpointTest\20170814000000\data\2024\07\12_0000000000.fb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\TrainingMonitoringPipelineTests\CheckpointTest\20170814000000\checkpoint\current.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\TrainingMonitoringPipelineTests\CheckpointTest\20170814000000\checkpoint\storage-checkpoint.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\TrainingMonitoringPipelineTests\CheckpointTest\20170814000000\data\2024\07\12_0000000000.fb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\TrainingMonitoringPipelineTests\CheckpointTest\20170814000000\data\2024\07\13_0000000000.fb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\LearnMetricsParserTests\LearnMetricsTests_CB_Data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\LearnMetricsParserTests\LearnMetricsTests_CCB_Data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\LearnMetricsParserTests\LearnMetricsTests_CB_Metrics.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="Common\Trainer\Data\LearnMetricsParserTests\LearnMetricsTests_CCB_Metrics.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="CommonVowpalWabbitTrainer\VowpalWabbitExeTrainerTests_CA_Data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="CommonVowpalWabbitTrainer\VowpalWabbitExeTrainerTests_CB_Data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Update="CommonVowpalWabbitTrainer\VowpalWabbitExeTrainerTests_CCB_Data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
     <None Update="EndpointCacheData\epix1.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -98,11 +152,23 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Common\Trainer\Data\JoinerPipelineTests\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Properties\" />
     <None Update="test.runsettings">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <!--
+  By default ProjectReferences don't copy over deps and runtime config files on publish,
+  but they are required to run the exe. We force them to be published here.
+  -->
+  <Target Name="PublishTestExeAppRuntimeConfigurationFiles" AfterTargets="Publish">
+    <MSBuild Projects="$(ProjectDir)\..\TestExeApp\TestExeApp.csproj" Targets="Build;GenerateBuildRuntimeConfigurationFiles" Properties="Configuration=$(Configuration);OutDir=$(PublishDir)" BuildInParallel="$(BuildInParallel)" />
+  </Target>
 
   <Target Name="PrintPackagesAndParents" DependsOnTargets="RunResolvePackageDependencies">
     <Message Importance="high" Text="* %(PackageDependencies.Identity) referenced by:%0a^---@(PackageDependencies->'%(ParentPackage) - target %(ParentTarget)', '%0a^---')" />
