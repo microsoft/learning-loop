@@ -87,6 +87,30 @@
           "value": "ON"
         }
       }
+    },
+    {
+      "name": "vcpkg-x64-osx",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-osx-dynamic"
+        }
+      }
+    },
+    {
+      "name": "vcpkg-x64-osx-static",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-osx"
+        },
+        "STATIC_LINK_BINARY_PARSER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
     }
   ],
   "buildPresets": [
@@ -105,6 +129,14 @@
     {
       "name": "vcpkg-x64-linux-static",
       "configurePreset": "vcpkg-x64-linux-static"
+    },
+    {
+      "name": "vcpkg-x64-osx",
+      "configurePreset": "vcpkg-x64-osx"
+    },
+    {
+      "name": "vcpkg-x64-osx-static",
+      "configurePreset": "vcpkg-x64-osx-static"
     }
   ]
 }
