@@ -69,7 +69,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ matrix.build.build_type }}
           -DCMAKE_MSVC_RUNTIME_LIBRARY=${{ matrix.build.msvc_runtime }}
           -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/ext_libs/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_MANIFEST_DIR="${{ github.workspace }}"
+          -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/ext_libs"
           -DVCPKG_TARGET_TRIPLET=${{ matrix.config.vcpkg_target_triplet }}
           -DVCPKG_HOST_TRIPLET=${{ matrix.config.vcpkg_target_triplet }}
           -DWARNING_AS_ERROR=OFF
