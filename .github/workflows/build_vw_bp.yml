@@ -17,6 +17,7 @@ on:
 
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
+  BUILD_ARTIFACTS_CACHE: ${{github.workspace}}/artifacts
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
@@ -30,9 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static"  }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64.exe" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64.exe" }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
@@ -68,3 +69,18 @@ jobs:
         run: |
           cd ext_libs
           cmake --build build --preset=${{ matrix.config.cmake_preset }}
+      - name: Copy binaries (windows)
+        if: startsWith(matrix.config.os, 'windows') == true
+        run: |
+          mkdir ${{ env.BUILD_ARTIFACTS_CACHE }}/vw-bin
+          copy ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/vw-bin/${{ matrix.config.vw_bin_dest }}
+      - name: Copy binaries (${{ matrix.config.os }})
+        if: startsWith(matrix.config.os, 'windows') == false
+        run: |
+          mkdir -p ${{ env.BUILD_ARTIFACTS_CACHE }}/vw-bin
+          cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/vw-bin/${{ matrix.config.vw_bin_dest }}
+      - name: Cache binaries
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: ${{ github.workflow }}-${{ github.head_ref || github.sha }}-artifacts
