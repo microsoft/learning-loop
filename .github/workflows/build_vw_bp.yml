@@ -24,18 +24,16 @@ concurrency:
 
 jobs:
   build-binary-parser:
-    name: binary-parser-${{ matrix.build.build_type }}-${{ startsWith(matrix.config.os, 'macos') && 'macos-latest' || matrix.config.os }}
+    name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { os: "windows-latest", vcpkg_target_triplet: "x64-windows-static" }
-          - { os: "ubuntu-latest", vcpkg_target_triplet: "x64-linux" }
-          - { os: "macos-13", vcpkg_target_triplet: "x64-osx" }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static"  }
         build:
-          # Set the appropriate static runtime for MSVC on Windows
-          # CMake ignores the CMAKE_MSVC_RUNTIME_LIBRARY option on other platforms
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
@@ -57,7 +55,7 @@ jobs:
           cache-name: vcpkg-cache
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
-          key: ${{ startsWith(matrix.config.os, 'macos') && 'macos-latest' || matrix.config.os }}-build-${{ env.cache-name }}-${{ hashFiles('vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
+          key: ${{ matrix.config.os_name }}-build-${{ env.cache-name }}-${{ hashFiles('vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
@@ -65,8 +63,8 @@ jobs:
       - name: Configure
         run: >
           cd ext_libs;
-          cmake --preset=vcpkg-${{ matrix.config.vcpkg_target_triplet }}${{ startsWith(matrix.config.os, 'windows') && '' || '-static' }}
+          cmake --preset=${{ matrix.config.cmake_preset }}
       - name: Build
         run: |
           cd ext_libs
-          cmake --build build --preset=vcpkg-${{ matrix.config.vcpkg_target_triplet }}${{ startsWith(matrix.config.os, 'windows') && '' || '-static' }} --config ${{ matrix.build.build_type }}
+          cmake --build build --preset=${{ matrix.config.cmake_preset }}
