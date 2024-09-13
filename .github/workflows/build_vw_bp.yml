@@ -12,6 +12,8 @@ on:
   pull_request:
     branches:
       - '*'
+  # NOTE: allow manual triggering of the workflow for testing (remove before making public)
+  workflow_dispatch:
 
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
