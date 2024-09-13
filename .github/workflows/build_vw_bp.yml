@@ -1,3 +1,7 @@
+# build the VM binary parser using the reinforcement learning library.
+# build all supported platforms: Windows, Linux, and MacOS
+# once this is complete, the binaries will be available to the doenet
+# projects.
 name: Build Binary Parser
 
 on:
