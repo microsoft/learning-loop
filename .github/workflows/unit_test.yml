@@ -37,7 +37,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: ${{ github.workflow }}-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
 
       - name: Build VW Resolver
         run: dotnet vstest ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"

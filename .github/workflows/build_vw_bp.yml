@@ -83,4 +83,4 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: ${{ github.workflow }}-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts

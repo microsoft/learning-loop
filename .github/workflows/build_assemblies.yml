@@ -37,22 +37,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: ${{ github.workflow }}-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
 
-      - name: Build VW Resolver
-        run: dotnet build -c ${{ matrix.build.build_type }} VWBinResolver/VWBinResolver.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
-      - name: Build Flatbuffers
-        run: dotnet build -c ${{ matrix.build.build_type }} Flatbuffers/Flatbuffers.csproj
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj
-      - name: Build CommonTest
-        run: dotnet build -c ${{ matrix.build.build_type }} CommonTest/CommonTest.csproj
-      - name: Build TestExeApp
-        run: dotnet build -c ${{ matrix.build.build_type }} TestExeApp/TestExeApp.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
 
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/Common
@@ -65,4 +57,4 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: ${{ github.workflow }}-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
