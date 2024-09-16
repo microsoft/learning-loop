@@ -14,6 +14,7 @@ jobs:
   build-assemblies:
     name: assemblies-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -34,10 +35,10 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Restore Binary Parser Binaries
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ github.event.workflow_run.outputs.cache_key }}-artifacts
 
       - name: Build Common
         run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
@@ -51,10 +52,10 @@ jobs:
       - name: Publish OnlineTrainer
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/OnlineTrainer
       - name: Publish Tests
-        run: dotnet publish -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/Tests
+        run: dotnet publish -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/Tests -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
 
       - name: Cache binaries
-        uses: actions/cache@v3
+        uses: actions/cache/save@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ github.event.workflow_run.outputs.cache_key }}-artifacts
