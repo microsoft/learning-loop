@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["Build Binary Parser"]
     types:
-      - success
+      - completed
 
 env:
   BUILD_ARTIFACTS_CACHE: ${{github.workspace}}/artifacts
