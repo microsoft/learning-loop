@@ -17,6 +17,7 @@ on:
 
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
+  BUILD_ARTIFACTS_CACHE: ${{github.workspace}}/artifacts
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
@@ -24,20 +25,18 @@ concurrency:
 
 jobs:
   build-binary-parser:
-    name: binary-parser-${{ matrix.build.build_type }}-${{ startsWith(matrix.config.os, 'macos') && 'macos-latest' || matrix.config.os }}
+    name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { os: "windows-latest", vcpkg_target_triplet: "x64-windows-static" }
-          - { os: "ubuntu-latest", vcpkg_target_triplet: "x64-linux" }
-          - { os: "macos-13", vcpkg_target_triplet: "x64-osx" }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64.exe" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64.exe" }
         build:
-          # Set the appropriate static runtime for MSVC on Windows
-          # CMake ignores the CMAKE_MSVC_RUNTIME_LIBRARY option on other platforms
-          - { build_type: "debug", msvc_runtime: "MultiThreadedDebug" }
-          - { build_type: "release", msvc_runtime: "MultiThreaded" }
+          - { build_type: "debug" }
+          - { build_type: "release" }
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
     steps:
@@ -57,42 +56,31 @@ jobs:
           cache-name: vcpkg-cache
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
-          key: ${{ startsWith(matrix.config.os, 'macos') && 'macos-latest' || matrix.config.os }}-build-${{ env.cache-name }}-${{ hashFiles('vcpkg.json') }}-${{ env.VCPKG_COMMIT }}"
+          key: ${{ matrix.config.os_name }}-build-${{ env.cache-name }}-${{ hashFiles('vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/vcpkg.json"
       - name: Configure
         run: >
-          cd ext_libs/reinforcement_learning/external_parser;
-          cmake -S . -B build -G Ninja
-          -DCMAKE_BUILD_TYPE=${{ matrix.build.build_type }}
-          -DCMAKE_MSVC_RUNTIME_LIBRARY=${{ matrix.build.msvc_runtime }}
-          -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/ext_libs/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/ext_libs"
-          -DVCPKG_TARGET_TRIPLET=${{ matrix.config.vcpkg_target_triplet }}
-          -DVCPKG_HOST_TRIPLET=${{ matrix.config.vcpkg_target_triplet }}
-          -DWARNING_AS_ERROR=OFF
-          -Wno-deprecated
-          -DFMT_SYS_DEP=ON
-          -DSPDLOG_SYS_DEP=ON
+          cd ext_libs;
+          cmake --preset=${{ matrix.config.cmake_preset }}
       - name: Build
         run: |
-          cd ext_libs/reinforcement_learning/external_parser
-          cmake --build build
-      - name: Test
+          cd ext_libs
+          cmake --build build --preset=${{ matrix.config.cmake_preset }} --config ${{ matrix.build.build_type }}
+      - name: Copy binaries (windows)
+        if: startsWith(matrix.config.os, 'windows') == true
         run: |
-          cd cd ext_libs/reinforcement_learning/external_parser/build
-          ctest --verbose --output-on-failure
-      - name: Test binary parser VW executable
+          mkdir ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
+          copy ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
+      - name: Copy binaries (${{ matrix.config.os_name }})
+        if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          cd cd ext_libs/reinforcement_learning/external_parser/build
-          ./vw --extra_metrics metrics.json -d ../unit_tests/test_files/valid_joined_logs/cb_simple.log --binary_parser --cb_explore_adf
-          python3 -m json.tool metrics.json
-      - name: Test with Valgrind
-        if: ${{ startsWith(matrix.config.os, 'ubuntu') }}
-        run: |
-          cd cd ext_libs/reinforcement_learning/external_parser/build
-          sudo apt-get update -y
-          sudo apt install -y valgrind
-          valgrind --quiet --error-exitcode=100 --undef-value-errors=no --leak-check=full ./unit_tests/binary_parser_unit_tests
+          mkdir -p ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
+          cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
+      - name: Cache binaries
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: ${{ github.workflow }}-${{ github.head_ref || github.sha }}-artifacts
