@@ -1,0 +1,8 @@
+<Project>
+    <ItemGroup>
+        <VWBinBinaries Include="$(CIVWBinParserPath)/*.*" />
+    </ItemGroup>
+    <Target Name="CopyVWBP" BeforeTargets="Build">
+        <Copy SourceFiles="@(VWBinBinaries)" DestinationFolder="$(TargetDir)vw-bin" />
+    </Target>
+</Project>

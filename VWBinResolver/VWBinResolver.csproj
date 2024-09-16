@@ -6,27 +6,18 @@
 		<AssemblyName>Microsoft.VW.VWBinResolver</AssemblyName>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>
-    <PropertyGroup>
-        <VWPresets Condition="$([MSBuild]::IsOSPlatform('Windows'))">vcpkg-x64-windows-static</VWPresets>
-        <VWPresets Condition="$([MSBuild]::IsOSPlatform('Linux'))">vcpkg-x64-linux-static</VWPresets>
-        <VWExecName Condition="$([MSBuild]::IsOSPlatform('Windows'))">vw.exe</VWExecName>
-        <VWExecName Condition="$([MSBuild]::IsOSPlatform('Linux'))">vw</VWExecName>
-    </PropertyGroup>
 	<ItemGroup>
-        <Content Include="$(OutputPath)\vw-bin\*">
+        <Content Include="$(OutputPath)/vw-bin/*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 			<Link>vw-bin\%(Filename)%(Extension)</Link>
 		</Content>
     </ItemGroup>
-    <ItemGroup>
-        <VWBinaries Include="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\$(VWExecName)" />
-        <VWBinaries Condition="$([MSBuild]::IsOSPlatform('Windows')) AND'$(Configuration)'=='Debug'" Include="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.pdb" />
-    </ItemGroup>
-    <Target Name="BuildVW" BeforeTargets="Build">
-        <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --preset=$(VWPresets)" />
-        <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --build --preset=$(VWPresets) --config $(Configuration)" />
-        <Copy Condition="$([MSBuild]::IsOSPlatform('Windows'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.exe" DestinationFiles="$(TargetDir)vw-bin\vw-win-x64.exe" />
-        <Copy Condition="$([MSBuild]::IsOSPlatform('Linux'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw" DestinationFiles="$(TargetDir)vw-bin\vw-linux-x64" />
-    </Target>
+	 <!--
+	 CIVWBinParserPath - The continuous integration path for the VW Binary Parser binaries on the build server.
+                       For local builds, CIVWParserPath is empty since the binaries are built for the local
+						     platform using VWBinResolver.dev.targets 
+	 -->
+    <Import Condition="'$(CIVWBinParserPath)' == ''" Project="VWBinResolver.dev.targets" />
+    <Import Condition="'$(CIVWBinParserPath)' != ''" Project="VWBinResolver.ci.targets" />
 </Project>
