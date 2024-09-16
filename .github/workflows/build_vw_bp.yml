@@ -27,6 +27,8 @@ jobs:
   build-binary-parser:
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
+    outputs:
+      cache_key: ${{ steps.cache.outputs.cache_key }}
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +42,9 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
     steps:
+      - name: Make cache key
+        id: cache_key
+        run: echo "::set-output name=cache_key::${{ github.head_ref || github.sha }}"
       - uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -80,7 +85,7 @@ jobs:
           mkdir -p ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
           cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
       - name: Cache binaries
-        uses: actions/cache@v3
+        uses: actions/cache/save@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
           key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
