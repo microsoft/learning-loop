@@ -77,9 +77,12 @@ jobs:
           cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
       - name: Cache binaries
         uses: actions/cache/save@v4
+        env:
+          cache-name: vw-cache-${{ matrix.config.os_name }}
         with:
+          enableCrossOsArchive: true
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
 
   build-assemblies:
     needs: build-binary-parser
@@ -104,11 +107,17 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 8.0.x
+
       - name: Restore Binary Parser Binaries
         uses: actions/cache/restore@v4
+        env:
+          cache-name: vw-cache-${{ matrix.config.os_name }}
         with:
+          enableCrossOsArchive: true
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
+          restore-keys: |
+            learning-loop-vw-cache-
 
       - name: Build Common
         run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
@@ -122,9 +131,12 @@ jobs:
 
       - name: Cache binaries
         uses: actions/cache/save@v4
+        env:
+          cache-name: trainer-cache-${{ matrix.config.os_name }}
         with:
+          enableCrossOsArchive: true
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
 
   unit-test:
     needs: build-binary-parser
@@ -149,11 +161,17 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 8.0.x
+      
       - name: Restore Binary Parser Binaries
         uses: actions/cache/restore@v4
+        env:
+          cache-name: vw-cache-${{ matrix.config.os_name }}
         with:
+          enableCrossOsArchive: true
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
-          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
+          restore-keys: |
+            learning-loop-vw-cache-
 
       - name: Run Tests
         run: dotnet test Tests/Tests.csproj --property:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin --configuration Debug --results-directory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
