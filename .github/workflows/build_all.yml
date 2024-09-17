@@ -156,4 +156,4 @@ jobs:
           key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
 
       - name: Run Tests
-        run: dotnet test Tests/Tests.csproj --property:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin --configuration Debug --results-directory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet test Tests/Tests.csproj --property:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin --configuration Debug --results-directory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
