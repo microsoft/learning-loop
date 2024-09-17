@@ -13,7 +13,7 @@ on:
 
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
-  BUILD_ARTIFACTS: ${{github.workspace}}/artifacts
+  BUILD_ARTIFACTS_CACHE: ${{github.workspace}}/artifacts
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
@@ -68,23 +68,26 @@ jobs:
       - name: Copy binaries (windows)
         if: startsWith(matrix.config.os, 'windows') == true
         run: |
-          mkdir ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
-          copy ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
+          mkdir ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
+          copy ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
       - name: Copy binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          mkdir -p ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
-          cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
-      - name: Save VW Parser Binaries
-        uses: actions/upload-artifact@v4
+          mkdir -p ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
+          cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
+      - name: Cache binaries
+        uses: actions/cache/save@v4
+        env:
+          cache-name: vw-cache-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
         with:
-          name: vw-binaries
-          path: ${{ env.BUILD_ARTIFACTS }}
+          enableCrossOsArchive: true
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
 
   # build the assemblies on ubuntu. later test the assemblies on all platforms
   build-assemblies:
     needs: build-binary-parser
-    name: build-assemblies-${{ matrix.build.build_type }}
+    name: build-assemblies-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -103,34 +106,42 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
+        uses: actions/cache/restore@v4
+        env:
+          cache-name: vw-cache-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
         with:
-          name: vw-binaries
-          path: ${{ env.BUILD_ARTIFACTS }}
+          enableCrossOsArchive: true
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
+          restore-keys: |
+            learning-loop-vw-cache-
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
 
       - name: Publish Common
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/Common
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/Common
       - name: Publish OnlineTrainer
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/OnlineTrainer
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/OnlineTrainer
       - name: Publish Tests
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/Tests
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/Tests
 
-      - name: Save Build Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Cache binaries
+        uses: actions/cache/save@v4
+        env:
+          cache-name: trainer-cache-${{ matrix.build.build_type }}
         with:
-          name: build-artifacts
-          path: ${{ env.BUILD_ARTIFACTS }}
+          enableCrossOsArchive: true
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
 
   # pull the test assemblies and run the tests on all platforms
   unit-test:
-    needs: build-binary-parser
+    needs: build-assemblies
     name: unittest-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -153,11 +164,16 @@ jobs:
         with:
           dotnet-version: 8.0.x
       
-      - name: Download Tests Binaries
-        uses: actions/download-artifact@v4
+      - name: Restore Tests Binaries
+        uses: actions/cache/restore@v4
+        env:
+          cache-name: trainer-cache-${{ matrix.build.build_type }}
         with:
-          name: build-artifacts
-          path: ${{ env.BUILD_ARTIFACTS }}
+          enableCrossOsArchive: true
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ env.cache-name }}-${{ github.head_ref || github.sha }}-artifacts
+          restore-keys: |
+            learning-loop-trainer-cache-
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
