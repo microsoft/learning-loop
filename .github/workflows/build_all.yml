@@ -1,8 +1,4 @@
-# build the VM binary parser using the reinforcement learning library.
-# build all supported platforms: Windows, Linux, and MacOS
-# once this is complete, the binaries will be available to the doenet
-# projects.
-name: Build Binary Parser
+name: Build All
 
 on:
   push:
@@ -27,8 +23,6 @@ jobs:
   build-binary-parser:
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
-    outputs:
-      cache_key: ${{ steps.cache.outputs.cache_key }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,9 +36,6 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
     steps:
-      - name: Make cache key
-        id: cache_key
-        run: echo "::set-output name=cache_key::${{ github.head_ref || github.sha }}"
       - uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -89,3 +80,80 @@ jobs:
         with:
           path: ${{ env.BUILD_ARTIFACTS_CACHE }}
           key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+
+  build-assemblies:
+    needs: build-binary-parser
+    name: build-assemblies-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: "windows-latest", os_name: "windows-latest" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+          - { os: "macos-13", os_name: "macos-latest" }
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore Binary Parser Binaries
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+
+      - name: Build Common
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
+      - name: Build OnlineTrainer
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin
+
+      - name: Publish Common
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/Common
+      - name: Publish OnlineTrainer
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/OnlineTrainer
+
+      - name: Cache binaries
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+
+  unit-test:
+    needs: build-assemblies
+    name: unittest-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: "windows-latest", os_name: "windows-latest" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+          - { os: "macos-13", os_name: "macos-latest" }
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore Binary Parser Binaries
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_ARTIFACTS_CACHE }}
+          key: learning-loop-${{ github.head_ref || github.sha }}-artifacts
+
+      - name: Run Tests
+        run: dotnet test ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/Tests/Tests.dll -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/vw-bin --results-directory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
