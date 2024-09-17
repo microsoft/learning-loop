@@ -76,7 +76,7 @@ jobs:
           mkdir -p ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
           cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin/${{ matrix.config.vw_bin_dest }}
       - name: Save VW Parser Binaries
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vw-binaries
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -103,7 +103,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore Binary Parser Binaries
-        uses: actions/download-artifacts@v3
+        uses: actions/download-artifact@v4
         with:
           name: vw-binaries
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -123,7 +123,7 @@ jobs:
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/Tests
 
       - name: Save Build Artifacts
-        uses: actions/upload-artifacts@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -154,7 +154,7 @@ jobs:
           dotnet-version: 8.0.x
       
       - name: Download Tests Binaries
-        uses: actions/download-artifacts@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: ${{ env.BUILD_ARTIFACTS }}
