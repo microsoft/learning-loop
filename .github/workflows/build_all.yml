@@ -127,7 +127,7 @@ jobs:
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/Common
       - name: Publish OnlineTrainer
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/OnlineTrainer
-      - name: Publish OnlineTrainer
+      - name: Publish Tests
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/Tests
 
       - name: Cache binaries
@@ -176,4 +176,4 @@ jobs:
             learning-loop-trainer-cache-
 
       - name: Run Tests
-        run: dotnet vstest Tests/Tests.csproj --configuration Debug --results-directory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.config.os_name }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS_CACHE }}/${{ matrix.build.build_type }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
