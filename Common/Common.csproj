@@ -49,11 +49,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="$(OutputPath)\vw-bin\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       <Link>vw-bin\%(Filename)%(Extension)</Link>
     </None>
   </ItemGroup>
+  <Target Name="CleanVWBin" AfterTargets="Clean">
+    <RemoveDir Directories="$(OutputPath)\vw-bin" />
+  </Target>
   <Target Name="PrintPackagesAndParents" DependsOnTargets="RunResolvePackageDependencies">
     <Message Importance="high" Text="* %(PackageDependencies.Identity) referenced by:%0a^---@(PackageDependencies->'%(ParentPackage) - target %(ParentTarget)', '%0a^---')" />
   </Target>

@@ -9,10 +9,20 @@
         <VWBinaries Include="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\$(VWExecName)" />
         <VWBinaries Condition="$([MSBuild]::IsOSPlatform('Windows')) AND'$(Configuration)'=='Debug'" Include="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.pdb" />
     </ItemGroup>
-    <Target Name="BuildVW" BeforeTargets="Build">
+    <Target Name="BuildVW" BeforeTargets="Publish;Build;Test">
         <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --preset=$(VWPresets)" />
         <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --build --preset=$(VWPresets) --config $(Configuration)" />
         <Copy Condition="$([MSBuild]::IsOSPlatform('Windows'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.exe" DestinationFiles="$(TargetDir)vw-bin\vw-win-x64.exe" />
         <Copy Condition="$([MSBuild]::IsOSPlatform('Linux'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw" DestinationFiles="$(TargetDir)vw-bin\vw-linux-x64" />
     </Target>
+    <ItemGroup>
+        <VWBinBinaries Include="$(TargetDir)vw-bin/*.*" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="@(VWBinBinaries)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <Link>vw-bin/%(Filename)%(Extension)</Link>
+        </Content>
+    </ItemGroup>
 </Project>

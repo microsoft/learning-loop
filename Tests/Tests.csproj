@@ -162,14 +162,6 @@
     </None>
   </ItemGroup>
 
-  <!--
-  By default ProjectReferences don't copy over deps and runtime config files on publish,
-  but they are required to run the exe. We force them to be published here.
-  -->
-  <Target Name="PublishTestExeAppRuntimeConfigurationFiles" AfterTargets="Publish">
-    <MSBuild Projects="$(ProjectDir)\..\TestExeApp\TestExeApp.csproj" Targets="Build;GenerateBuildRuntimeConfigurationFiles" Properties="Configuration=$(Configuration);OutDir=$(PublishDir)" BuildInParallel="$(BuildInParallel)" />
-  </Target>
-
   <Target Name="PrintPackagesAndParents" DependsOnTargets="RunResolvePackageDependencies">
     <Message Importance="high" Text="* %(PackageDependencies.Identity) referenced by:%0a^---@(PackageDependencies->'%(ParentPackage) - target %(ParentTarget)', '%0a^---')" />
   </Target>
