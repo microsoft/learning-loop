@@ -61,7 +61,7 @@ jobs:
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/vcpkg.json"
 
       - name: Build Solution
-        run: dotnet build .\learning-loop.sln -c ${{ matrix.build.build_type }}
+        run: dotnet build ./learning-loop.sln -c ${{ matrix.build.build_type }}
 
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
