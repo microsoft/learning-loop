@@ -35,7 +35,6 @@ jobs:
           - { build_type: "release" }
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
-      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts
 
     steps:
       - uses: actions/checkout@v3
@@ -60,21 +59,26 @@ jobs:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/vcpkg.json"
 
-      - name: Build Solution
-        run: dotnet build ./learning-loop.sln -c ${{ matrix.build.build_type }}
-
+      - name: Build Common
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj
       - name: Publish Common
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS }}/Common
+
+      - name: Build OnlineTrainer
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj
       - name: Publish OnlineTrainer
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS }}/OnlineTrainer
+
+      - name: Build Tests
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj
       - name: Publish Tests
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS }}/Tests
 
       - name: Save Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-          path: ${{ env.BUILD_ARTIFACTS }}/assembly
+          path: ${{ env.BUILD_ARTIFACTS }}
 
   # pull the test assemblies and run the tests on all platforms
   unit-test:
