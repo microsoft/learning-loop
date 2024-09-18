@@ -35,6 +35,9 @@ jobs:
           - { build_type: "release" }
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
+      VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
+      BINARY_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -68,13 +71,13 @@ jobs:
       - name: Copy binaries (windows)
         if: startsWith(matrix.config.os, 'windows') == true
         run: |
-          mkdir ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
-          copy ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}/${{ matrix.config.vw_bin_dest }}
+          mkdir ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+          copy ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
       - name: Copy binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
-          cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}/${{ matrix.config.vw_bin_dest }}
+          mkdir -p ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+          cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
       - name: Save VW Parser Binaries
         uses: actions/upload-artifact@v4
         with:
@@ -94,8 +97,8 @@ jobs:
       - name: Reorganize Binaries
         run: |
           mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/debug/**/* vw-bin-flat/debug
-          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/release/**/* vw-bin-flat/release
+          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/debug/**/* ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug
+          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/release/**/* ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
           mv ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin
 
       - name: Save Combined VW Binaries
@@ -116,6 +119,9 @@ jobs:
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
+    env:
+      VW_BINARY_PATH: ${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
+      BINARY_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/assembly
 
     steps:
       - uses: actions/checkout@v3
@@ -133,18 +139,18 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
 
       - name: Publish Common
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS }}/assembly/Common
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
       - name: Publish OnlineTrainer
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS }}/assembly/OnlineTrainer
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
       - name: Publish Tests
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS }}/assembly/Tests
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
 
       - name: Save Build Artifacts
         uses: actions/upload-artifact@v4
@@ -167,6 +173,9 @@ jobs:
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
+    env:
+      BUILD_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/build-artifacts-${{ matrix.build.build_type }}
+      TEST_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
     steps:
       - uses: actions/checkout@v3
@@ -184,4 +193,4 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/build-artifacts-${{ matrix.build.build_type }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
