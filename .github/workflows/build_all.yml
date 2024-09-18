@@ -36,7 +36,7 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
       VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
-      BINARY_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
     steps:
       - uses: actions/checkout@v3
@@ -120,8 +120,8 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
-      VW_BINARY_PATH: ${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
-      BINARY_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/assembly
+      VW_BINARY_PATH: ${{github.workspace}}/artifacts/vw-binaries/vw-bin/${{ matrix.build.build_type }}
+      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
 
     steps:
       - uses: actions/checkout@v3
@@ -174,8 +174,8 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
-      BUILD_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/build-artifacts-${{ matrix.build.build_type }}
-      TEST_ARTIFACTS_BASE_PATH: ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+      BUILD_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/build-artifacts-${{ matrix.build.build_type }}
+      TEST_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
     steps:
       - uses: actions/checkout@v3
