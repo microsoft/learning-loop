@@ -85,24 +85,25 @@ jobs:
   combine-vw-binaries:
     needs: build-binary-parser
     runs-on: ubuntu-latest
-    - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
+    steps:
+      - name: Restore Binary Parser Binaries
+          uses: actions/download-artifact@v4
+          with:
+            path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Reorganize Binaries
+        run: |
+          mkdir ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
+          cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/debug/**/* vw-bin-flat/debug
+          cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/release/**/* vw-bin-flat/release
+          rm -rf cp ${{ env.BUILD_ARTIFACTS }}/vw-bin
+          mv ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin
+
+      - name: Save Combined VW Binaries
+        uses: actions/upload-artifact@v4
         with:
+          name: vw-binaries
           path: ${{ env.BUILD_ARTIFACTS }}
-
-    - name: Reorganize Binaries
-      run: |
-        mkdir ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-        cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/debug/**/* vw-bin-flat/debug
-        cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/release/**/* vw-bin-flat/release
-        rm -rf cp ${{ env.BUILD_ARTIFACTS }}/vw-bin
-        mv ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin
-
-    - name: Save Combined VW Binaries
-      uses: actions/upload-artifact@v4
-      with:
-        name: vw-binaries
-        path: ${{ env.BUILD_ARTIFACTS }}
 
 
   # build the assemblies on ubuntu. later test the assemblies on all platforms
