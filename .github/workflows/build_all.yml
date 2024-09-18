@@ -68,12 +68,12 @@ jobs:
       - name: Copy binaries (windows)
         if: startsWith(matrix.config.os, 'windows') == true
         run: |
-          mkdir ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
+          mkdir ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
           copy ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}/${{ matrix.config.vw_bin_dest }}
       - name: Copy binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          mkdir -p ${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/vw-bin
+          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
           cp ext_libs/build/reinforcement_learning/external_parser/${{ matrix.config.vw_bin_src }} ${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}/${{ matrix.config.vw_bin_dest }}
       - name: Save VW Parser Binaries
         uses: actions/upload-artifact@v4
@@ -93,7 +93,7 @@ jobs:
 
       - name: Reorganize Binaries
         run: |
-          mkdir ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
+          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
           cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/debug/**/* vw-bin-flat/debug
           cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/release/**/* vw-bin-flat/release
           rm -rf cp ${{ env.BUILD_ARTIFACTS }}/vw-bin
