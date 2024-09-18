@@ -18,6 +18,6 @@
                        For local builds, CIVWParserPath is empty since the binaries are built for the local
 						     platform using VWBinResolver.dev.targets 
 	 -->
-    <Import Condition="'$(CIVWBinParserPath)' == ''" Project="VWBinResolver.dev.targets" />
-    <Import Condition="'$(CIVWBinParserPath)' != ''" Project="VWBinResolver.ci.targets" />
+    <Import Condition="'$(CIVWBinParserPath)' == ''" Project="VWBinResolver.vwbinbuild.targets" />
+    <Import Condition="'$(CIVWBinParserPath)' != ''" Project="VWBinResolver.vwbin.targets" />
 </Project>

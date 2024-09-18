@@ -20,23 +20,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-binary-parser:
-    name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+  build-binaries:
+    name: build-binaries-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64" }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static" }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
-      VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
-      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts
 
     steps:
       - uses: actions/checkout@v3
@@ -60,95 +59,9 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/vcpkg.json"
-      - name: Configure
-        run: >
-          cd ext_libs;
-          cmake --preset=${{ matrix.config.cmake_preset }}
-      - name: Build
-        run: |
-          cd ext_libs
-          cmake --build build --preset=${{ matrix.config.cmake_preset }} --config ${{ matrix.build.build_type }}
-      - name: Copy binaries (windows)
-        if: startsWith(matrix.config.os, 'windows') == true
-        run: |
-          mkdir ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
-          copy ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
-      - name: Copy binaries (${{ matrix.config.os_name }})
-        if: startsWith(matrix.config.os, 'windows') == false
-        run: |
-          mkdir -p ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
-          cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
-      - name: Save VW Parser Binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: vw-binaries-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-          path: ${{ env.BUILD_ARTIFACTS }}
 
-  # combine artifacts of binary parser
-  combine-vw-binaries:
-    needs: build-binary-parser
-    runs-on: ubuntu-latest
-    steps:
-      - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
-        with:
-          path: ${{ env.BUILD_ARTIFACTS }}
-
-      - name: Reorganize Binaries
-        run: |
-          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/debug/**/* ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug
-          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/release/**/* ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-          mv ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin
-
-      - name: Save Combined VW Binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: vw-binaries
-          path: ${{ env.BUILD_ARTIFACTS }}
-
-
-  # build the assemblies on ubuntu. later test the assemblies on all platforms
-  build-assemblies:
-    needs: combine-vw-binaries
-    name: build-assemblies-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - { os: "windows-latest", os_name: "windows-latest" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
-          - { os: "macos-13", os_name: "macos-latest" }
-        build:
-          - { build_type: "debug" }
-          - { build_type: "release" }
-
-    env:
-      VW_BINARY_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}
-      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: vw-binaries
-          path: ${{ env.BUILD_ARTIFACTS }}
-
-      - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
-      - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
-      - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+      - name: Build Solution
+        run: dotnet build .\learning-loop.sln -c ${{ matrix.build.build_type }}
 
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
@@ -165,7 +78,7 @@ jobs:
 
   # pull the test assemblies and run the tests on all platforms
   unit-test:
-    needs: build-assemblies
+    needs: build-binaries
     name: unittest-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
     runs-on: ${{ matrix.config.os }}
     strategy:
