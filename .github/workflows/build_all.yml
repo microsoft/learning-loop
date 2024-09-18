@@ -28,8 +28,8 @@ jobs:
       matrix:
         config:
           - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64.exe" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64" }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
@@ -191,6 +191,20 @@ jobs:
         with:
           name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Prepare binaries (${{ matrix.config.os_name }})
+        if: startsWith(matrix.config.os, 'windows') == false
+        run: |
+          if [ -f "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp" ]; then
+            chmod +x ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp
+            echo "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp set to executable"
+          elif [ -f "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp.exe" ]; then
+            chmod +x ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp.exe
+            echo "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp.exe set to executable"
+          else
+            echo "TestExeApp is missing"
+            exit 1
+          fi
 
       - name: Run Tests
         run: dotnet vstest ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
