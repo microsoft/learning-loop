@@ -94,9 +94,8 @@ jobs:
       - name: Reorganize Binaries
         run: |
           mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-          cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/debug/**/* vw-bin-flat/debug
-          cp ${{ env.BUILD_ARTIFACTS }}/vw-bin/release/**/* vw-bin-flat/release
-          rm -rf cp ${{ env.BUILD_ARTIFACTS }}/vw-bin
+          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/debug/**/* vw-bin-flat/debug
+          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/release/**/* vw-bin-flat/release
           mv ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin
 
       - name: Save Combined VW Binaries
@@ -134,11 +133,11 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-bin/${{ matrix.build.build_type }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.BUILD_ARTIFACTS }}/vw-binaries/vw-bin/${{ matrix.build.build_type }}
 
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS }}/assembly/Common
@@ -185,4 +184,4 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/build-artifacts-${{ matrix.build.build_type }}/Tests/Tests.dll /ResultsDirectory:${{ env.BUILD_ARTIFACTS }}/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
