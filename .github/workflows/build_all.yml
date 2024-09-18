@@ -167,9 +167,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: "windows-latest", os_name: "windows-latest" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
-          - { os: "macos-13", os_name: "macos-latest" }
+          - { os: "windows-latest", os_name: "windows-latest", vw_bin: "vw-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vw_bin: "vw-linux-x64" }
+          - { os: "macos-13", os_name: "macos-latest", vw_bin: "vw-macos-x64" }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
@@ -192,7 +192,13 @@ jobs:
           name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
-      - name: Prepare binaries (${{ matrix.config.os_name }})
+      - name: Prepare VW binaries (${{ matrix.config.os_name }})
+        if: startsWith(matrix.config.os, 'windows') == false
+        run: |
+          chmod +x ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/vw-bin/${{ matrix.config.vw_bin }}
+          echo "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
+
+      - name: Prepare Test binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
           if [ -f "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp" ]; then
