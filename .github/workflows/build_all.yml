@@ -135,7 +135,7 @@ jobs:
           fi
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.single-threaded.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
 
       - name: Save Test Artifacts
         uses: actions/upload-artifact@v4
@@ -166,7 +166,7 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build Docker Image
-        run: docker build -t learning-loop:latest --build-arg SRC_PATH=${{ env.BUILD_ARTIFACTS }}/onlinetrainer -f ./OnlineTrainerExe/Dockerfile .
+        run: docker build -t learning-loop:latest --build-arg SRC_PATH=${{ env.BUILD_ARTIFACTS }}/OnlineTrainer -f ./OnlineTrainerExe/Dockerfile .
 
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
