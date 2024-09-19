@@ -209,13 +209,13 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Setup Nuget CLI
-        run: |
-          if [[ "${{ matrix.config.os }}" == "windows-latest" ]]; then
-            choco install nuget.commandline -y
-          else
-            wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O nuget.exe
-          fi
+      - name: Setup Nuget CLI (Windows)
+        if: startsWith(matrix.config.os, 'windows-latest') == true
+        run: choco install nuget.commandline -y
+
+      - name: Setup Nuget CLI (Linux and Mac)
+        if: startsWith(matrix.config.os, 'windows-latest') == false
+        run: wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O nuget.exe
 
       - name: Install Mono (Linux and Mac Only)
         if: startsWith(matrix.config.os, 'windows-latest') == false
@@ -237,9 +237,9 @@ jobs:
       - name: Pack Nuget
         run: |
           if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
-            nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+            nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
           else
-            mono nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+            mono nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
           fi
 
       - name: Save Nuget Artifacts
