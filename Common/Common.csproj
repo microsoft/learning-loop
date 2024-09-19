@@ -15,7 +15,8 @@
     <PackageVersion>1.0.0</PackageVersion>
     <PackageOutputPath>$(SolutionDir)\artifacts</PackageOutputPath>
     <NuspecFile>$(AssemblyName).nuspec</NuspecFile>
-	<NuspecProperties>targetframework=$(TargetFramework);PackageSourcePath=bin\$(Configuration)\$(TargetFramework);version=$(PackageVersion)</NuspecProperties>
+    <NuspecSourceBinPath>bin/$(Configuration)/$(TargetFramework)</NuspecSourceBinPath>
+	  <NuspecProperties>targetframework=$(TargetFramework);PackageSourcePath=$(NuspecSourceBinPath);version=$(PackageVersion)</NuspecProperties>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Join\Local\**" />
