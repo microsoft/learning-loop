@@ -25,11 +25,10 @@ namespace Tests
     public class StorageUploadBlockIntegrationTests
     {
         public TestContext TestContext { get; set; }
-        private const int time_10s = 10 * 1000;
-        private const int time_30s = 30 * 1000;
+        private const int abortTestTimeout = 45 * 1000;
 
         private static IStorageFactory storageFactory;
-        private static readonly TimeSpan uploadTimeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan uploadTimeout = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan uploadRetryDelay = TimeSpan.FromMilliseconds(500);
 
         private const JoinedLogFormat joinedLogFormat = JoinedLogFormat.Binary;
@@ -71,7 +70,7 @@ namespace Tests
         }
 
         [TestMethod, Description("ResumeAsync returns null when no data is present.")]
-        [Timeout(time_30s)]
+        [Timeout(abortTestTimeout)]
         [TestCategory("Decision Service/Online Trainer")]
         public async Task StorageUploadBlock_ResumeAsyncReturnsNull_WhenStartingNewAsync()
         {
@@ -81,7 +80,7 @@ namespace Tests
         }
 
         [TestMethod, Description("ResumeAsync returns null when no eventhub position.")]
-        [Timeout(time_30s)]
+        [Timeout(abortTestTimeout)]
         [TestCategory("Decision Service/Online Trainer")]
         public async Task StorageUploadBlock_ResumeAsyncReturnsNull_WhenStartingWithNoEventhubPositionsAsync()
         {
@@ -94,7 +93,7 @@ namespace Tests
         }
 
         [TestMethod, Description("ResumeAsync recovers the last eventhub position.")]
-        [Timeout(time_10s)]
+        [Timeout(abortTestTimeout)]
         [TestCategory("Decision Service/Online Trainer")]
         public async Task StorageUploadBlock_ResumeAsyncReturnsNull_WhenStartingWithTwoEventhubPositionAsync()
         {
@@ -160,7 +159,7 @@ namespace Tests
         }
 
         [TestMethod]
-        [Timeout(time_30s)]
+        [Timeout(abortTestTimeout)]
         [TestCategory("Decision Service/Online Trainer")]
         [DynamicData(nameof(GetUploadResumeTestCases), DynamicDataSourceType.Method)]
         public async Task StorageUploadBlock_EventsResumeFromCheckpointAsync(

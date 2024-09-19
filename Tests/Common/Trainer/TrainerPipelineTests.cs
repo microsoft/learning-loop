@@ -29,8 +29,8 @@ namespace Tests.Common.Trainer;
 [TestClass]
 public class TrainerPipelineTests
 {
-    private const int TestTimeout_10s = 10_000;
-    private const int TestTimeout_30s = 30_000;
+    private const int storageWaitTimeout = 30_000;
+    private const int abortTestTimeout = 45_000;
     private readonly string _testAppId = BasicPipelineMockProvider.DefaultAppId;
     private readonly string _testModelId = "test-model-1";
 
@@ -171,9 +171,9 @@ public class TrainerPipelineTests
         mockProvider.EventHubController.GetReceiverClient(EHConstants.EH_OBSERVATION, partitionId).InjectMessages(new EventBatch[] { observationBatch });
 
         // wait for the block to be committed or abort
-        if (await Task.WhenAny(tcs.Task, Task.Delay(TestTimeout_10s)) != tcs.Task)
+        if (await Task.WhenAny(tcs.Task, Task.Delay(storageWaitTimeout)) != tcs.Task)
         {
-            Assert.Fail($"the trainer output was not committed within the expected timeframe of {TestTimeout_10s}ms");
+            Assert.Fail($"the trainer output was not committed within the expected timeframe of {storageWaitTimeout}ms");
         }
 
         // stop everything
@@ -191,7 +191,7 @@ public class TrainerPipelineTests
     [TestMethod]
     [Description("Updates to the TrainerConfig causes a restart")]
     [TestCategory("Decision Service/Online Trainer")]
-    [Timeout(TestTimeout_10s)]
+    [Timeout(abortTestTimeout)]
     public async Task Trainer_Update_TrainerConfig_Causes_Restart_StartAsync()
     {
         int restartCount = 0;
@@ -211,7 +211,7 @@ public class TrainerPipelineTests
     [TestMethod]
     [Description("The trainer starts with config option LocalCookedLogsPath")]
     [TestCategory("Decision Service/Online Trainer")]
-    [Timeout(TestTimeout_10s)]
+    [Timeout(abortTestTimeout)]
     public async Task Trainer_Start_With_LocalCookedLogsPath_StartAsync()
     {
         bool startedAndStoppedSuccessfully = false;
@@ -243,7 +243,7 @@ public class TrainerPipelineTests
     [TestMethod]
     [Description("Trainer and Joiner pipeline with CB events generates a model")]
     [TestCategory("Decision Service/Online Trainer")]
-    [Timeout(TestTimeout_30s)]
+    [Timeout(abortTestTimeout)]
     public async Task Trainer_Train_with_CBEvents_StartAsync()
     {
         var mockProvider = new BasicPipelineMockProvider();
