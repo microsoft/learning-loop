@@ -165,6 +165,8 @@ jobs:
           name: build-artifacts-ubuntu-latest-release
           path: ${{ env.BUILD_ARTIFACTS }}
 
+      - run: mkdir -p ${{ env.DOCKER_ARTIFACTS_PATH }}
+
       - name: Build Docker Image
         run: docker build -t learning-loop:latest --build-arg SRC_PATH=artifacts/OnlineTrainer -f ./OnlineTrainerExe/Dockerfile .
 
