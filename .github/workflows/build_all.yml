@@ -1,3 +1,4 @@
+# build, test, and package
 name: Build All
 
 on:
@@ -183,65 +184,65 @@ jobs:
           path: ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar.gz
 
   nuget-package:
-      needs: build-binaries
-      name: nuget-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-      runs-on: ${{ matrix.config.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-        config:
-          - { os: "windows-latest", os_name: "windows-latest" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
-          - { os: "macos-13", os_name: "macos-latest" }
-        build:
-          - { build_type: "debug" }
-          - { build_type: "release" }
-      env:
-        NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
-  
-      steps:
-        - uses: actions/checkout@v3
-          with:
-            ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
-        - name: Setup .NET Core
-          uses: actions/setup-dotnet@v4
-          with:
-            dotnet-version: 8.0.x
-  
-        - name: Setup Nuget CLI
-          run: |
-            if [[ "${{ matrix.config.os }}" == "windows-latest" ]]; then
-              choco install nuget.commandline -y
-            else
-              wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O nuget.exe
-            fi
-  
-        - name: Install Mono (Linux and Mac Only)
-          if: startsWith(matrix.config.os, 'windows-latest') == false
-          run: |
-            if [ "${{ matrix.config.os }}" == "ubuntu-latest" ]; then
-              sudo apt-get update
-              sudo apt-get install -y mono-complete
-            else
-              brew update
-              brew install mono
-            fi
-  
-        - name: Download Tests Binaries
-          uses: actions/download-artifact@v4
-          with:
-            name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-            path: ${{ env.BUILD_ARTIFACTS }}
-  
-        - name: Pack Nuget
-          run: |
-            if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
-              nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
-            else
-              mono nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
-            fi
-  
-        - name: Save Nuget Artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: nuget-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+    needs: build-binaries
+    name: nuget-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+      config:
+        - { os: "windows-latest", os_name: "windows-latest" }
+        - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+        - { os: "macos-13", os_name: "macos-latest" }
+      build:
+        - { build_type: "debug" }
+        - { build_type: "release" }
+    env:
+      NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Nuget CLI
+        run: |
+          if [[ "${{ matrix.config.os }}" == "windows-latest" ]]; then
+            choco install nuget.commandline -y
+          else
+            wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O nuget.exe
+          fi
+
+      - name: Install Mono (Linux and Mac Only)
+        if: startsWith(matrix.config.os, 'windows-latest') == false
+        run: |
+          if [ "${{ matrix.config.os }}" == "ubuntu-latest" ]; then
+            sudo apt-get update
+            sudo apt-get install -y mono-complete
+          else
+            brew update
+            brew install mono
+          fi
+
+      - name: Download Tests Binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Pack Nuget
+        run: |
+          if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
+            nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+          else
+            mono nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+          fi
+
+      - name: Save Nuget Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
