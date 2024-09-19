@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/dotnet/runtime:6.0 AS base
-ENV DOTNET_ENVIRONMENT=Production
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+ARG SRC_PATH=bin/onlinetrainer
+ARG IMAGE_ENVIRONMENT=Production
+ENV DOTNET_ENVIRONMENT=${IMAGE_ENVIRONMENT}
 WORKDIR /app
-COPY ThirdPartyNotices.txt .
-COPY onlinetrainer.sh .
-COPY bin/onlinetrainer .
+COPY ${SRC_PATH} .
 RUN chmod 555 vw-bin/vw-*
 ENV PATH="${PATH}:/app"
 RUN apt-get update && apt-get install -y gdb zstd

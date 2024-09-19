@@ -35,6 +35,8 @@
 
   <ItemGroup>
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="ThirdPartyNotices.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="onlinetrainer.sh" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="PrintPackagesAndParents" DependsOnTargets="RunResolvePackageDependencies">
