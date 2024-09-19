@@ -234,13 +234,13 @@ jobs:
           name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
-      - name: Pack Nuget
-        run: |
-          if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
-            nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
-          else
-            mono nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
-          fi
+      - name: Pack Nuget (Windows)
+        if: startsWith(matrix.config.os, 'windows-latest') == true
+        run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/Common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+
+      - name: Pack Nuget (Linux and Mac)
+        if: startsWith(matrix.config.os, 'windows-latest') == false
+        run: mono nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/Common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
 
       - name: Save Nuget Artifacts
         uses: actions/upload-artifact@v4
