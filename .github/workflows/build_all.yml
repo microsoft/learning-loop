@@ -166,7 +166,7 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build Docker Image
-        run: docker build -t learning-loop:latest --build-arg SRC_PATH=${{ env.BUILD_ARTIFACTS }}/OnlineTrainer -f ./OnlineTrainerExe/Dockerfile .
+        run: docker build -t learning-loop:latest --build-arg SRC_PATH=artifacts/OnlineTrainer -f ./OnlineTrainerExe/Dockerfile .
 
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
