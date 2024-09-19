@@ -246,3 +246,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuget-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+          path: ${{ env.NUGET_ARTIFACTS_PATH }}
