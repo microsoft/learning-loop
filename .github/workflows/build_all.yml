@@ -190,13 +190,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-      config:
-        - { os: "windows-latest", os_name: "windows-latest" }
-        - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
-        - { os: "macos-13", os_name: "macos-latest" }
-      build:
-        - { build_type: "debug" }
-        - { build_type: "release" }
+        config:
+          - { os: "windows-latest", os_name: "windows-latest" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+          - { os: "macos-13", os_name: "macos-latest" }
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
     env:
       NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
 
