@@ -27,7 +27,7 @@ concurrency:
 jobs:
   check-vw-binary-cache:
     name: check-vw-binary-cache
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.config.os }}
     outputs:
       cache-hit: ${{ steps.bin-cache.outputs.cache-hit }}
     strategy:
