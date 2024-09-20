@@ -66,8 +66,10 @@ jobs:
         id: cache-hit
         run: |
           if [ -d cached-binaries ]; then
+            echo "VW Binaries cache found"
             echo "cache-hit=true" >> $GITHUB_OUTPUT
           else
+            echo "VW Binaries cache not found"
             echo "cache-hit=false" >> $GITHUB_OUTPUT
           fi
         shell: bash
