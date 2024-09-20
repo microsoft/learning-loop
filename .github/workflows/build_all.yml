@@ -60,19 +60,13 @@ jobs:
         id: bin-cache
         uses: actions/cache/restore@v4
         with:
-          path: cached-binaries/
+          path: cached-binaries
           key: ${{ steps.vw-bin-cache-key.outputs.key }}
+          lookup-only: true
 
-      - name: Check if cache hit
+      - name: Check if cache-hit
         id: cache-hit
-        run: |
-          if [ -d cached-binaries ]; then
-            echo "VW Binaries cache found: ${{ steps.vw-bin-cache-key.outputs.key }}"
-            echo "cache-hit=true" >> $GITHUB_OUTPUT
-          else
-            echo "VW Binaries cache NOT found: ${{ steps.vw-bin-cache-key.outputs.key }}"
-            echo "cache-hit=false" >> $GITHUB_OUTPUT
-          fi
+        run: echo "cache-hit=${{ steps.bin-cache.outputs.cache-hit }}" >> $GITHUB_OUTPUT
         shell: bash
 
   build-binary-parser:
