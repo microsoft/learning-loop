@@ -63,6 +63,7 @@ jobs:
         shell: bash
 
   build-binary-parser:
+    needs: check-vw-binary-cache
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
