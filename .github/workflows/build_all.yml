@@ -113,8 +113,8 @@ jobs:
       - name: Restore Binary Parser Binaries
         uses: actions/download-artifact@v4
         with:
-          name: vw-binaries-.*
-          name_is_regexp: true
+          pattern: vw-binaries-*
+          merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Reorganize VW Binaries
