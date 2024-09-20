@@ -165,13 +165,23 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore Binary Parser Binaries
+      - name: Restore Binary Parser Binaries (Windows)
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.BUILD_ARTIFACTS }}
-          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}
-          restore-keys: |
-            vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-
+          path: ${{ env.BUILD_ARTIFACTS }}/windows
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-windows-latest
+
+      - name: Restore Binary Parser Binaries (Linux)
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_ARTIFACTS }}/linux
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-ubuntu-latest
+
+      - name: Restore Binary Parser Binaries (OSX)
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_ARTIFACTS }}/macos
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-macos-latest
 
       - name: Reorganize VW Binaries
         run: |
@@ -322,3 +332,25 @@ jobs:
         with:
           name: nuget-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.NUGET_ARTIFACTS_PATH }}
+
+  # build-example:
+  #   needs: nuget-package
+  #   name: build-example-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+  #   runs-on: ${{ matrix.config.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       config:
+  #         - { os: "windows-latest", os_name: "windows-latest" }
+  #         - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+  #         - { os: "macos-13", os_name: "macos-latest" }
+  #       build:
+  #         - { build_type: "debug" }
+  #         - { build_type: "release" }
+
+  #   steps:
+  #     - name: Download Nuget
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build-artifacts-release
+  #         path: ${{ env.BUILD_ARTIFACTS }}
