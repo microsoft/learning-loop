@@ -62,11 +62,15 @@ jobs:
         with:
           path: cached-binaries
           key: ${{ steps.vw-bin-cache-key.outputs.key }}
+          restore-keys: |
+            vw-binaries-
           lookup-only: true
 
       - name: Check if cache-hit
         id: cache-hit
-        run: echo "cache-hit=${{ steps.bin-cache.outputs.cache-hit }}" >> $GITHUB_OUTPUT
+        run: |
+          restore-hit="${{ steps.bin-cache.outputs.cache-hit }}"
+          echo "cache-hit=$restore-hit" >> $GITHUB_OUTPUT
         shell: bash
 
   build-binary-parser:
