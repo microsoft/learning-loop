@@ -13,6 +13,8 @@ on:
   workflow_dispatch:
 
 env:
+  REINFORCEMENT_LEARNING_REPO: VowpalWabbit/reinforcement_learning
+  REINFORCEMENT_LEARNING_REPO_API_URL: https://api.github.com/repos/VowpalWabbit/reinforcement_learning
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
   BUILD_ARTIFACTS: ${{github.workspace}}/artifacts
   DOTNET_VERSION: 8.0.x
@@ -23,6 +25,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-vw-binary-cache:
+    name: check-vw-binary-cache
+    runs-on: ${{ matrix.os }}
+    outputs:
+      cache-hit: ${{ steps.bin-cache.outputs.cache-hit }}
+    strategy:
+      matrix:
+        config:
+          - { os: "windows-latest", os_name: "windows-latest" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+          - { os: "macos-13", os_name: "macos-latest" }
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
+    steps:
+      - name: Get ${{ env.REINFORCEMENT_LEARNING_REPO }} SHA
+        id: rl-sha
+        run: echo "::set-output name=sha::$(curl -s ${{ env.REINFORCEMENT_LEARNING_REPO_API_URL }}/commits/master | jq -r '.sha')"
+        shell: bash
+
+      - name: Generate VW Binaries Cache Key
+        id: vw-bin-cache-key
+        run: echo "VW_BIN_CACHE_KEY=vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Restore Cached Binaries
+        id: bin-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: cached-binaries/
+          key: ${{ steps.vw-bin-cache-key.outputs.VW_BIN_CACHE_KEY }}
+
+      - name: Check if cache hit
+        id: cache-hit
+        run: echo "::set-output name=cache-hit::$(test -d cached-binaries && echo true || echo false)"
+        shell: bash
+
   build-binary-parser:
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
@@ -41,8 +80,9 @@ jobs:
       VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
+    if: ${{ needs.check-vw-binary-cache.outputs.cache-hit == 'false' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - run: git -C ${{ github.workspace }}/ext_libs/vcpkg fetch --unshallow
@@ -81,11 +121,11 @@ jobs:
         run: |
           mkdir -p ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
           cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
-      - name: Save VW Parser Binaries
-        uses: actions/upload-artifact@v4
+      - name: Cache the VW Binaries
+        uses: actions/cache/save@v4
         with:
-          name: vw-binaries-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
 
   build-assemblies:
     needs: build-binary-parser
@@ -112,11 +152,12 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
+        uses: actions/cache/restore@v4
         with:
-          pattern: vw-binaries-*
-          merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}
+          restore-keys: |
+            vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-
 
       - name: Reorganize VW Binaries
         run: |
