@@ -61,16 +61,16 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: cached-binaries/
-          key: vw-binaries-${{ steps.vw-bin-cache-key.outputs.key }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+          key: ${{ steps.vw-bin-cache-key.outputs.key }}
 
       - name: Check if cache hit
         id: cache-hit
         run: |
           if [ -d cached-binaries ]; then
-            echo "VW Binaries cache found: vw-binaries-${{ steps.vw-bin-cache-key.outputs.key }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}"
+            echo "VW Binaries cache found: ${{ steps.vw-bin-cache-key.outputs.key }}"
             echo "cache-hit=true" >> $GITHUB_OUTPUT
           else
-            echo "VW Binaries cache NOT found: vw-binaries-${{ steps.vw-bin-cache-key.outputs.key }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}"
+            echo "VW Binaries cache NOT found: ${{ steps.vw-bin-cache-key.outputs.key }}"
             echo "cache-hit=false" >> $GITHUB_OUTPUT
           fi
         shell: bash
