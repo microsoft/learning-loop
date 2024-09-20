@@ -209,6 +209,10 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Setup Nuget CLI (Linux and Mac)
+        if: startsWith(matrix.config.os, 'windows-latest') == false
+        run: wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O nuget.exe
+
       - name: Download Tests Binaries
         uses: actions/download-artifact@v4
         with:
