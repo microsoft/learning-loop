@@ -30,6 +30,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     outputs:
       cache-hit: ${{ steps.cache-hit.outputs.cache-hit }}
+      rl-sha: ${{ steps.rl-sha.outputs.sha }}
     strategy:
       matrix:
         config:
@@ -138,7 +139,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}
-          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
 
   build-assemblies:
     needs: build-binary-parser
@@ -168,9 +169,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}
-          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}
           restore-keys: |
-            vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-
+            vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-
 
       - name: Reorganize VW Binaries
         run: |
