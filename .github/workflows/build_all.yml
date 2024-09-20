@@ -120,7 +120,7 @@ jobs:
 
       - name: Reorganize VW Binaries
         run: |
-          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat
+          mkdir -p ${{ env.VW_BINARY_PATH }}
           cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
 
       - name: Build Common
