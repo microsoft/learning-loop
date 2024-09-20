@@ -42,14 +42,17 @@ jobs:
     steps:
       - name: Get ${{ env.REINFORCEMENT_LEARNING_REPO }} SHA
         id: rl-sha
-        run: echo "::set-output name=sha::$(curl -s ${{ env.REINFORCEMENT_LEARNING_REPO_API_URL }}/commits/master | jq -r '.sha')"
+        run: |
+          sha=$(curl -s ${{ env.REINFORCEMENT_LEARNING_REPO_API_URL }}/commits/master | jq -r '.sha')
+          echo "sha=$sha" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Generate VW Binaries Cache Key
         id: vw-bin-cache-key
         run: |
-          echo "VW_BIN_CACHE_KEY=vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}" >> $GITHUB_ENV
-          echo "::set-output name=key::vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}"
+          key="vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}"
+          echo "VW_BIN_CACHE_KEY=$key" >> $GITHUB_ENV
+          echo "key=$key" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore Cached Binaries
@@ -61,7 +64,12 @@ jobs:
 
       - name: Check if cache hit
         id: cache-hit
-        run: echo "::set-output name=cache-hit::$(test -d cached-binaries && echo true || echo false)"
+        run: |
+          if [ -d cached-binaries ]; then
+            echo "cache-hit=true" >> $GITHUB_OUTPUT
+          else
+            echo "cache-hit=false" >> $GITHUB_OUTPUT
+          fi
         shell: bash
 
   build-binary-parser:
