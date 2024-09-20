@@ -1,44 +1,29 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.DecisionService.Common.Utils.Exe;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
 namespace Tests.Common.Utils.Exe
 {
     [TestClass]
     public class CommandLineExeRunnerTests
     {
-        private const string WIN_BINARY = "TestExeApp.exe";
-        private const string NIX_BINARY = "TestExeApp";
+        private const string VW_MOCK_BINARY = "TestExeApp.dll";
 
         private static string GetBinaryFullPath(string exeName)
         {
             return Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), exeName);
         }
 
-        private static string GetTestAppBinary()
+        private static IExeRunner GetCommandLineRunner()
         {
-            bool isWindowsOS = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            string platformSpecificExe = isWindowsOS ? WIN_BINARY : NIX_BINARY;
-            string binFile = GetBinaryFullPath(platformSpecificExe);
-            if (File.Exists(binFile)) {
-                return binFile;
-            }
-            string fallbackExe = isWindowsOS ? NIX_BINARY : WIN_BINARY;
-            binFile = GetBinaryFullPath(fallbackExe);
-            if (File.Exists(binFile)) {
-                return binFile;
-            }
-            throw new FileNotFoundException("TestExeApp or TestExeApp.exe was not found", binFile);
+            return new CommandLineExeRunner(GetBinaryFullPath(VW_MOCK_BINARY), dotnetRunner: true);
         }
 
         #region RunAsync tests
@@ -46,7 +31,7 @@ namespace Tests.Common.Utils.Exe
         [TestMethod]
         public async Task RunAsync_NoParams_Async()
         {
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
             var result = await exeRunner.RunAsync();
             Assert.AreEqual(0, result.ExitCode);
         }
@@ -57,7 +42,7 @@ namespace Tests.Common.Utils.Exe
         [DataRow(2)]
         public async Task RunAsync_ReturnExitCode_Async(int expectedExitCode)
         {
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
             var result = await exeRunner.RunAsync(
                 $"--exit-code {expectedExitCode}");
             Assert.AreEqual(expectedExitCode, result.ExitCode);
@@ -67,7 +52,7 @@ namespace Tests.Common.Utils.Exe
         public async Task RunAsync_WithInput_Async()
         {
             const string expectedOutput = "output message";
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
 
             var result = await exeRunner.RunAsync(
                 "--use-stdin",
@@ -81,7 +66,7 @@ namespace Tests.Common.Utils.Exe
         [Timeout(6000)]
         public async Task RunAsync_CancelLongRunningProcess_Async()
         {
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
             using var cancellationTokenSource = new CancellationTokenSource();
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
@@ -99,7 +84,7 @@ namespace Tests.Common.Utils.Exe
         [TestMethod]
         public void Run_NoParams()
         {
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
             var result = exeRunner.Run();
             Assert.AreEqual(0, result.ExitCode);
         }
@@ -110,7 +95,7 @@ namespace Tests.Common.Utils.Exe
         [DataRow(2)]
         public void Run_ReturnExitCode(int expectedExitCode)
         {
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
             var result = exeRunner.Run(
                 $"--exit-code {expectedExitCode}");
             Assert.AreEqual(expectedExitCode, result.ExitCode);
@@ -120,7 +105,7 @@ namespace Tests.Common.Utils.Exe
         public void Run_WithInput()
         {
             const string expectedOutput = "output message";
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
 
             var result = exeRunner.Run(
                 "--use-stdin",
@@ -135,7 +120,7 @@ namespace Tests.Common.Utils.Exe
         {
             const string expectedOutput = "output message";
             const string expectedError = "error message";
-            IExeRunner exeRunner = new CommandLineExeRunner(GetTestAppBinary());
+            IExeRunner exeRunner = GetCommandLineRunner();
 
             var result = exeRunner.Run(
                 $"--output \"{expectedOutput}\" --error \"{expectedError}\"");
