@@ -98,7 +98,8 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
-      VW_BINARY_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}
+      VW_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}
+      VW_BINARY_PATH: ${{github.workspace}}/vw-bin
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
 
     steps:
@@ -119,10 +120,8 @@ jobs:
 
       - name: Reorganize VW Binaries
         run: |
-          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/debug/**/* ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/debug
-          cp ${{ env.BUILD_ARTIFACTS }}/**/vw-bin/release/**/* ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat/release
-          mv ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat ${{ env.BUILD_ARTIFACTS }}/vw-bin
+          mkdir -p ${{ env.BUILD_ARTIFACTS }}/vw-bin-flat
+          cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
 
       - name: Build Common
         run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
