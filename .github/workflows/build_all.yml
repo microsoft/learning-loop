@@ -47,7 +47,9 @@ jobs:
 
       - name: Generate VW Binaries Cache Key
         id: vw-bin-cache-key
-        run: echo "VW_BIN_CACHE_KEY=vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}" >> $GITHUB_ENV
+        run: |
+          echo "VW_BIN_CACHE_KEY=vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}" >> $GITHUB_ENV
+          echo "::set-output name=key::vw-binaries-${{ steps.rl-sha.outputs.sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}"
         shell: bash
 
       - name: Restore Cached Binaries
@@ -55,7 +57,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: cached-binaries/
-          key: ${{ steps.vw-bin-cache-key.outputs.VW_BIN_CACHE_KEY }}
+          key: ${{ steps.vw-bin-cache-key.outputs.key }}
 
       - name: Check if cache hit
         id: cache-hit
