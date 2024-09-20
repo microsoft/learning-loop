@@ -29,7 +29,7 @@ jobs:
     name: check-vw-binary-cache
     runs-on: ${{ matrix.config.os }}
     outputs:
-      cache-hit: ${{ steps.bin-cache.outputs.cache-hit }}
+      cache-hit: ${{ steps.cache-hit.outputs.cache-hit }}
     strategy:
       matrix:
         config:
@@ -91,7 +91,7 @@ jobs:
       VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
-    if: ${{ needs.check-vw-binary-cache.outputs.cache-hit == 'false' }}
+    if: needs.check-vw-binary-cache.outputs.cache-hit == 'false'
     steps:
       - uses: actions/checkout@v4
         with:
