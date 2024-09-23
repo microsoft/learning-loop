@@ -296,7 +296,7 @@ jobs:
       - name: Download Nuget
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-${{ matrix.build.build_type }}
+          name: nuget-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: List Downloaded Nuget Packages
