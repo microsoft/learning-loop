@@ -41,6 +41,9 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     steps:
+      - name: Enable debug logging
+        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+
       - name: Get ${{ env.REINFORCEMENT_LEARNING_REPO }} SHA
         id: rl-sha
         run: |
@@ -65,10 +68,14 @@ jobs:
           key: ${{ steps.vw-bin-cache-key.outputs.key }}
           lookup-only: true
 
+      # - name: Set cache-hit
+      #   if: steps.bin-cache.outputs.cache-hit == 'true'
+      #   id: cache-hit
+      #   run: echo "cache-hit=true" >> $GITHUB_OUTPUT
+
       - name: Set cache-hit
-        if: steps.bin-cache.outputs.cache-hit == 'true'
         id: cache-hit
-        run: echo "cache-hit=true" >> $GITHUB_OUTPUT
+        run: echo "cache-hit=false" >> $GITHUB_OUTPUT
 
   build-binary-parser:
     needs: check-vw-binary-cache
@@ -93,6 +100,9 @@ jobs:
 
     if: needs.check-vw-binary-cache.outputs.cache-hit != 'true'
     steps:
+      - name: Enable debug logging
+        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
