@@ -302,5 +302,5 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build ConsoleJoiner Example
-        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
       
