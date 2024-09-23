@@ -11,8 +11,6 @@
     </contentFiles>
     <dependencies>
       <group targetFramework="$targetframework$">
-        <dependency id="reinforcement_learning.messages.flatbuff.v2" version="1.0.0" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.VW.VWBinResolver" version="1.0.0" exclude="Build,Analyzers" />
         <dependency id="Azure.Data.Tables" version="12.8.0" exclude="Build,Analyzers" />
         <dependency id="Azure.Identity" version="1.9.0" exclude="Build,Analyzers" />
         <dependency id="Azure.Messaging.EventHubs" version="5.10.0" exclude="Build,Analyzers" />
