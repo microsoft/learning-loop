@@ -56,6 +56,7 @@ jobs:
           echo "key=$key" >> $GITHUB_OUTPUT
         shell: bash
 
+      - run: mkdir -p ${{ github.workspace }}/bin-cache
       - name: Restore Cached Binaries
         id: bin-cache
         uses: actions/cache@v4
@@ -67,7 +68,7 @@ jobs:
       - name: Check if cache-hit
         id: cache-hit
         run: |
-          if [ "${{ steps.bin-cache.outputs.cache-hit }}" != "true" ]; then
+          if [[ "${{ steps.bin-cache.outputs.cache-hit }}" != "true" ]]; then
             echo "cache-hit=false" >> $GITHUB_OUTPUT
           else
             echo "cache-hit=true" >> $GITHUB_OUTPUT
@@ -113,8 +114,7 @@ jobs:
           cache-name: vcpkg-cache
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
-          # todo: hashFiles('ext_libs/vcpkg.json') is returning null, need to fix this
-          key: ${{ matrix.config.os_name }}-build-${{ env.cache-name }}-${{ hashFiles('**/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
+          key: ${{ matrix.config.os_name }}-${{ matrix.build.build_type }}-build-${{ env.cache-name }}-${{ hashFiles('**/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
@@ -138,7 +138,7 @@ jobs:
           mkdir -p ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
           cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
       - name: Cache the VW Binaries
-        uses: actions/cache/save@v4
+        uses: actions/cache@v3
         with:
           path: ${{ env.BUILD_ARTIFACTS }}
           key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
