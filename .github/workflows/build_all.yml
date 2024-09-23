@@ -270,24 +270,37 @@ jobs:
           name: nuget-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.NUGET_ARTIFACTS_PATH }}
 
-  # build-example:
-  #   needs: nuget-package
-  #   name: build-example-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
-  #   runs-on: ${{ matrix.config.os }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       config:
-  #         - { os: "windows-latest", os_name: "windows-latest" }
-  #         - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
-  #         - { os: "macos-13", os_name: "macos-latest" }
-  #       build:
-  #         - { build_type: "debug" }
-  #         - { build_type: "release" }
+  build-example:
+    needs: nuget-package
+    name: build-example-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: "windows-latest", os_name: "windows-latest" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
+          - { os: "macos-13", os_name: "macos-latest" }
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
 
-  #   steps:
-  #     - name: Download Nuget
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: build-artifacts-release
-  #         path: ${{ env.BUILD_ARTIFACTS }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download Nuget
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Build ConsoleJoiner Example
+        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner.csproj
+      
