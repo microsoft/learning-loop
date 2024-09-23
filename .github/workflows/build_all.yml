@@ -67,11 +67,12 @@ jobs:
           path: cached-binaries
           key: ${{ steps.vw-bin-cache-key.outputs.key }}
           lookup-only: true
+          fail-on-cache-miss: true
 
       - name: Set cache-hit
         if: steps.bin-cache.outputs.cache-hit == 'true'
         id: cache-hit
-        run: echo "cache-hit=false" >> $GITHUB_OUTPUT
+        run: echo "cache-hit=true" >> $GITHUB_OUTPUT
 
   build-binary-parser:
     needs: check-vw-binary-cache
