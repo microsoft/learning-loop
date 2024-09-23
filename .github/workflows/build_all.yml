@@ -13,8 +13,6 @@ on:
   workflow_dispatch:
 
 env:
-  REINFORCEMENT_LEARNING_REPO: VowpalWabbit/reinforcement_learning
-  REINFORCEMENT_LEARNING_REPO_API_URL: https://api.github.com/repos/VowpalWabbit/reinforcement_learning
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
   BUILD_ARTIFACTS: ${{github.workspace}}/artifacts
   DOTNET_VERSION: 8.0.x
