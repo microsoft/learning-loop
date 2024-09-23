@@ -58,7 +58,7 @@ jobs:
 
       - name: Restore Cached Binaries
         id: bin-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache@v4
         with:
           path: cached-binaries
           key: ${{ steps.vw-bin-cache-key.outputs.key }}
@@ -113,7 +113,8 @@ jobs:
           cache-name: vcpkg-cache
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
-          key: ${{ matrix.config.os_name }}-build-${{ env.cache-name }}-${{ hashFiles('ext_libs/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
+          # todo: hashFiles('ext_libs/vcpkg.json') is returning null, need to fix this
+          key: ${{ matrix.config.os_name }}-build-${{ env.cache-name }}-${{ hashFiles('**/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
