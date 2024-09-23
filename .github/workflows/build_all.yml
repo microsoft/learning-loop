@@ -299,6 +299,9 @@ jobs:
           name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
+      - name: List Downloaded Nuget Packages
+        run: ls -l ${{ env.BUILD_ARTIFACTS }}
+
       - name: Build ConsoleJoiner Example
         run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
       
