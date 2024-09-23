@@ -78,8 +78,6 @@ jobs:
     needs: check-vw-binary-cache
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
-    outputs:
-      rl-sha: ${{ steps.rl-sha.outputs.sha }}
     strategy:
       fail-fast: false
       matrix:
@@ -141,10 +139,6 @@ jobs:
         with:
           path: ${{ env.BUILD_ARTIFACTS }}
           key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
-      - name: Pass the RL SHA to the next job
-        id: rl-sha
-        run: echo "sha=${{ needs.check-vw-binary-cache.outputs.rl-sha }}" >> $GITHUB_OUTPUT
-        shell: bash
 
   build-assemblies:
     needs: build-binary-parser
@@ -174,19 +168,19 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}/windows
-          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-windows-latest
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-windows-latest
 
       - name: Restore Binary Parser Binaries (Linux)
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}/linux
-          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-ubuntu-latest
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-ubuntu-latest
 
       - name: Restore Binary Parser Binaries (OSX)
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}/macos
-          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.rl-sha }}-${{ matrix.build.build_type }}-macos-latest
+          key: vw-binaries-${{ needs.check-vw-binary-cache.outputs.sha }}-${{ matrix.build.build_type }}-macos-latest
 
       - name: Reorganize VW Binaries
         run: |
