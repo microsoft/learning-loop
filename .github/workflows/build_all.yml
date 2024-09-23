@@ -24,6 +24,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
   cancel-in-progress: true
 
+permissins:
+  contents: read
+  actions: write
+
 jobs:
   check-vw-binary-cache:
     name: check-vw-binary-cache
