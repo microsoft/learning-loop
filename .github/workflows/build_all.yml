@@ -70,11 +70,6 @@ jobs:
         id: cache-hit
         run: echo "cache-hit=true" >> $GITHUB_OUTPUT
 
-      - name: Set cache-miss
-        if: steps.bin-cache.outputs.cache-hit != 'true'
-        id: cache-hit
-        run: echo "cache-hit=false" >> $GITHUB_OUTPUT
-
   build-binary-parser:
     needs: check-vw-binary-cache
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
@@ -96,7 +91,7 @@ jobs:
       VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
-    if: needs.check-vw-binary-cache.outputs.cache-hit == 'false'
+    if: needs.check-vw-binary-cache.outputs.cache-hit != 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -167,20 +162,23 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - run: mkdir -p ${{ env.BUILD_ARTIFACTS }}/windows
       - name: Restore Binary Parser Binaries (Windows)
-        uses: actions/cache/restore@v4
+        uses: actions/cache@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}/windows
           key: vw-binaries-${{ needs.build-binary-parser.outputs.rl-sha }}-${{ matrix.build.build_type }}-windows-latest
 
+      - run: mkdir -p ${{ env.BUILD_ARTIFACTS }}/ubuntu
       - name: Restore Binary Parser Binaries (Linux)
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ${{ env.BUILD_ARTIFACTS }}/linux
+          path: ${{ env.BUILD_ARTIFACTS }}/ubuntu
           key: vw-binaries-${{ needs.build-binary-parser.outputs.rl-sha }}-${{ matrix.build.build_type }}-ubuntu-latest
 
+      - run: mkdir -p ${{ env.BUILD_ARTIFACTS }}/macos
       - name: Restore Binary Parser Binaries (OSX)
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.BUILD_ARTIFACTS }}/macos
           key: vw-binaries-${{ needs.build-binary-parser.outputs.rl-sha }}-${{ matrix.build.build_type }}-macos-latest
