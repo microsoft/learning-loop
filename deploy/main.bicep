@@ -19,10 +19,26 @@ param kvImageRegistryPassword string?
 @description('Main configuration for the deployment')
 param mainConfig conf.mainConfigT
 
-// Generate the storage account name, event hub name, and container group name
-var storageAccountName = f.makeStorageAccountName(mainConfig.appName)
-var eventHubName = f.makeEventHubName(mainConfig.appName)
-var containerGroupName = f.makeAppContainerGroupName(mainConfig.appName)
+module formatContainerName 'modules/formatcontainername.bicep' = {
+  name: 'formatContainerNameModule'
+  params: {
+    containerName: f.makeAppContainerGroupName(mainConfig.appName)
+  }
+}
+
+module formatEventHubName 'modules/formateventhubname.bicep' = {
+  name: 'formatEventHubNameModule'
+  params: {
+    eventhubName: f.makeEventHubName(mainConfig.appName)
+  }
+}
+
+module formatStorageAccountName 'modules/formatstorageaccoutname.bicep' = {
+  name: 'formatStorageAccountNameModule'
+  params: {
+    storageAccountName: f.makeStorageAccountName(mainConfig.appName)
+  }
+}
 
 // Generate the default environment variables and combine with the main configuration environment variables
 var defaultEnvironmentVars = [
@@ -32,11 +48,11 @@ var defaultEnvironmentVars = [
   }
   {
     name: 'StorageAccountUrl'
-    value: f.makeStorageAccountUrl(storageAccountName)
+    value: f.makeStorageAccountUrl(formatStorageAccountName.outputs.formattedStorageAccountName)
   }
   {
     name: 'FullyQualifiedEventHubNamespace'
-    value: f.makeEventhubNamespace(eventHubName)
+    value: f.makeEventhubNamespace(formatEventHubName.outputs.formattedEventHubName)
   }
 ]
 var containerEnvironmentVars = concat(defaultEnvironmentVars, mainConfig.environmentVars ?? [])
@@ -67,7 +83,7 @@ module containerGroup 'modules/containergroup.bicep' = {
   name: 'container'
   params: {
     containerConfig: {
-      name: containerGroupName
+      name: formatContainerName.outputs.formattedContainerName
       resourceTags: mainConfig.resourceTags
       location: location
       environmentVars: containerEnvironmentVars
@@ -82,7 +98,7 @@ module storage 'modules/storage.bicep' = {
   name: 'storage'
   params: {
     storageConfig: {
-      name: storageAccountName
+      name: formatStorageAccountName.outputs.formattedStorageAccountName
       resourceTags: mainConfig.resourceTags
       location: location
       sku: mainConfig.storage.sku
@@ -97,7 +113,7 @@ module eventhubs 'modules/eventhubs.bicep' = {
   name: 'eventhubs'
   params: {
     eventhubsConfig: {
-      name: eventHubName
+      name: formatEventHubName.outputs.formattedEventHubName
       resourceTags: mainConfig.resourceTags
       location: location
       sku: mainConfig.eventhub.sku
