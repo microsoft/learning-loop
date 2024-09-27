@@ -4,6 +4,9 @@ param(
    [switch] $noDeploy,
 
    [Parameter()]
+   [switch] $skipSetupEnvironemt,
+
+   [Parameter()]
    [string] $bicepParamsFile = "parameters.bicepparam",
 
    [Parameter()]
@@ -146,6 +149,14 @@ function GetAzAccount {
    }
 }
 
+function KeyVaultExists {
+   $keyVault = az keyvault show --name $imageRegistryKeyVaultName --resource-group $resourceGroupName --query "name" --output tsv 2>$null
+   if ($LASTEXITCODE -ne 0) {
+      return $false
+   }
+   return $null -ne $keyVault
+}
+
 function GetNormalizedLoopName {
    param (
       [string]$loopName
@@ -163,30 +174,31 @@ function GetNormalizedLoopName {
 }
 
 function ValidateAndDefaultParameters {
+   $account = GetAzAccount
    $normalizedLoopName = GetNormalizedLoopName $loopName
    if ($normalizedLoopName -ne $loopName) {
       $loopName = $normalizedLoopName
-      Write-Output "Adjusted loop name to: '$loopName'."
+      Write-Host "Adjusted loop name to: '$loopName'" -ForegroundColor Yellow
    }
    
    # Set default value for acrName if dockerUserOrOrgName is not provided
    if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -and [string]::IsNullOrEmpty($acrName)) {
       $script:acrName = "acrlearningloop"
-      Write-Output "ACR name defaulted to '$acrName'."
+      Write-Host "ACR name defaulted to '$acrName'" -ForegroundColor Yellow
    }
    
    if ($imageRegistryCredType -eq "KeyVault") {
       if ([string]::IsNullOrEmpty($imageRegistryKvSubscriptionId)) {
          $script:imageRegistryKvSubscriptionId = $account.id
-         Write-Output "KeyVault subscription defaulted to '$imageRegistryKvSubscriptionId'"
+         Write-Host "KeyVault subscription defaulted to '$imageRegistryKvSubscriptionId'" -ForegroundColor Yellow
       }
       if ([string]::IsNullOrEmpty($imageRegistryKvUserNameId)) {
          $script:imageRegistryKvUserNameId = "$loopName-username"
-         Write-Output "KeyVault username id defaulted to '$imageRegistryKvUserNameId'"
+         Write-Host "KeyVault username id defaulted to '$imageRegistryKvUserNameId'" -ForegroundColor Yellow 
       }
       if ([string]::IsNullOrEmpty($imageRegistryKvPasswordId)) {
          $script:imageRegistryKvPasswordId = "$loopName-password"
-         Write-Output "KeyVault password id defaulted to '$imageRegistryKvPasswordId'"
+         Write-Host "KeyVault password id defaulted to '$imageRegistryKvPasswordId'" -ForegroundColor Yellow
       }
    }
 
@@ -198,48 +210,63 @@ function ValidateAndDefaultParameters {
       $script:imageHost = "$acrName.azurecr.io"
    }
    else {
-      Write-Output "You must specify either -dockerUserOrOrgName or -acrName."
-      exit 1
+      throw "You must specify either -dockerUserOrOrgName or -acrName."
    }
+
+   Write-Host "Docker repository is '$script:imageHost'" -ForegroundColor Yellow
+   Write-Host ""
 }
 
 function DisplayParameters {
-   Write-Output "The deployment will execute with the following parameters:"
+   $paramterList = @{};
+
+   Write-Host "The deployment will execute with the following parameters:" -ForegroundColor Yellow
    if ($noDeploy -eq $true) {
-      Write-Output "noDeploy: $noDeploy - this will generate the bicep params file $bicepParamsFile, but will NOT deploy the resources."
+      $paramterList["noDeploy"] = @{ Value = $noDeploy; Note = "Generates the bicep params file ${bicepParamsFile}, but will NOT deploy the resources" }
    }
    else {
-      Write-Output "noDeploy: $noDeploy - this will generate the bicep params file $bicepParamsFile, AND will deploy the resources."
+      $paramterList["noDeploy"] = @{ Value = $noDeploy; Note = "Generate the bicep params file ${bicepParamsFile}, AND will deploy the resources" }
    }
    if ($loopNameAdjusted) {
-      Write-Output "loopName: $loopName (adjusted to $normalizedLoopName)"
+      $paramterList["loopName"] = @{ Value = $loopName; Note = "Adjusted loopName for deployment" }
    }
    else {
-      Write-Output "loopName: $loopName"
+      $paramterList["loopName"] = @{ Value = $loopName; Note = "" }
    }
-   Write-Output "enableTrainer: $enableTrainer"
-   Write-Output "enableJoiner: $enableJoiner"
-   Write-Output "resourceGroupName: $resourceGroupName"
-   Write-Output "location: $location"
-   Write-Output "loadAndPushDockerImage: $loadAndPushDockerImage"
-   Write-Output "dockerImageTar: $dockerImageTar"
-   Write-Output "dockerImageName: $dockerImageName"
-   Write-Output "dockerImageTag: $dockerImageTag"
-   Write-Output "dockerUserOrOrgName: $dockerUserOrOrgName"
-   Write-Output "acrName: $acrName"
-   Write-Output "imageRegistryCredType: $imageRegistryCredType"
-   if  ($imageRegistryCredType -eq "KeyVault") {
-      Write-Output "imageRegistryKeyVaultName: $imageRegistryKeyVaultName"
-      Write-Output "imageRegistryKvSubscriptionId: $imageRegistryKvSubscriptionId"
-      Write-Output "imageRegistryKvUserNameId: $imageRegistryKvUserNameId"
-      Write-Output "imageRegistryKvPasswordId: $imageRegistryKvPasswordId"
+
+   if ($skipSetupEnvironemt -eq $true) {
+      $paramterList["skipSetupEnvironemt"] = @{ Value = $skipSetupEnvironemt; Note = "Will not deploy the resource group (it must exist)" }
+   }
+   else {
+      $paramterList["skipSetupEnvironemt"] = @{ Value = $skipSetupEnvironemt; Note = "Create the resource group and dependencies" }
+   }
+
+   $paramterList["enableTrainer"] = @{ Value = $enableTrainer; Note = "" }
+   $paramterList["enableJoiner"] = @{ Value = $enableJoiner; Note = "" }
+   $paramterList["resourceGroupName"] = @{ Value = $resourceGroupName; Note = "" }
+   $paramterList["location"] = @{ Value = $location; Note = "" }
+   $paramterList["loadAndPushDockerImage"] = @{ Value = $loadAndPushDockerImage; Note = "" }
+   $paramterList["dockerImageTar"] = @{ Value = $dockerImageTar; Note = "" }
+   $paramterList["dockerImageName"] = @{ Value = $dockerImageName; Note = "" }
+   $paramterList["dockerImageTag"] = @{ Value = $dockerImageTag; Note = "" }
+   $paramterList["dockerUserOrOrgName"] = @{ Value = $dockerUserOrOrgName; Note = "" }
+   $paramterList["acrName"] = @{ Value = $acrName; Note = "" }
+   $paramterList["imageRegistryCredType"] = @{ Value = $imageRegistryCredType; Note = "" }
+
+   if ($imageRegistryCredType -eq "KeyVault") {
+      $paramterList["imageRegistryKeyVaultName"] = @{ Value = $imageRegistryKeyVaultName; Note = "" }
+      $paramterList["imageRegistryKvSubscriptionId"] = @{ Value = $imageRegistryKvSubscriptionId; Note = "" }
+      $paramterList["imageRegistryKvUserNameId"] = @{ Value = $imageRegistryKvUserNameId; Note = "" }
+      $paramterList["imageRegistryKvPasswordId"] = @{ Value = $imageRegistryKvPasswordId; Note = "" }
    }
    elseif ($imageRegistryCredType -eq "ManagedIdentity") {
-      Write-Output "imageRegistryManagedIdentityName: $imageRegistryManagedIdentityName"
+      $paramterList["imageRegistryManagedIdentityName"] = @{ Value = $imageRegistryManagedIdentityName; Note = "" }
    }
    elseif ($imageRegistryCredType -eq "Classic") {
-      Write-Output "You will prompted for the imageRegistryPassword and imageRegistryUserName"
+      $paramterList["imageRegistryUserName"] = @{ Value = $imageRegistryPassword; Note = "You will be prompted for the username" }
+      $paramterList["imageRegistryPassword"] = @{ Value = $imageRegistryPassword; Note = "You will be prompted for the password" }
    }
+   $paramterList | Format-Table -Property @{Label="Parameter"; Expression={$_.Key}}, @{Label="Value"; Expression={$_.Value.Value}}, @{Label="Note"; Expression={$_.Value.Note}} -AutoSize
 }
 
 function GeneratedParametersFile {
@@ -325,7 +352,7 @@ param mainConfig = {
       memoryGig: 16
       image: {
       registry: {
-         host: '$Global:imageHost'
+         host: '$script:imageHost'
          credentials: $imageCredentials
       }
       name: '$dockerImageName'
@@ -336,52 +363,16 @@ param mainConfig = {
 "@
    
    $bicepParams | Out-File -FilePath $bicepParamsFile -Encoding utf8
-   Write-Output "Bicep parameters file generated: $bicepParamsFile"
+   Write-Host "Bicep parameters file generated: $bicepParamsFile" -ForegroundColor Yellow
 }
 
-function TryStartDocker {
+function TryVerifyDocker {
    docker info >$null 2>&1
    if ($LASTEXITCODE -ne 0) {
-      Write-Output "Docker is not running. Attempting to start Docker..."
-      if ($IsWindows) {
-         Start-Service -Name "docker"
-      }
-      else {
-         sudo systemctl start docker
-      }
-      Start-Sleep -Seconds 10 # Wait for Docker to start
-
-      # Re-check if Docker is running
-      docker info >$null 2>&1
-      if ($LASTEXITCODE -ne 0) {
-         Write-Output "Docker is still not running. Waiting 10 more seconds..."
-         Start-Sleep -Seconds 10 # Wait additional 10 seconds
-
-         docker info >$null 2>&1
-         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to start Docker. Please start the Docker application manually."
-         }
-         else {
-            Write-Output "Docker started successfully."
-         }
-      }
-      else {
-         Write-Output "Docker started successfully."
-      }
+      throw "Failed to start Docker. Please start Docker and try again."
    }
    else {
-      Write-Output "Docker is running."
-   }
-}
-
-function TryCreateResourceGroup {
-   $resourceGroup = az group show --name $resourceGroupName --query "name" --output tsv 2>$null
-   if ($null -eq $resourceGroup) {
-      az group create --name $resourceGroupName --location $location --output none
-      Write-Output "Resource group '$resourceGroupName' created in location '$location'"
-   }
-   else {
-      Write-Output "Resource group '$resourceGroupName' exists; skipping creation"
+      Write-Host "Docker is running" -ForegroundColor Green
    }
 }
 
@@ -438,35 +429,6 @@ function TryCreateCredentials {
    }
 }
 
-function TryCreateACR {
-   $acr = az acr show --name $acrName --resource-group $resourceGroupName --query "name" --output tsv 2>$null
-   if ($null -eq $acr) {
-      Write-Output "Creating ACR '$acrName' in resource group '$resourceGroupName'."
-      $result = az acr create --name $acrName --resource-group $resourceGroupName --sku Basic
-      if ($result) {
-         Write-Output "ACR '$acrName' created in resource group '$resourceGroupName'."
-   
-         # Grant the managed identity ACR pull access
-         $principalId = az identity show --name $imageRegistryManagedIdentityName --resource-group $resourceGroupName --query "principalId" --output tsv
-         $acrScope = az acr show --name $acrName --resource-group $resourceGroupName --query id --output tsv
-         Write-Output "Granting managed identity '$imageRegistryManagedIdentityName' ACR pull access (princialId: $principalId, scope: $acrScope)."
-         $roleAssignmentResult = az role assignment create --assignee $principalId --role "AcrPull" --scope $acrScope
-         if ($roleAssignmentResult) {
-            Write-Output "Managed identity granted ACR pull access successfully."
-         }
-         else {
-            throw "Failed to grant ACR pull access to the managed identity."
-         }
-      }
-      else {
-         throw "Failed to create ACR '$acrName' in resource group '$resourceGroupName'."
-      }
-   }
-   else {
-      Write-Output "ACR '$acrName' already exists in resource group '$resourceGroupName'."
-   }
-}
-
 function TryPushDockerImage
 {
    docker load -i $dockerImageTar
@@ -493,7 +455,7 @@ function TryPushDockerImage
       } else {
          throw "Azure Container Registry login failed."
       }
-      $fullDockerImage = "${Global:imageHost}/${dockerImageName}:${dockerImageTag}"
+      $fullDockerImage = "${script:imageHost}/${dockerImageName}:${dockerImageTag}"
    }
    else {
       throw "You must specify either -dockerUserOrOrgName or -acrName."
@@ -515,7 +477,49 @@ function TryPushDockerImage
    }
 }
 
-function TryDeploy {
+function PromptSecure {
+   param (
+      [string]$prompt
+   )
+
+   $secureString = Read-Host -Prompt $prompt -AsSecureString
+   $plainText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureString))
+   return $plainText
+}
+
+function TrySetupEnvironment {
+   Write-Host "Deploying environment..."
+   $createKeyVault = ($imageRegistryCredType -eq "KeyVault") -and ((KeyVaultExists) -eq $false)
+   if ($createKeyVault) {
+      $registryUsername = PromptSecure -Prompt "Enter the username for the image registry"
+      $registryPassword = PromptSecure -Prompt "Enter the password for the image registry"
+
+      $userObjectId = (az ad signed-in-user show --query objectId --output tsv)
+      $azResult = az deployment sub create `
+      --location $location `
+      --name "$loopName-environment" `
+      --template-file .\environment.bicep `
+      --parameters resourceGroupName=$resourceGroupName managedIdentityName=$imageRegistryManagedIdentityName keyVaultName=$imageRegistryKeyVaultName imageRegistryUsernameId=$imageRegistryKvUserNameId imageRegistryUsername=$registryUsername imageRegistryPasswordId=$imageRegistryKvPasswordId imageRegistryPassword=$registryPassword userObjectId=$userObjectId
+      $registryPassword = $null
+      $registryUsername = $null
+      }
+   else {
+      $azResult = az deployment sub create `
+      --location $location `
+      --name "$loopName-environment" `
+      --template-file .\environment.bicep `
+      --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$imageRegistryManagedIdentityName
+   }
+   $azResultJson = $azResult | ConvertFrom-Json
+   if ($azResultJson.properties.provisioningState -eq "Succeeded") {
+      Write-Output "Environment deployment succeeded."
+   }
+   else {
+      throw "Environment deployment failed: $azResultJson"
+   }
+}
+
+function TryDeployLoop {
    Write-Output "Deployment started... using bicep parameters file: $bicepParamsFile"
    $azResult = az deployment group create --resource-group $resourceGroupName --name $loopName --parameters $bicepParamsFile
    $azResultJson = $azResult | ConvertFrom-Json
@@ -527,40 +531,47 @@ function TryDeploy {
    }
 }
 
+function TryVerifyAccountInfo {
+   $account = GetAzAccount
+   Write-Host "Logged in as: " -NoNewline
+   Write-Host "$($account.user.name) ($($account.user.type))" -ForegroundColor Green
+   Write-Host "Subscription: " -NoNewline
+   Write-Host "$($account.name) - $($account.id)" -ForegroundColor Green
+   Write-Host ""
+}
+
 #############################################################################
 # Main script
 try {
-   $account = GetAzAccount
-   Write-Output "Logged in as $($account.user.name) ($($account.user.type))"
-   Write-Output "Subscription: $($account.id) - $($account.name)"
+   TryVerifyDocker
+   TryVerifyAccountInfo
    ValidateAndDefaultParameters
    DisplayParameters
    GeneratedParametersFile
 
    if ($noDeploy) {
-      Write-Output "Skipping deployment."
+      Write-Host "Done... skipping deployment (noDeploy: $noDeploy)" -ForegroundColor Yellow
       exit 0
    }
 
    $continue = Read-Host "Would you like to continue with the deployment? (yes/no)"
    if ($continue -ne "yes") {
-      Write-Output "Deployment aborted by the user."
+      Write-Host "Deployment aborted by the user." -ForegroundColor Yellow
       exit 0
    }
 
-   TryStartDocker
-   TryCreateResourceGroup
-   TryCreateCredentials
-   TryCreateACR 
+   if ($skipSetupEnvironemt -eq $false) {
+      TrySetupEnvironment
+   }
 
    if ($loadAndPushDockerImage -eq $true) {
       TryPushDockerImage
    }
 
-   TryDeploy
+   TryDeployLoop
 }
 catch {
-    Write-Output "An error occurred: $($_.Exception.Message)"
-    Write-Output "Full error details: $($_ | Out-String)"
+    Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Full error details: $($_ | Out-String)"  -ForegroundColor Red
     exit 1
 }
