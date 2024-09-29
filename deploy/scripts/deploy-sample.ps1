@@ -1,4 +1,3 @@
-#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
    Deploys a Learning Loop environment using Azure resources and Docker images.
@@ -105,7 +104,6 @@
    ./deploy-sample.ps1 -noDeploy -bicepParamsFile "custom-params.bicepparam" -imageRegistryCredType ManagedIdentity
    Generates the Bicep parameters file "custom-params.bicepparam" without deploying the resources.
 #>
-
 [CmdletBinding()]
 param(
    [Parameter(HelpMessage = "Switch to skip the deployment process.")]
