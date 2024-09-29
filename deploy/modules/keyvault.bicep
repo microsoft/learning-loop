@@ -1,14 +1,29 @@
+@description('The name of the Key Vault.')
 param keyVaultName string
+
+@description('The location where the Key Vault will be deployed.')
 param location string
+
 @secure()
+@description('The Key Vault secret ID for the image registry username.')
 param kvImageRegistryUsernameId string
+
 @secure()
+@description('The Key Vault secret ID for the image registry password.')
 param kvImageRegistryPasswordId string
+
 @secure()
+@description('The image registry username stored in Key Vault.')
 param kvImageRegistryUsername string
+
 @secure()
+@description('The image registry password stored in Key Vault.')
 param kvImageRegistryPassword string
+
+@description('The principal ID of the managed identity.')
 param managedIdentityPrincipalId string
+
+@description('The principal ID of the deployment user.')
 param userPrincipalId string
 
 param secrets array = [
@@ -32,6 +47,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     }
     tenantId: subscription().tenantId
     enableSoftDelete: false
+    enabledForTemplateDeployment: true
     accessPolicies: [
       {
         tenantId: subscription().tenantId

@@ -1,7 +1,11 @@
+@description('The location where the resources will be deployed.')
 param location string
-param acrName string
-param roleAssignmentPrincipalId string
 
+@description('The name of the Azure Container Registry.')
+param acrName string
+
+@description('The principal ID for the role assignment.')
+param roleAssignmentPrincipalId string
 
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: acrName

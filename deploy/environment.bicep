@@ -1,18 +1,33 @@
 targetScope = 'subscription'
 
+@description('The name of the Azure Container Registry (if using docker hub, leave this empty).')
 param acrName string?
+
+@description('The Object ID of the user.')
 param userObjectId string?
+
+@description('The name of the managed identity.')
 param managedIdentityName string
+
+@description('The name of the resource group.')
 param resourceGroupName string
+
+@description('The name of the Key Vault.')
 param keyVaultName string?
 
+@description('The ID of the Key Vault secret containing the image registry username.')
 param imageRegistryUsernameId string?
+
+@description('The ID of the Key Vault secret containing the image registry password.')
 param imageRegistryPasswordId string?
+
+@description('The username for the image registry.')
 @secure()
 param imageRegistryUsername string?
+
+@description('The password for the image registry.')
 @secure()
 param imageRegistryPassword string?
-
 
 resource learningLoopRg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: resourceGroupName
