@@ -338,4 +338,4 @@ jobs:
 
       - name: Build ConsoleJoiner Example
         run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
-      
+     
