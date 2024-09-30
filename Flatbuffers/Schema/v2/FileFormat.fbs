@@ -1,0 +1,37 @@
+include "Event.fbs";
+include "LearningModeType.fbs";
+include "ProblemType.fbs";
+
+namespace reinforcement_learning.messages.flatbuff.v2;
+enum RewardFunctionType : ubyte { Earliest, Average, Median, Sum, Min, Max }
+
+table JoinedEvent {
+    event: [ubyte];
+    timestamp: TimeStamp;
+}
+
+table JoinedPayload {
+    events: [JoinedEvent];
+}
+
+table KeyValue {
+    key: string;
+    value: string;
+}
+
+table FileHeader {
+    join_time: TimeStamp;
+    properties: [KeyValue];
+}
+
+table CheckpointInfo {
+    reward_function_type: RewardFunctionType;
+    default_reward: float;
+    learning_mode_config: LearningModeType;
+    problem_type_config: ProblemType;
+    use_client_time: bool;
+}
+
+root_type FileHeader;
+root_type CheckpointInfo;
+root_type JoinedPayload;

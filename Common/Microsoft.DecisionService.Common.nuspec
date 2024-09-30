@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.DecisionService.Common</id>
+    <version>$version$</version>
+    <authors>Microsoft.DecisionService.Common</authors>
+    <description>Package Description</description>
+    <copyright>Copyright © 2024</copyright>
+    <contentFiles>
+      <files include="contentFiles\any\any\**" buildAction="None" copyToOutput="true" />
+    </contentFiles>
+    <dependencies>
+      <group targetFramework="$targetframework$">
+        <dependency id="Azure.Data.Tables" version="12.8.0" exclude="Build,Analyzers" />
+        <dependency id="Azure.Identity" version="1.9.0" exclude="Build,Analyzers" />
+        <dependency id="Azure.Messaging.EventHubs" version="5.10.0" exclude="Build,Analyzers" />
+        <dependency id="Azure.Storage.Blobs" version="12.15.0" exclude="Build,Analyzers" />
+        <dependency id="Google.FlatBuffers" version="22.12.6" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Configuration" version="6.0.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Hosting.Abstractions" version="8.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging" version="8.0.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+        <dependency id="OpenTelemetry.Api" version="1.6.0" exclude="Build,Analyzers" />
+        <dependency id="System.Linq.Async" version="6.0.1" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Json" version="7.0.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+	  <file src="$PackageSourcePath$\Microsoft.DecisionService.Common.dll" target="lib\$targetframework$" />
+    <file src="$PackageSourcePath$\Microsoft.VW.VWBinResolver.dll" target="lib\$targetframework$" />
+    <file src="$PackageSourcePath$\reinforcement_learning.messages.flatbuff.v2.dll" target="lib\$targetframework$" />
+	  <file src="$PackageSourcePath$\vw-bin\*" target="content\vw-bin" />
+	  <file src="$PackageSourcePath$\vw-bin\*" target="contentFiles\any\any\vw-bin" />
+  </files>
+</package>

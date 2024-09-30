@@ -1,0 +1,142 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 10,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "generator": "Ninja",
+
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        },
+        "BUILD_FLATBUFFERS": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "WARNING_AS_ERROR": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "DO_NOT_BUILD_VW_C_WRAPPER": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "BUILD_JAVA": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "BUILD_PYTHON": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "BUILD_TESTING": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "BUILD_EXPERIMENTAL_BINDING": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "BUILD_BINARY_PARSER_TESTS": {
+          "type": "BOOL",
+          "value": "OFF"
+        }
+      }
+    },
+    {
+      "name": "vcpkg-x64-windows",
+      "inherits": "default"
+    },
+    {
+      "name": "vcpkg-x64-windows-static",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-windows-static-md"
+        }
+      }
+    },
+    {
+      "name": "vcpkg-x64-linux",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-linux-dynamic"
+        }
+      }
+    },
+    {
+      "name": "vcpkg-x64-linux-static",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-linux"
+        },
+        "STATIC_LINK_BINARY_PARSER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "vcpkg-x64-osx",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-osx-dynamic"
+        }
+      }
+    },
+    {
+      "name": "vcpkg-x64-osx-static",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-osx"
+        },
+        "STATIC_LINK_BINARY_PARSER": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vcpkg-x64-windows",
+      "configurePreset": "vcpkg-x64-windows"
+    },
+    {
+      "name": "vcpkg-x64-windows-static",
+      "configurePreset": "vcpkg-x64-windows-static"
+    },
+    {
+      "name": "vcpkg-x64-linux",
+      "configurePreset": "vcpkg-x64-linux"
+    },
+    {
+      "name": "vcpkg-x64-linux-static",
+      "configurePreset": "vcpkg-x64-linux-static"
+    },
+    {
+      "name": "vcpkg-x64-osx",
+      "configurePreset": "vcpkg-x64-osx"
+    },
+    {
+      "name": "vcpkg-x64-osx-static",
+      "configurePreset": "vcpkg-x64-osx-static"
+    }
+  ]
+}

@@ -1,9 +1,21 @@
+# GitHub Actions workflow for building, testing, and packaging learning-loop components
+# This workflow is triggered on push to main or releases branches or pull requests
+# It builds the binary parser, assemblies, runs unit tests, builds docker image, and packages nuget
+# It also builds the example projects
+# For more information on GitHub Actions, see https://docs.github.com/en/actions
+
+# Note: future improvements may include:
+#   - improving build times by cachine vw binaries
+#   - running performance tests
+#   - running integration tests
+
+# TODO: VCPKG caching is not working as expected (there's always a cache miss), investigate and fix
 name: Build All
 
 on:
   push:
     branches:
-      - master
+      - main
       - 'releases/**'
   pull_request:
     branches:
@@ -12,31 +24,45 @@ on:
   workflow_dispatch:
 
 env:
+  # cache directory for vcpkg binaries
   VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
+  # Base directory for build artifacts
   BUILD_ARTIFACTS: ${{github.workspace}}/artifacts
+  DOTNET_VERSION: 8.0.x
+  TARGET_FRAMEWORK: net8.0
 
 concurrency:
+  # Group jobs by workflow and branch/commit
   group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  build-binaries:
-    name: build-binaries-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+  # build vw binary parser for all platforms and configurations
+  # the binaries are used by the assemblies and tests across platforms
+  # from a single assembly package
+  build-binary-parser:
+    name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static" }
+          # Note: os is used to specify the runner OS, os_name is used to specify the
+          #       os name in the matrix and for the build artifacts normilzing the 
+          #       os name to be used in the build artifacts path
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64" }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
+      VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
+      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
     steps:
+      # checkout the code with submodules for vcpkg, and reinforcment_learning
       - uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -53,36 +79,104 @@ jobs:
           cache-name: vcpkg-cache
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
-          key: ${{ matrix.config.os_name }}-build-${{ env.cache-name }}-${{ hashFiles('vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
+          key: ${{ matrix.config.os_name }}-${{ matrix.build.build_type }}-build-${{ env.cache-name }}-${{ hashFiles('**/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/vcpkg.json"
+      # build the binary parser only - the presets are convenient for consistent build settings for local and CI builds
+      - name: Configure
+        run: >
+          cd ext_libs;
+          cmake --preset=${{ matrix.config.cmake_preset }}
+      - name: Build
+        run: |
+          cd ext_libs
+          cmake --build build --preset=${{ matrix.config.cmake_preset }} --config ${{ matrix.build.build_type }}
+      # prepare binaries and package
+      - name: Copy binaries (windows)
+        if: startsWith(matrix.config.os, 'windows') == true
+        run: |
+          mkdir ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+          copy ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+      - name: Copy binaries (${{ matrix.config.os_name }})
+        if: startsWith(matrix.config.os, 'windows') == false
+        run: |
+          mkdir -p ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+          cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+      - name: Save VW Parser Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: vw-binaries-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+  # build debug and release assemblies on linux used by all supported platforms.
+  # this job generates a single debug and release package.
+  build-assemblies:
+    needs: build-binary-parser
+    name: build-assemblies-${{ matrix.build.build_type }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
+    env:
+      # vw binary pareser packages are organized by build type and os name
+      VW_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}
+      # locally vw binaries are re-orgnized for the build.  all binaries
+      # are flattened in the build artifacts under vw-bin
+      VW_BINARY_PATH: ${{github.workspace}}/vw-bin
+      # base directory for the assemebly artifacts
+      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
+
+    steps:
+      # there's no need to check submodules since they are not needed in this job
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore Binary Parser Binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vw-binaries-*
+          merge-multiple: true
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Reorganize VW Binaries
+        run: |
+          mkdir -p ${{ env.VW_BINARY_PATH }}
+          cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Publish Common
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BUILD_ARTIFACTS }}/Common
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
 
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Publish OnlineTrainer
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BUILD_ARTIFACTS }}/OnlineTrainer
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
 
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Publish Tests
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BUILD_ARTIFACTS }}/Tests
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
 
       - name: Save Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-          path: ${{ env.BUILD_ARTIFACTS }}
+          name: build-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
 
-  # pull the test assemblies and run the tests on all platforms
+  # pull the test assemblies and run the tests on all platforms for all confirgurations
   unit-test:
-    needs: build-binaries
+    needs: build-assemblies
     name: unittest-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -96,7 +190,6 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
-      BUILD_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts
       TEST_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/${{ matrix.build.build_type }}
 
     steps:
@@ -106,36 +199,22 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: ${{ env.DOTNET_VERSION }}
       
       - name: Download Tests Binaries
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+          name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Prepare VW binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          chmod +x ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/vw-bin/${{ matrix.config.vw_bin }}
-          echo "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
-
-      - name: Prepare Test binaries (${{ matrix.config.os_name }})
-        if: startsWith(matrix.config.os, 'windows') == false
-        run: |
-          if [ -f "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp" ]; then
-            chmod +x ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp
-            echo "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp set to executable"
-          elif [ -f "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp.exe" ]; then
-            chmod +x ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp.exe
-            echo "${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/TestExeApp.exe set to executable"
-          else
-            echo "TestExeApp is missing"
-            exit 1
-          fi
+          chmod +x ${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }}
+          echo "${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS_BASE_PATH }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.single-threaded.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
 
       - name: Save Test Artifacts
         uses: actions/upload-artifact@v4
@@ -143,8 +222,9 @@ jobs:
           name: test-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
           path: ${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults
 
+  # build and package the docker image (tar'd) built for ubuntu-latest
   docker-image:
-    needs: build-binaries
+    needs: build-assemblies
     name: docker-image-ubuntu-latest-release
     runs-on: ubuntu-latest
     env:
@@ -157,12 +237,12 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Download Binaries
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-ubuntu-latest-release
+          name: build-artifacts-release
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - run: mkdir -p ${{ env.DOCKER_ARTIFACTS_PATH }}
@@ -182,13 +262,53 @@ jobs:
           name: docker-image-ubuntu-latest
           path: ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar.gz
 
+  # package the nuget package for the common assembly that can be used to include
+  # and configure the learning-loop components in a .NET application
   nuget-package:
-      needs: build-binaries
-      name: nuget-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-      runs-on: ${{ matrix.config.os }}
-      strategy:
-        fail-fast: false
-        matrix:
+    needs: build-assemblies
+    name: nuget-${{ matrix.build.build_type }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - { build_type: "debug" }
+          - { build_type: "release" }
+    env:
+      NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download Tests Binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Pack Nuget
+        run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=../artifacts/Common;version=1.0.0;targetframework=${{ env.TARGET_FRAMEWORK }}" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+
+      - name: Save Nuget Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.NUGET_ARTIFACTS_PATH }}
+
+  # build the example projects for all platforms and configurations
+  build-example:
+    needs: nuget-package
+    name: build-example-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
         config:
           - { os: "windows-latest", os_name: "windows-latest" }
           - { os: "ubuntu-latest", os_name: "ubuntu-latest" }
@@ -196,52 +316,26 @@ jobs:
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
-      env:
-        NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
-  
-      steps:
-        - uses: actions/checkout@v3
-          with:
-            ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
-        - name: Setup .NET Core
-          uses: actions/setup-dotnet@v4
-          with:
-            dotnet-version: 8.0.x
-  
-        - name: Setup Nuget CLI
-          run: |
-            if [[ "${{ matrix.config.os }}" == "windows-latest" ]]; then
-              choco install nuget.commandline -y
-            else
-              wget https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O nuget.exe
-            fi
-  
-        - name: Install Mono (Linux and Mac Only)
-          if: startsWith(matrix.config.os, 'windows-latest') == false
-          run: |
-            if [ "${{ matrix.config.os }}" == "ubuntu-latest" ]; then
-              sudo apt-get update
-              sudo apt-get install -y mono-complete
-            else
-              brew update
-              brew install mono
-            fi
-  
-        - name: Download Tests Binaries
-          uses: actions/download-artifact@v4
-          with:
-            name: build-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
-            path: ${{ env.BUILD_ARTIFACTS }}
-  
-        - name: Pack Nuget
-          run: |
-            if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
-              nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
-            else
-              mono nuget.exe pack Common\Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=..\artifacts\common;version=1.0.0;targetframework=net8.0" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
-            fi
-  
-        - name: Save Nuget Artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: nuget-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download Nuget
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: List Downloaded Nuget Packages
+        run: ls -l ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Build ConsoleJoiner Example
+        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
+     

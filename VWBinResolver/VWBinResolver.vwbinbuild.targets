@@ -1,0 +1,31 @@
+<Project>
+    <PropertyGroup>
+        <VWPresets Condition="$([MSBuild]::IsOSPlatform('Windows'))">vcpkg-x64-windows-static</VWPresets>
+        <VWPresets Condition="$([MSBuild]::IsOSPlatform('Linux'))">vcpkg-x64-linux-static</VWPresets>
+        <VWPresets Condition="$([MSBuild]::IsOSPlatform('OSX'))">vcpkg-x64-osx-static</VWPresets>
+        <VWExecName Condition="$([MSBuild]::IsOSPlatform('Windows'))">vw.exe</VWExecName>
+        <VWExecName Condition="$([MSBuild]::IsOSPlatform('Linux'))">vw</VWExecName>
+        <VWExecName Condition="$([MSBuild]::IsOSPlatform('OSX'))">vw</VWExecName>
+    </PropertyGroup>
+    <ItemGroup>
+        <VWBinaries Include="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\$(VWExecName)" />
+        <VWBinaries Condition="$([MSBuild]::IsOSPlatform('Windows')) AND'$(Configuration)'=='Debug'" Include="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.pdb" />
+    </ItemGroup>
+    <Target Name="BuildVW" BeforeTargets="Publish;Build;Test">
+        <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --preset=$(VWPresets)" />
+        <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --build --preset=$(VWPresets) --config $(Configuration)" />
+        <Copy Condition="$([MSBuild]::IsOSPlatform('Windows'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.exe" DestinationFiles="$(TargetDir)vw-bin\vw-win-x64.exe" />
+        <Copy Condition="$([MSBuild]::IsOSPlatform('Linux'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw" DestinationFiles="$(TargetDir)vw-bin\vw-linux-x64" />
+        <Copy Condition="$([MSBuild]::IsOSPlatform('OSX'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw" DestinationFiles="$(TargetDir)vw-bin\vw-macos-x64" />
+    </Target>
+    <ItemGroup>
+        <VWBinBinaries Include="$(TargetDir)vw-bin/*.*" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="@(VWBinBinaries)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <Link>vw-bin/%(Filename)%(Extension)</Link>
+        </Content>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+<Project>
+    <ItemGroup>
+        <VWBinBinaries Include="$(CIVWBinParserPath)/*.*" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="@(VWBinBinaries)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <Link>vw-bin/%(Filename)%(Extension)</Link>
+        </Content>
+    </ItemGroup>
+</Project>

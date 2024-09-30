@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+		<AssemblyName>Microsoft.VW.VWBinResolver</AssemblyName>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	</PropertyGroup>
+	<ItemGroup>
+        <Content Include="$(OutputPath)/vw-bin/*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			<Link>vw-bin\%(Filename)%(Extension)</Link>
+		</Content>
+    </ItemGroup>
+	 <!--
+	 CIVWBinParserPath - The continuous integration path for the VW Binary Parser binaries on the build server.
+                       For local builds, CIVWParserPath is empty since the binaries are built for the local
+						     platform using VWBinResolver.dev.targets 
+	 -->
+    <Import Condition="'$(CIVWBinParserPath)' == ''" Project="VWBinResolver.vwbinbuild.targets" />
+    <Import Condition="'$(CIVWBinParserPath)' != ''" Project="VWBinResolver.vwbin.targets" />
+</Project>

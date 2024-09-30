@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <TestRunParameters>
+	<!--
+	<Parameter name="e2eStorageUri" value="https://personalizerunitteststg.blob.core.windows.net/" />
+	<Parameter name="e2eSasStorageUri" value="https://personalizerunitteststgsas.blob.core.windows.net/" />
+	-->
+	<!--
+    <Parameter name="e2eStorageUri" value="https://personalizerstdunittest.blob.core.windows.net/" />
+    <Parameter name="e2eSasStorageUri" value="https://personalizerstdunittestsas.blob.core.windows.net/" />
+	-->
+	<!--
+    <Parameter name="e2eStorageUri" value="https://127.0.0.1:10000/devstoreaccount1" />
+    <Parameter name="e2eSasStorageUri" value="https://127.0.0.1:10000/devstoreaccount1sas" />
+	-->
+	<Parameter name="e2eStorageUri" value="https://memstore" />
+	<Parameter name="e2eSasStorageUri" value="https://memstoresas/readonly" />
+	<Parameter name="VwBinPath" value="" />
+  </TestRunParameters>
+  <MSTest>
+    <Parallelize>
+      <Workers>0</Workers>
+      <Scope>ClassLevel</Scope>
+    </Parallelize>
+  </MSTest>
+</RunSettings>
