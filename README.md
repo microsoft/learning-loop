@@ -5,10 +5,10 @@ This repository contains the primary code for the Learning Loop service.
 ## Getting Started
 See the following to get started building, deploying, and executing Learning Loops.
 
-- [Build the Learning Loop binaries](BUILD.md)
-- [Build a Learning Loop Docker Image](DOCKER.md)
 - [Deploy a Learning Loop to an environment](DEPLOY.md)
 - [Exercise a Learning Loop](RL_SIM.md)
+- [Build the Learning Loop binaries](BUILD.md)
+- [Build a Learning Loop Docker Image](DOCKER.md)
 
 ## Contributing
 
