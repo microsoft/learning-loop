@@ -121,6 +121,9 @@ module eventhubs 'modules/eventhubs.bicep' = {
       messageRetentionDays: mainConfig.eventhub.messageRetentionDays
       partitionCount: mainConfig.eventhub.partitionCount
       roleAssignmentPrincipalId: containerGroup.outputs.containerPrincipalId
+      senderReceiverUserObjectId: mainConfig.roleAssignmentUserObjectId
     }
   }
 }
+
+output eventHubEndpoint string = eventhubs.outputs.eventHubEndpoint
