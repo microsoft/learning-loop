@@ -57,7 +57,7 @@ Run the below commands in PowerShell and ensure the Docker Engine is running.
 docker info
 az login --use-device-code
 cd deploy
-./scripts/deploy-sample.sh -dockerImageTar ../learning-loop-ubuntu-latest.tar
+./scripts/deploy-sample.ps1 -dockerImageTar ../learning-loop-ubuntu-latest.tar
 ```
 
 ## Next Steps
