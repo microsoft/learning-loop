@@ -46,7 +46,7 @@ sudo systemctl start docker.service
 sudo pwsh
 az login --use-device-code
 cd deploy
-./scripts/deploy-sample.sh -dockerImageTar ../learning-loop-ubuntu-latest.tar -imageRegistryCredType ManagedIdentity
+./scripts/deploy-sample.sh -dockerImageTar ../learning-loop-ubuntu-latest.tar
 ```
 
 ### Sample Deploy (Windows / Linux - WSL)
@@ -57,7 +57,7 @@ Run the below commands in PowerShell and ensure the Docker Engine is running.
 docker info
 az login --use-device-code
 cd deploy
-./scripts/deploy-sample.sh -dockerImageTar ../learning-loop-ubuntu-latest.tar -imageRegistryCredType ManagedIdentity
+./scripts/deploy-sample.sh -dockerImageTar ../learning-loop-ubuntu-latest.tar
 ```
 
 ## Next Steps
