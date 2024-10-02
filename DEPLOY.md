@@ -39,6 +39,8 @@ The general steps are:
 4. Navigate to the `deploy` directory
 5. Run the deploy-sample.sh script
 
+**Note:** add -createApplicationInsights to the deploy-sample command to deploy application insights
+
 ### Sample Deploy (Linux - not WSL)
 
 ```powershell
