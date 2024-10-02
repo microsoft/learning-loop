@@ -5,6 +5,7 @@ namespace Microsoft.DecisionService.OnlineTrainer;
 
 public class MonitoringExporterConfig
 {
+    public bool AzureMonitorMetricExporterEnabled { get; set; } = false;
     public bool ConsoleTraceExporterEnabled { get; set; } = true;
     public bool ConsoleLogExporterEnabled { get; set; } = true;
     public bool ConsoleMetricExporterEnabled { get; set; } = true;

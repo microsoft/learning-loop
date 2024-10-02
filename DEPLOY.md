@@ -30,7 +30,7 @@ A full deployment using the deploy-sample.ps1 will deploy all required resource 
 
 The sample deployment will set up a resource group for your environment, create an Azure ACR, push the Docker image to the ACR, and deploy the Learning Loop with storage and Event Hub.
 
-Deploy the Docker image from your build or get the Docker image from the GitHub build (currently located [here](https://github.com/microsoft/learning-loop/actions/runs/11109130866/artifacts/1996359925))
+Deploy the Docker image from your build or get the Docker image from the GitHub build; currently located [under action runs](https://github.com/microsoft/learning-loop/actions); download the latest docker artifact.
 
 The general steps are:
 1. Start the docker engine

@@ -103,13 +103,16 @@
 .PARAMETER applyUserRoleAssignments
    If true, the script will apply role assignments to the user who is currently logged in. Default is $true.
 
+.PARAMETER createApplicationInsights
+   If enabled, the script will create an Application Insights instance that will be used by the Learning Loop to publish metrics.
+
 .EXAMPLE
    Deploys a sample-loop (default) to resource group rg-sample-loop in the westus2 (default) location using the Docker image
    "learning-loop-ubuntu-latest.tar" with an Azure image repository.  An ACR is used since -dockerUserOrOrgName was not supplied.
    Resource names are derived from the loop name.
 
    cd ./deploy
-   ./scripts/deploy-sample.ps1 -dockerImageTar learning-loop-ubuntu-latest.tar
+   ./scripts/deploy-sample.ps1 -dockerImageTar learning-loop-ubuntu-latest.tar -createApplicationInsights
 
 .EXAMPLE
    Deploys a sample-loop (default) to resource group rg-sample-loop in the westus2 (default) location using the Docker image
@@ -227,7 +230,13 @@ param(
    [string] $rlSimConfigFilename = "rlsim-$loopName.config.json",
 
    [Parameter(HelpMessage = "If true, the script will apply role assignments to the user who is currently logged in. Default is true.")]
-   [bool] $applyUserRoleAssignments = $true
+   [bool] $applyUserRoleAssignments = $true,
+
+   [Parameter(HelpMessage = "If enabled, the script will create an Application Insights instance that will be used by the Learning Loop to publish metrics.")]
+   [switch] $createApplicationInsights,
+
+   [Parameter(HelpMessage = "The Application Insights instance connection string. Leave this empty if createApplicationInsights is enabled as the script will generate the connection string.")]
+   [string] $applicationInsightsConnectionString
 )
 
 ##########################################################################################
@@ -339,6 +348,10 @@ function ValidateAndDefaultParametersForNoDeploy {
          throw "You must specify -managedIdentityName when using -NoDeploy or -skipSetupEnvironment."
       }
    }
+
+   if ($createApplicationInsights -and [string]::IsNullOrEmpty($applicationInsightsConnectionString)) {
+      throw "You must specify -applicationInsightsConnectionString when using -createApplicationInsights."
+   }
 }
 
 function ValidateAndDefaultParametersForExistingEnvironment {
@@ -385,6 +398,10 @@ function ValidateAndDefaultParametersForExistingEnvironment {
       if ([string]::IsNullOrEmpty($managedIdentityName)) {
          throw "You must specify -managedIdentityName when using -NoDeploy or -skipSetupEnvironment."
       }
+   }
+
+   if ($createApplicationInsights -and [string]::IsNullOrEmpty($applicationInsightsConnectionString)) {
+      throw "You must specify -applicationInsightsConnectionString when using -createApplicationInsights."
    }
 }
 
@@ -499,6 +516,8 @@ function DisplayParameters {
    $paramterList["dockerImageTar"] = @{ Value = $dockerImageTar; Note = "" }
    $paramterList["dockerImageName"] = @{ Value = $dockerImageName; Note = "" }
    $paramterList["dockerImageTag"] = @{ Value = $dockerImageTag; Note = "" }
+   $paramterList["createApplicationInsights"] = @{ Value = $createApplicationInsights; Note = "" }
+
    if ($script:imageHostType -eq "docker") {
       $paramterList["dockerUserOrOrgName"] = @{ Value = $dockerUserOrOrgName; Note = "" }
    }
@@ -549,7 +568,8 @@ function GeneratedParametersFile {
    param(
       [string] $imageRegistryKeyVaultName,
       [string] $managedIdentityName,
-      [string] $imageHost
+      [string] $imageHost,
+      [string] $appInsightsConnectionString
    )
 
    $finalImageName = $dockerImageName
@@ -587,6 +607,20 @@ param kvImageRegistryPassword = getSecret('$imageRegistryKvSubscriptionId', '$re
       $userObjectId = (az ad signed-in-user show --query 'id' --output tsv)
       $roleAssignmentUserParam = "roleAssignmentUserObjectId: '$userObjectId'";
    }
+
+   $applicationInsightsSettings = ""
+   if (-not [string]::IsNullOrEmpty($appInsightsConnectionString)) {
+      $applicationInsightsSettings = @"
+      {
+      name: 'AzureMonitorMetricExporterEnabled' 
+      value: 'true'
+      }
+      {
+      name: 'APPLICATIONINSIGHTS_CONNECTION_STRING' 
+      value: '$appInsightsConnectionString'
+      }
+"@
+   }
   
    $bicepParams = @"
 //
@@ -598,14 +632,7 @@ param mainConfig = {
    appName: '$loopName'
    $roleAssignmentUserParam
    environmentVars: [
-      {
-      name: 'ConsoleMetricExporterEnabled' 
-      value: 'true'
-      }
-      {
-      name: 'OtlpMetricExporterEnabled' 
-      value: 'true'
-      }
+      $applicationInsightsSettings
       {
       name: 'ExperimentalUnitDuration'
       value: '0:0:10'
@@ -745,7 +772,7 @@ function TrySetupEnvironment {
       $registryPassword = PromptSecure -Prompt "Enter the password for the image registry"
 
       $userObjectId = (az ad signed-in-user show --query 'id' --output tsv)
-      Write-Host "`texecuting az command: $azResult = az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName doNotGenerateACRName=$doNotGenerateImageRepositoryName managedIdentityName=$managedIdentityName doNotGenerateManagedIdentityName=$doNotGenerateImageRepositoryName keyVaultName=$imageRegistryKeyVaultName imageRegistryUsernameId=$imageRegistryKvUserNameId imageRegistryUsername=********** imageRegistryPasswordId=$imageRegistryKvPasswordId imageRegistryPassword=************ userObjectId=$userObjectId" -ForegroundColor Gray
+      Write-Host "`texecuting az command: $azResult = az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName doNotGenerateACRName=$doNotGenerateImageRepositoryName managedIdentityName=$managedIdentityName doNotGenerateManagedIdentityName=$doNotGenerateImageRepositoryName keyVaultName=$imageRegistryKeyVaultName imageRegistryUsernameId=$imageRegistryKvUserNameId imageRegistryUsername=********** imageRegistryPasswordId=$imageRegistryKvPasswordId imageRegistryPassword=************ userObjectId=$userObjectId createAppInsights=$createApplicationInsights" -ForegroundColor Gray
       $azResult = az deployment sub create `
          --location $location `
          --name "$loopName-environment" `
@@ -760,18 +787,19 @@ function TrySetupEnvironment {
             imageRegistryUsername=$registryUsername `
             imageRegistryPasswordId=$imageRegistryKvPasswordId `
             imageRegistryPassword=$registryPassword `
-            userObjectId=$userObjectId
+            userObjectId=$userObjectId `
+            createAppInsights=$createApplicationInsights
 
       $registryPassword = $null
       $registryUsername = $null
    }
    else {
-      Write-Host "`texecuting az command: az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$managedIdentityName" -ForegroundColor Gray
+      Write-Host "`texecuting az command: az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$managedIdentityName createAppInsights=$createApplicationInsights" -ForegroundColor Gray
       $azResult = az deployment sub create `
       --location $location `
       --name "$loopName-environment" `
       --template-file .\environment.bicep `
-      --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$managedIdentityName
+      --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$managedIdentityName createAppInsights=$createApplicationInsights
    }
    $azResultJson = $azResult | ConvertFrom-Json
    if ($azResultJson.properties.provisioningState -eq "Succeeded") {
@@ -891,6 +919,7 @@ try {
    $finalACRName = $acrName
    $finalKeyVaultName = $keyVaultName
    $finalManagedIdentityName = $managedIdentityName
+   $finalAppInsightsConnectionString = $applicationInsightsConnectionString
    if ($skipSetupEnvironment -eq $false) {
       $envResult = TrySetupEnvironment
 
@@ -898,10 +927,11 @@ try {
       $finalACRName = $envResult.properties.outputs.acrName.value
       $finalKeyVaultName = $envResult.properties.outputs.keyVaultName.value
       $finalManagedIdentityName = $envResult.properties.outputs.managedIdentityName.value
+      $finalAppInsightsConnectionString = $envResult.properties.outputs.appInsightsConnectionString.value
       $script:imageHost = MakeImageHost -hostType $script:imageHostType -acrName $finalACRName
    }
 
-   GeneratedParametersFile -imageRegistryKeyVaultName $finalKeyVaultName -managedIdentityName $finalManagedIdentityName -imageHost $imageHost
+   GeneratedParametersFile -imageRegistryKeyVaultName $finalKeyVaultName -managedIdentityName $finalManagedIdentityName -imageHost $imageHost -appInsightsConnectionString $finalAppInsightsConnectionString
 
    if ($loadAndPushDockerImage -eq $true) {
       TryPushDockerImage -dockerImageTar $dockerImageTar -dockerImageName $dockerImageName -dockerImageTag $dockerImageTag -dockerUserOrOrgName $dockerUserOrOrgName -acrName $finalACRName

@@ -13,6 +13,8 @@ Once the binaries are ready, build a Docker image.
 # Prepare the Binaries
 
 Prepare the OnlineTrainer binaries for the Docker image.
+**Note:** Currently, the Docker build targets Ubuntu.; before building the docker image, be sure the VM Binary Parser binary is available for Linux.
+
 ```sh
 dotnet publish --no-build OnlineTrainerExe/OnlineTrainerExe.csproj -o artifacts/OnlineTrainer
 ```

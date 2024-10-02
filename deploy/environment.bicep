@@ -35,6 +35,9 @@ param imageRegistryUsername string?
 @secure()
 param imageRegistryPassword string?
 
+@description('If true, creates an Application Insights instance.')
+param createAppInsights bool = false
+
 resource learningLoopRg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: resourceGroupName
   location: deployment().location
@@ -90,6 +93,21 @@ module keyVault './modules/keyvault.bicep' = if (doCreateKeyValue) {
   }
 }
 
+// generate a unique application insights name from subscription id and the location
+// the name is restricted to 255 characters (3 from ai-, 128 from the supplied managed identity name, 1 hyphen, and 13 from unique string)
+var generatedAppInsightsName = 'ai-${take(learningLoopRg.name, 128)}-${uniqueString(subscription().tenantId, deployment().location)}'
+
+module appInsights './modules/appinsights.bicep' = if (createAppInsights) {
+  name: 'appInsights'
+  scope: learningLoopRg
+  params: {
+    insightsName: generatedAppInsightsName
+    location: deployment().location
+  }
+}
+
 output keyVaultName string = doCreateKeyValue ? keyVault.outputs.keyVaultName : ''
 output acrName string = !empty(acrName) ? containerRegistry.outputs.acrName : ''
 output managedIdentityName string = managedIdentity.outputs.managedIdentityName
+output appInsightsConnectionString string = createAppInsights ? appInsights.outputs.applicationInsightsConnectionString : ''
+output appInsightsInstrumentationKey string = createAppInsights ? appInsights.outputs.applicationInsightsInstrumentationKey : ''
