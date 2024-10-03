@@ -15,6 +15,8 @@ type mainConfigT = {
   testerIdentityName: string?
   @description('Tags applied to each deployed resource')
   resourceTags: object?
+  @description('Object ID of the user to apply the role assignments; allows access to deployed resource (optional)')
+  roleAssignmentUserObjectId: string?
   @description('Configuration for the storage account')  
   storage: {
     @description('The SKU of the storage account (e.g. Standard_LRS)')

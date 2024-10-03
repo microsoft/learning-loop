@@ -78,3 +78,5 @@ resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2021-10-01' = [for s
     value: secret.value
   }
 }]
+
+output keyVaultName string = keyVault.name

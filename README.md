@@ -2,20 +2,13 @@
 
 This repository contains the primary code for the Learning Loop service.
 
-## Prerequisites
+## Getting Started
+See the following to get started building, deploying, and executing Learning Loops.
 
-- Dotnet 8.0
-  - https://dotnet.microsoft.com/download
-- Ninja build
-  - https://ninja-build.org/
-
-## Building
-
-Clone this repository using --recurse-submodules.
-
-```sh
-dotnet build ./learning-loop.sln -c Release
-```
+- [Deploy a Learning Loop to an environment](DEPLOY.md)
+- [Exercise a Learning Loop](RL_SIM.md)
+- [Build the Learning Loop binaries](BUILD.md)
+- [Build a Learning Loop Docker Image](DOCKER.md)
 
 ## Contributing
 

@@ -3,6 +3,7 @@
 
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.DecisionService.Common;
 using Microsoft.DecisionService.Common.Config;
@@ -184,6 +185,11 @@ namespace Microsoft.DecisionService.OnlineTrainer
                     metricsBuilder =>
                     {
                         metricsBuilder.AddMeter("Microsoft.DecisionService.OnlineTrainer*");
+
+                        if (config.AzureMonitorMetricExporterEnabled)
+                        {
+                            metricsBuilder.AddAzureMonitorMetricExporter();
+                        }
 
                         if (config.ConsoleMetricExporterEnabled)
                         {

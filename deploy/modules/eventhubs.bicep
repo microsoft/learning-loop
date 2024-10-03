@@ -25,6 +25,8 @@ type eventhubsConfigT = {
   partitionCount: int
   @description('Principal ID for the role assignments')
   roleAssignmentPrincipalId: string
+  @description('User Object ID for the sender/receiver role assignments')
+  senderReceiverUserObjectId: string?
 }
 
 param eventhubsConfig eventhubsConfigT
@@ -75,3 +77,25 @@ resource eventHubRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
   }
 }
+
+// Add role assignment to event hub receiver to the user object id
+resource eventHubUserReceiverRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (!empty(eventhubsConfig.senderReceiverUserObjectId)) {
+  name: guid(subscription().subscriptionId, 'AzureUserEventHubDataReceiver', eventhubsConfig.name)
+  scope: eventHub
+  properties: {
+    principalId: eventhubsConfig.senderReceiverUserObjectId!
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
+  }
+}
+
+// Add role assignment to event hub sender to the user object id
+resource eventHubUserSenderRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (!empty(eventhubsConfig.senderReceiverUserObjectId)) {
+  name: guid(subscription().subscriptionId, 'AzureUserEventHubDataSender', eventhubsConfig.name)
+  scope: eventHub
+  properties: {
+    principalId: eventhubsConfig.senderReceiverUserObjectId!
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2b629674-e913-4c01-ae53-ef4638d8f975')
+  }
+}
+
+output eventHubEndpoint string = eventHub.properties.serviceBusEndpoint

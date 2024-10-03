@@ -1,6 +1,6 @@
-### Deployment Description
+# Deployment Description
 
-The Bicep files in this folder can be used to customize the deployment of an rl_loop.
+The Bicep files in this folder can be used to customize the deployment of a Learning Loop.
 
 1. **Sample Parameters**: 
    - A `sample.bicepparam` file is provided as a starter template for parameter values.
@@ -22,4 +22,4 @@ The Bicep files in this folder can be used to customize the deployment of an rl_
    - The `main.bicep` file supports most standard configurations.
    - Custom deployment scripts can be created by leveraging the provided modules.
    - If the provided modules do not meet specific needs, they can be used as a basis for creating custom modules.
-   - Please note that resource names may be restricted in length and allowed characters. Ensure that the resource names comply with the naming restrictions imposed by the Azure resource.   
+   - Please note that resource names may be restricted in length and allowed characters. Ensure that the resource names comply with the naming restrictions imposed by the Azure resource.

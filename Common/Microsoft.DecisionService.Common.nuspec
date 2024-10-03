@@ -11,18 +11,18 @@
     </contentFiles>
     <dependencies>
       <group targetFramework="$targetframework$">
-        <dependency id="Azure.Data.Tables" version="12.8.0" exclude="Build,Analyzers" />
-        <dependency id="Azure.Identity" version="1.9.0" exclude="Build,Analyzers" />
-        <dependency id="Azure.Messaging.EventHubs" version="5.10.0" exclude="Build,Analyzers" />
-        <dependency id="Azure.Storage.Blobs" version="12.15.0" exclude="Build,Analyzers" />
+        <dependency id="Azure.Data.Tables" version="12.9.1" exclude="Build,Analyzers" />
+        <dependency id="Azure.Identity" version="1.12.1" exclude="Build,Analyzers" />
+        <dependency id="Azure.Messaging.EventHubs" version="5.11.5" exclude="Build,Analyzers" />
+        <dependency id="Azure.Storage.Blobs" version="12.22.1" exclude="Build,Analyzers" />
         <dependency id="Google.FlatBuffers" version="22.12.6" exclude="Build,Analyzers" />
-        <dependency id="Microsoft.Extensions.Configuration" version="6.0.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Configuration" version="8.0.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Extensions.Hosting.Abstractions" version="8.0.0" exclude="Build,Analyzers" />
         <dependency id="Microsoft.Extensions.Logging" version="8.0.0" exclude="Build,Analyzers" />
         <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
-        <dependency id="OpenTelemetry.Api" version="1.6.0" exclude="Build,Analyzers" />
+        <dependency id="OpenTelemetry.Api" version="1.9.0" exclude="Build,Analyzers" />
         <dependency id="System.Linq.Async" version="6.0.1" exclude="Build,Analyzers" />
-        <dependency id="System.Text.Json" version="7.0.1" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Json" version="8.0.4" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>

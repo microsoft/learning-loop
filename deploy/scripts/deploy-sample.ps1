@@ -8,11 +8,11 @@
    customizing the deployment, including skipping environment setup, loading and pushing Docker images, 
    and specifying credentials for image registries.
 
-   The script supports both Azure Container Registry and Docker Hub. Azure Container Registry credentials can
-   be managed using either a managed identity or a KeyVault. Docker Hub credentials are managed using a KeyVault.
+   The script supports both Azure Container Registry and Docker Hub. Azure Container Registry credentials are
+   managed using a managed identity. Docker Hub credentials are managed using a KeyVault.
 
-   If a KeyVault is used for image registry credentials, the script will create the KeyVault and will prompt for
-   the registry username and password secrets.
+   If a KeyVault is used for image registry credentials (in the case of Docker Hub), the script will create the
+   KeyVault and will prompt for the registry username and password secrets.
 
    The following is required prior to running the script:
 
@@ -34,10 +34,10 @@
    If specified, the script skips the setup of the environment. The resource group must already exist.
 
 .PARAMETER bicepParamsFile
-   The name of the Bicep parameters file to generate. Default is "parameters.bicepparam".
+   The name of the Bicep parameters file to generate. Default is '<loopName>.bicepparam'.
 
 .PARAMETER loopName
-   The name of the loop to deploy. Default is "sample-loop".
+   The name of the loop to deploy. Default is 'sample-loop'.
 
 .PARAMETER enableTrainer
    Enables the trainer component. Default is $true.
@@ -45,11 +45,11 @@
 .PARAMETER enableJoiner
    Enables the joiner component. Default is $true.
 
-.PARAMETER resourceGroupName
-   The name of the resource group to use. Default is "rg-sample-loop".
-
 .PARAMETER location
-   The Azure location to deploy the resources. Default is "westus2".
+   The Azure location to deploy the resources. Default is 'westus2'.
+
+.PARAMETER resourceGroupName
+   The name of the resource group to use. Default is 'rg-<loopName>'.
 
 .PARAMETER loadAndPushDockerImage
    If specified, the script loads and pushes the Docker image. Default is $true.
@@ -58,79 +58,114 @@
    The path to the Docker image tar file. Required if loadAndPushDockerImage is true.
 
 .PARAMETER dockerImageName
-   The name of the Docker image. Default is "learning-loop".
+   The name of the Docker image. Default is 'learning-loop'.
 
 .PARAMETER dockerImageTag
-   The tag of the Docker image. Default is "latest".
+   The tag of the Docker image. Default is 'latest'.
 
 .PARAMETER dockerUserOrOrgName
-   The Docker Hub username or organization name. Cannot be specified with acrName.
+   The Docker Hub username or organization name if using a Docker Hub image repository. Cannot be specified with acrName.
 
 .PARAMETER acrName
    The Azure Container Registry name. Cannot be specified with dockerUserOrOrgName.
 
-.PARAMETER imageRegistryCredType
-   The type of credentials to use for the image registry. Valid values are "ManagedIdentity" and "KeyVault". Default is "ManagedIdentity".
+.PARAMETER doNotGenerateImageRepositoryName
+   If specified, the script does not generate the image repository name (acrName will be used unmodified). Default is $false.
 
 .PARAMETER imageRegistryKeyVaultName
-   The name of the KeyVault to use for image registry credentials. Required if imageRegistryCredType is "KeyVault".
+   The name of the KeyVault to use for image registry credentials and is required for Docker Hub. A default name
+   will be generated if not supplied.
 
 .PARAMETER imageRegistryKvSubscriptionId
-   The subscription ID for the KeyVault. Required if imageRegistryCredType is "KeyVault".
+   The subscription ID for the KeyVault. Required if using Docker Hub and default to the az account login subscription.
 
 .PARAMETER imageRegistryKvUserNameId
-   The KeyVault secret ID for the image registry username. Required if imageRegistryCredType is "KeyVault".
+   The KeyVault secret ID for the image registry username. Required if using Docker Hub and default to '<loopName>-username'.
 
 .PARAMETER imageRegistryKvPasswordId
-   The KeyVault secret ID for the image registry password. Required if imageRegistryCredType is "KeyVault".
+   The KeyVault secret ID for the image registry password. Required if using Docker Hub and default to '<loopName>-password'.
 
-.PARAMETER imageRegistryManagedIdentityName
-   The name of the managed identity to use for the image registry. Required if imageRegistryCredType is "ManagedIdentity".
+.PARAMETER managedIdentityName
+   The name of the managed identity to used for running the loop and/or for accessing image registry if using an ACR.
+
+.PARAMETER doNotGenerateManagedIdentityName
+   If specified, the script does not generate the managed identity name. The name specified in managedIdentityName will be used unmodified.
+
+.PARAMETER rlSimConfigType   
+   The type of RLSim config to generate. 'connStr' uses connections strings and 'az' uses Azure Credentials. Default is 'az'.
+   Notes:
+      1) to use Azure Credentials with rl_sim, rl_sim must be built wtih RL_LINK_AZURE_LIBS.
+      2) connStr generates a config file with a placeholder connection string. The user must replace the placeholder with the actual connection string.
+
+.PARAMETER rlSimConfigFilename
+   The filename to use for the RLSim config file. Default is 'rlsim-<loopName>.config.json'.
+
+.PARAMETER applyUserRoleAssignments
+   If true, the script will apply role assignments to the user who is currently logged in. Default is $true.
+
+.PARAMETER createApplicationInsights
+   If enabled, the script will create an Application Insights instance that will be used by the Learning Loop to publish metrics.
 
 .EXAMPLE
+   Deploys a sample-loop (default) to resource group rg-sample-loop in the westus2 (default) location using the Docker image
+   "learning-loop-ubuntu-latest.tar" with an Azure image repository.  An ACR is used since -dockerUserOrOrgName was not supplied.
+   Resource names are derived from the loop name.
+
    cd ./deploy
-   ./scripts/deploy-sample.ps1 -dockerImageTar learning-loop-ubuntu-latest.tar -imageRegistryCredType ManagedIdentity
-   Deploys a sample-loop to resource group rg-sample-loop in the westus2 location using the Docker image "learning-loop-ubuntu-latest.tar" with
-   an Azure image repository and Managed Identity for image registry credentials.
+   ./scripts/deploy-sample.ps1 -dockerImageTar learning-loop-ubuntu-latest.tar -createApplicationInsights
 
 .EXAMPLE
+   Deploys a sample-loop (default) to resource group rg-sample-loop in the westus2 (default) location using the Docker image
+   "learning-loop-ubuntu-latest.tar" with an a Docker Hub repository since -dockerUserOrOrgName was supplied.  A Key Vault is used
+   to store the Docker Hub credentials.  Resources names are derived from the loop name.
+
    cd ./deploy
-   ./scripts/deploy-sample.ps1 -dockerImageTar learning-loop-ubuntu-latest.tar -imageRegistryCredType KeyVault -dockerUserOrOrgName "learningloop"
-   Deploys a sample-loop to resource group rg-sample-loop in the westus2 location using the Docker image "learning-loop-ubuntu-latest.tar" with
-   a DockerHub repository and a Key Vault for image registry credentials.
+   ./scripts/deploy-sample.ps1 -dockerImageTar learning-loop-ubuntu-latest.tar -dockerUserOrOrgName "learningloop"
 
 .EXAMPLE
+   Generates the Bicep parameters file "custom-params.bicepparam" without deploying the resources.  When using noDeploy, all resource
+   names must be supplied since the script will not generate them.
+
    cd ./deploy
-   ./deploy-sample.ps1 -noDeploy -bicepParamsFile "custom-params.bicepparam" -imageRegistryCredType ManagedIdentity
-   Generates the Bicep parameters file "custom-params.bicepparam" without deploying the resources.
+   ./deploy-sample.ps1 -noDeploy `
+      -bicepParamsFile "custom-params.bicepparam" `
+      -loopName "sample-loop" `
+      -resourceGroupName "rg-sample-loop" `
+      -dockerImageTar "learning-loop-ubuntu-latest.tar" `
+      -dockerUserOrOrgName "learningloop" `
+      -imageRegistryKeyVaultName "sample-loop-kv" `
+      -imageRegistryKvSubscriptionId "00000000-0000-0000-0000-000000000000" `
+      -imageRegistryKvUserNameId "docker-hub-username" `
+      -imageRegistryKvPasswordId "docker-hub-password" `
+      -managedIdentityName "mi-sample-loop"
 #>
 [CmdletBinding()]
 param(
-   [Parameter(HelpMessage = "Switch to skip the deployment process.")]
+   [Parameter(HelpMessage = "If specified, the script generates the Bicep parameters file but does not deploy the resources.")]
    [switch] $noDeploy,
 
-   [Parameter(HelpMessage = "Switch to skip the setup of the environment.")]
-   [switch] $skipSetupEnvironemt,
+   [Parameter(HelpMessage = "If specified, the script skips the setup of the environment. The resource group must already exist.")]
+   [switch] $skipSetupEnvironment,
    
-   [Parameter(HelpMessage = "Path to the Bicep parameters file that will be generated by the script.")]
-   [string] $bicepParamsFile = "parameters.bicepparam",
+   [Parameter(HelpMessage = "The name of the Bicep parameters file to generate. Default is '<loopName>.bicepparam'")]
+   [string] $bicepParamsFile,
    
-   [Parameter(HelpMessage = "Name of the Leanring Loop.")]
+   [Parameter(HelpMessage = "The name of the loop to deploy. Default is 'sample-loop'")]
    [string] $loopName = "sample-loop",
    
-   [Parameter(HelpMessage = "Enable the trainer component.")]
+   [Parameter(HelpMessage = "Enables the trainer component. Default is true.")]
    [bool] $enableTrainer = $true,
    
-   [Parameter(HelpMessage = "Enable the joiner component.")]
+   [Parameter(HelpMessage = "Enables the joiner component. Default is true.")]
    [bool] $enableJoiner = $true,
    
-   [Parameter(HelpMessage = "Name of the target resource group.")]
-   [string] $resourceGroupName = "rg-sample-loop",
-   
-   [Parameter(HelpMessage = "Azure location for the resources.")]
+   [Parameter(HelpMessage = "The Azure location to deploy the resources. Default is 'westus2'.")]
    [string] $location = "westus2",
+
+   [Parameter(HelpMessage = "The name of the resource group to use. Default is 'rg-<loopName>'.")]
+   [string] $resourceGroupName,
    
-   [Parameter(HelpMessage = "true to Load and push the Docker image.")]
+   [Parameter(HelpMessage = "If specified, the script loads and pushes the Docker image. Default is true.")]
    [bool] $loadAndPushDockerImage = $true,
    
    [Parameter(HelpMessage = "Path to the Docker image tar file.")]
@@ -142,13 +177,13 @@ param(
    })]
    [string] $dockerImageTar,
    
-   [Parameter(HelpMessage = "Name of the Docker image.")]
+   [Parameter(HelpMessage = "The name of the Docker image. Default is 'learning-loop'.")]
    [string] $dockerImageName = "learning-loop",
    
-   [Parameter(HelpMessage = "Tag of the Docker image.")]
+   [Parameter(HelpMessage = "The tag of the Docker image. Default is 'latest'.")]
    [string] $dockerImageTag = "latest",
    
-   [Parameter(HelpMessage = "Docker user or organization name (should be supplied if using a Docker image repository).")]
+   [Parameter(HelpMessage = "The Docker Hub username or organization name if using a Docker Hub image repository. Cannot be specified with acrName.")]
    [ValidateScript({
        if ($null -ne $args[0] -and $null -ne $acrName) {
            throw "You cannot specify both -dockerUserOrOrgName and -acrName."
@@ -157,7 +192,7 @@ param(
    })]
    [string] $dockerUserOrOrgName,
    
-   [Parameter(HelpMessage = "Azure Container Registry name (should be supplied if using an Azure image repository).")]
+   [Parameter(HelpMessage = "The Azure Container Registry name. Cannot be specified with dockerUserOrOrgName.")]
    [ValidateScript({
        if ($null -ne $args[0] -and $null -ne $dockerUserOrOrgName) {
            throw "You cannot specify both -dockerUserOrOrgName and -acrName."
@@ -165,64 +200,51 @@ param(
        $true
    })]
    [string] $acrName,
+
+   [Parameter(HelpMessage = "If specified, the script does not generate the image repository name (acrName will be used unmodified). Default is false.")]
+   [switch] $doNotGenerateImageRepositoryName,
    
-   [Parameter(HelpMessage = "Type of credentials for the image registry.")]
-   [ValidateSet("ManagedIdentity", "KeyVault")]
-   [string] $imageRegistryCredType = "ManagedIdentity",
-   
-   [Parameter(HelpMessage = "Name of the Key Vault for image registry credentials.")]
-   [ValidateScript({
-       if ($imageRegistryCredType -eq "KeyVault" -or $null -eq $args[0]) {
-           $true
-       } else {
-           throw "You can only specify -imageRegistryKeyVaultName if -imageRegistryCredType is 'KeyVault'."
-       }
-   })]
-   [string] $imageRegistryKeyVaultName = "kv-learning-loop",
-   
-   [Parameter(HelpMessage = "Subscription ID for the Key Vault (defaults to the current subscription).")]
-   [ValidateScript({
-       if ($imageRegistryCredType -eq "KeyVault" -or $null -eq $args[0]) {
-           $true
-       } else {
-           throw "You can only specify -imageRegistryKvSubscriptionId if -imageRegistryCredType is 'KeyVault'."
-       }
-   })]
+   [Parameter(HelpMessage = "The name of the KeyVault to use for image registry credentials and is required for Docker Hub. A default name will be generated if not supplied.")]
+   [string] $imageRegistryKeyVaultName,
+
+   [Parameter(HelpMessage = "The subscription ID for the KeyVault. Required if using Docker Hub and default to the az account login subscription.")]
    [string] $imageRegistryKvSubscriptionId,
    
-   [Parameter(HelpMessage = "KeyVault Secret user name identifier.")]
-   [ValidateScript({
-       if ($imageRegistryCredType -eq "KeyVault" -or $null -eq $args[0]) {
-           $true
-       } else {
-           throw "You can only specify -imageRegistryKvUserNameId if -imageRegistryCredType is 'KeyVault'."
-       }
-   })]
+   [Parameter(HelpMessage = "The KeyVault secret ID for the image registry username. Required if using Docker Hub and default to '<loopName>-username'.")]
    [string] $imageRegistryKvUserNameId,
    
-   [Parameter(HelpMessage = "KeyVault Secret password identifier.")]
-   [ValidateScript({
-       if ($imageRegistryCredType -eq "KeyVault" -or $null -eq $args[0]) {
-           $true
-       } else {
-           throw "You can only specify -imageRegistryKvPasswordId if -imageRegistryCredType is 'KeyVault'."
-       }
-   })]
+   [Parameter(HelpMessage = "The KeyVault secret ID for the image registry password. Required if using Docker Hub and default to '<loopName>-password'.")]
    [string] $imageRegistryKvPasswordId,
    
-   [Parameter(HelpMessage = "Name of the managed identity for the image registry (defaults to mi-learning-loop).")]
-   [ValidateScript({
-       if ($imageRegistryCredType -eq "ManagedIdentity" -or $null -eq $args[0]) {
-           $true
-       } else {
-           throw "You can only specify imageRegistryManagedIdentityName if -imageRegistryCredType is 'ManagedIdentity'."
-       }
-   })]
-   [string] $imageRegistryManagedIdentityName = "mi-learning-loop"
+   [Parameter(HelpMessage = "The name of the managed identity to used for running the loop and/or for accessing image registry if using an ACR.")]
+   [string] $managedIdentityName = "learning-loop",
+
+   [Parameter(HelpMessage = "If specified, the script does not generate the managed identity name. The name specified in managedIdentityName will be used unmodified. The default is false")]
+   [switch] $doNotGenerateManagedIdentityName,
+
+   [Parameter(HelpMessage = "The type of RLSim config to generate. 'connStr' uses connections strings and 'az' uses Azure Credentials. Default is 'connStr'")]
+   [ValidateSet("connStr", "az")]
+   [string] $rlSimConfigType = "az",
+
+   [Parameter(HelpMessage = "The filename to use for the RLSim config file. Default is 'rlsim-<loopName>.config.json'")]
+   [string] $rlSimConfigFilename = "rlsim-$loopName.config.json",
+
+   [Parameter(HelpMessage = "If true, the script will apply role assignments to the user who is currently logged in. Default is true.")]
+   [bool] $applyUserRoleAssignments = $true,
+
+   [Parameter(HelpMessage = "If enabled, the script will create an Application Insights instance that will be used by the Learning Loop to publish metrics.")]
+   [switch] $createApplicationInsights,
+
+   [Parameter(HelpMessage = "The Application Insights instance connection string. Leave this empty if createApplicationInsights is enabled as the script will generate the connection string.")]
+   [string] $applicationInsightsConnectionString
 )
 
-# Globals -- these are used in the functions below (TODO: refactor to pass as parameters)
+##########################################################################################
+# Globals -- these are used script-wide
 $imageHost = ""
+$imageHostType = "docker"
+$imageRegistryCredType = ""
+##########################################################################################
 
 function GetAzAccount {
    $account = az account show --output json | ConvertFrom-Json
@@ -258,21 +280,165 @@ function GetNormalizedLoopName {
    return $adjustedLoopName
 }
 
-function ValidateAndDefaultParameters {
+function MakeACRName {
+   param (
+      [string]$name
+   )
+
+   $transformatedName = $name.ToLower()
+   $transformatedName = $transformatedName -replace '[^a-z0-9]', '' # Extract only a-z and 0-9
+   return $transformatedName
+}
+
+function  MakeImageHost {
+   param (
+      [ValidateSet("docker", "acr")]
+      [string] $hostType,
+      [string] $acrName
+   )
+   if ($hostType -eq "docker") {
+      return "docker.io"
+   }
+   elseif ($hostType -eq "acr") {
+      return "$acrName.azurecr.io"
+   }
+   else {
+      throw "Invalid host type: $hostType"
+   }
+}
+
+function ValidateAndDefaultParametersForNoDeploy {
+   if ([string]::IsNullOrEmpty($loopName)) {
+      throw "You must specify -loopName when using -NoDeploy or -skipSetupEnvironment."
+   }
+
+   if ([string]::IsNullOrEmpty($bicepParamsFile)) {
+      $script:bicepParamsFile = "$loopName.bicepparam"
+   }
+
+   if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -and [string]::IsNullOrEmpty($acrName)) {
+      throw "You must specify -dockerUserOrOrgName or -acrName when using -NoDeploy or -skipSetupEnvironment."
+   }
+   
+   if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -eq $false) {
+      $script:imageHostType = "docker"
+   }
+   elseif ([string]::IsNullOrEmpty($acrName) -eq $false) {
+      $script:imageHostType = "acr"
+   }
+
+   $script:imageHost = MakeImageHost -hostType $script:imageHostType -acrName $acrName
+
+   if ($script:imageHostType -eq "docker") {
+      $script:imageRegistryCredType = "KeyVault"
+      if ([string]::IsNullOrEmpty($imageRegistryKvSubscriptionId)) {
+         $account = GetAzAccount
+         $script:imageRegistryKvSubscriptionId = $account.id
+      }
+      if ([string]::IsNullOrEmpty($imageRegistryKvUserNameId)) {
+         throw "You must specify -imageRegistryKvUserNameId when using -NoDeploy or -skipSetupEnvironment."
+      }
+      if ([string]::IsNullOrEmpty($imageRegistryKvPasswordId)) {
+         throw "You must specify -imageRegistryKvPasswordId when using -NoDeploy or -skipSetupEnvironment."
+      }
+   }
+   else {
+      $script:imageRegistryCredType = "ManagedIdentity"
+      if ([string]::IsNullOrEmpty($managedIdentityName)) {
+         throw "You must specify -managedIdentityName when using -NoDeploy or -skipSetupEnvironment."
+      }
+   }
+
+   if ($createApplicationInsights -and [string]::IsNullOrEmpty($applicationInsightsConnectionString)) {
+      throw "You must specify -applicationInsightsConnectionString when using -createApplicationInsights."
+   }
+}
+
+function ValidateAndDefaultParametersForExistingEnvironment {
+   if ([string]::IsNullOrEmpty($loopName)) {
+      throw "You must specify -loopName when using -NoDeploy or -skipSetupEnvironment."
+   }
+
+   if ([string]::IsNullOrEmpty($bicepParamsFile)) {
+      $script:bicepParamsFile = "$loopName.bicepparam"
+   }
+
+   if ([string]::IsNullOrEmpty($resourceGroupName)) {
+      throw "You must specify -resourceGroupName when using -NoDeploy or -skipSetupEnvironment."
+   }
+   
+   if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -and [string]::IsNullOrEmpty($acrName)) {
+      throw "You must specify -dockerUserOrOrgName or -acrName when using -NoDeploy or -skipSetupEnvironment."
+   }
+   
+   if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -eq $false) {
+      $script:imageHostType = "docker"
+   }
+   elseif ([string]::IsNullOrEmpty($acrName) -eq $false) {
+      $script:imageHostType = "acr"
+   }
+
+   $script:imageHost = MakeImageHost -hostType $script:imageHostType -acrName $acrName
+
+   if ($script:imageHostType -eq "docker") {
+      $script:imageRegistryCredType = "KeyVault"
+      if ([string]::IsNullOrEmpty($imageRegistryKvSubscriptionId)) {
+         $account = GetAzAccount
+         $script:imageRegistryKvSubscriptionId = $account.id
+      }
+      if ([string]::IsNullOrEmpty($imageRegistryKvUserNameId)) {
+         throw "You must specify -imageRegistryKvUserNameId when using -NoDeploy or -skipSetupEnvironment."
+      }
+      if ([string]::IsNullOrEmpty($imageRegistryKvPasswordId)) {
+         throw "You must specify -imageRegistryKvPasswordId when using -NoDeploy or -skipSetupEnvironment."
+      }
+   }
+   else {
+      $script:imageRegistryCredType = "ManagedIdentity"
+      if ([string]::IsNullOrEmpty($managedIdentityName)) {
+         throw "You must specify -managedIdentityName when using -NoDeploy or -skipSetupEnvironment."
+      }
+   }
+
+   if ($createApplicationInsights -and [string]::IsNullOrEmpty($applicationInsightsConnectionString)) {
+      throw "You must specify -applicationInsightsConnectionString when using -createApplicationInsights."
+   }
+}
+
+function ValidateAndDefaultParametersForNewEnvironment {
    $account = GetAzAccount
    $normalizedLoopName = GetNormalizedLoopName $loopName
    if ($normalizedLoopName -ne $loopName) {
       $loopName = $normalizedLoopName
       Write-Host "Adjusted loop name to: '$loopName'" -ForegroundColor Yellow
    }
+
+   if ([string]::IsNullOrEmpty($bicepParamsFile)) {
+      $script:bicepParamsFile = "$loopName.bicepparam"
+   }
+
+   if ([string]::IsNullOrEmpty($resourceGroupName)) {
+      $script:resourceGroupName = "rg-$loopName"
+   }
    
    # Set default value for acrName if dockerUserOrOrgName is not provided
    if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -and [string]::IsNullOrEmpty($acrName)) {
-      $script:acrName = "acrlearningloop"
-      Write-Host "ACR name defaulted to '$acrName'" -ForegroundColor Yellow
+      $script:acrName = MakeACRName -name $loopName
    }
    
-   if ($imageRegistryCredType -eq "KeyVault") {
+   if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -eq $false) {
+      $script:imageHostType = "docker"
+   }
+   elseif ($null -ne $acrName) {
+      $script:imageHostType = "acr"
+   }
+   else {
+      throw "You must specify either -dockerUserOrOrgName or -acrName."
+   }
+   $script:imageHost = MakeImageHost -hostType $script:imageHostType -acrName $acrName
+
+   if ($script:imageHostType -eq "docker") {
+      $script:imageRegistryCredType = "KeyVault"
       if ([string]::IsNullOrEmpty($imageRegistryKvSubscriptionId)) {
          $script:imageRegistryKvSubscriptionId = $account.id
          Write-Host "KeyVault subscription defaulted to '$imageRegistryKvSubscriptionId'" -ForegroundColor Yellow
@@ -286,19 +452,25 @@ function ValidateAndDefaultParameters {
          Write-Host "KeyVault password id defaulted to '$imageRegistryKvPasswordId'" -ForegroundColor Yellow
       }
    }
-
-   # TODO: fix $script:imageHost
-   if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -eq $false) {
-      $script:imageHost = "docker.io"
+   else {
+      $script:imageRegistryCredType = "ManagedIdentity"
+      if ([string]::IsNullOrEmpty($managedIdentityName)) {
+         $script:managedIdentityName = $loopName
+      }
    }
-   elseif ($null -ne $acrName) {
-      $script:imageHost = "$acrName.azurecr.io"
+}
+
+function ValidateAndDefaultParameters {
+   if ($noDeploy) {
+      ValidateAndDefaultParametersForNoDeploy
+      return
+   }
+   if ($skipSetupEnvironment) {
+      ValidateAndDefaultParametersForExistingEnvironment
    }
    else {
-      throw "You must specify either -dockerUserOrOrgName or -acrName."
+      ValidateAndDefaultParametersForNewEnvironment
    }
-
-   Write-Host "Docker repository is '$script:imageHost'" -ForegroundColor Yellow
    Write-Host ""
 }
 
@@ -319,38 +491,87 @@ function DisplayParameters {
       $paramterList["loopName"] = @{ Value = $loopName; Note = "" }
    }
 
-   if ($skipSetupEnvironemt -eq $true) {
-      $paramterList["skipSetupEnvironemt"] = @{ Value = $skipSetupEnvironemt; Note = "Will not deploy the resource group (it must exist)" }
+   if ($skipSetupEnvironment -eq $true) {
+      $paramterList["skipSetupEnvironment"] = @{ Value = $skipSetupEnvironment; Note = "Will not deploy the resource group (it must exist)" }
    }
    else {
-      $paramterList["skipSetupEnvironemt"] = @{ Value = $skipSetupEnvironemt; Note = "Create the resource group and dependencies" }
+      $paramterList["skipSetupEnvironment"] = @{ Value = $skipSetupEnvironment; Note = "Create the resource group and dependencies" }
    }
 
+   if ($applyUserRoleAssignments) {
+      $paramterList["applyUserRoleAssignments"] = @{ Value = $applyUserRoleAssignments; Note = "Role assignments will be applied to the user who is currently logged in" }
+   }
+   else {
+      $paramterList["applyUserRoleAssignments"] = @{ Value = $applyUserRoleAssignments; Note = $note = "Role assignments will NOT be applied to the user who is currently logged in" }
+   }
+
+   $paramterList["bicepParamsFile"] = @{ Value = $bicepParamsFile; Note = "" }
    $paramterList["enableTrainer"] = @{ Value = $enableTrainer; Note = "" }
    $paramterList["enableJoiner"] = @{ Value = $enableJoiner; Note = "" }
+   $paramterList["rlSimConfigType"] = @{ Value = $rlSimConfigType; Note = "" }
+   $paramterList["rlSimConfigFilename"] = @{ Value = $rlSimConfigFilename; Note = "" }
    $paramterList["resourceGroupName"] = @{ Value = $resourceGroupName; Note = "" }
    $paramterList["location"] = @{ Value = $location; Note = "" }
    $paramterList["loadAndPushDockerImage"] = @{ Value = $loadAndPushDockerImage; Note = "" }
    $paramterList["dockerImageTar"] = @{ Value = $dockerImageTar; Note = "" }
    $paramterList["dockerImageName"] = @{ Value = $dockerImageName; Note = "" }
    $paramterList["dockerImageTag"] = @{ Value = $dockerImageTag; Note = "" }
-   $paramterList["dockerUserOrOrgName"] = @{ Value = $dockerUserOrOrgName; Note = "" }
-   $paramterList["acrName"] = @{ Value = $acrName; Note = "" }
-   $paramterList["imageRegistryCredType"] = @{ Value = $imageRegistryCredType; Note = "" }
+   $paramterList["createApplicationInsights"] = @{ Value = $createApplicationInsights; Note = "" }
+
+   if ($script:imageHostType -eq "docker") {
+      $paramterList["dockerUserOrOrgName"] = @{ Value = $dockerUserOrOrgName; Note = "" }
+   }
+   elseif ($script:imageHostType -eq "acr") {
+      $note = ""
+      if ($doNotGenerateImageRepositoryName) {
+         $note = "An Azure container repository will be created with the specified name. To use a generated name re-run the script without the -doNotGenerateImageRepositoryName switch"
+      }
+      else {
+         $note = "An Azure container repository will be created. The ACR name will be generated when the environment is deployed with '$acrName' included in the generated name. To disable ACR name generation re-run the script with -doNotGenerateImageRepositoryName"
+      }
+      if ([string]::IsNullOrEmpty($acrName)) {
+         $note = "ACR name will be generated when the environment is deployed"
+      }
+      $paramterList["acrName"] = @{ Value = $acrName; Note = $note }
+   }
 
    if ($imageRegistryCredType -eq "KeyVault") {
-      $paramterList["imageRegistryKeyVaultName"] = @{ Value = $imageRegistryKeyVaultName; Note = "" }
+      $note = ""
+      if ([string]::IsNullOrEmpty($imageRegistryKeyVaultName)) {
+         $note = "KeyVault name will be created with '$loopName' included in the generated name. To use a specified name re-run with the -imageRegistryKeyVaultName parameter"
+      }
+      else {
+         $note = "KeyVault name will be created with the specified name. To use a generated name re-run without the -imageRegistryKeyVaultName parameter"
+      }
+      $paramterList["imageRegistryKeyVaultName"] = @{ Value = $imageRegistryKeyVaultName; Note = $note }
       $paramterList["imageRegistryKvSubscriptionId"] = @{ Value = $imageRegistryKvSubscriptionId; Note = "" }
       $paramterList["imageRegistryKvUserNameId"] = @{ Value = $imageRegistryKvUserNameId; Note = "" }
       $paramterList["imageRegistryKvPasswordId"] = @{ Value = $imageRegistryKvPasswordId; Note = "" }
    }
-   elseif ($imageRegistryCredType -eq "ManagedIdentity") {
-      $paramterList["imageRegistryManagedIdentityName"] = @{ Value = $imageRegistryManagedIdentityName; Note = "" }
+   if ($doNotGenerateManagedIdentityName) {
+      $paramterList["managedIdentityName"] = @{ Value = $managedIdentityName; Note = "A managed identity will be created with the specified name. To use a generated name re-run without the -doNotGenerateManagedIdentityName switch" }
    }
-   $paramterList | Format-Table -Property @{Label="Parameter"; Expression={$_.Key}}, @{Label="Value"; Expression={$_.Value.Value}}, @{Label="Note"; Expression={$_.Value.Note}} -AutoSize
+   else {
+      $paramterList["managedIdentityName"] = @{ Value = $managedIdentityName; Note = "A managed identity will be created with a generated name when the environment is deployed with '$managedIdentityName' included in the generated name. To disable name generation re-run with the -doNotGenerateManagedIdentityName switch" }
+   }
+   $paramterList.GetEnumerator() | Sort-Object Key | Format-Table -Property @{Label="Parameter"; Expression={$_.Key}}, @{Label="Value"; Expression={$_.Value.Value}}, @{Label="Note"; Expression={$_.Value.Note}} -Wrap
+
+   if ($script:imageHostType -eq "acr" -and $doNotGenerateImageRepositoryName -eq $false) {
+      Write-Host "An Azure container repository will be used. The image host name will be generated when the environment is deployed. To disable ACR name generation rerun the script with -doNotGenerateImageRepositoryName (do this if you already have an ACR)" -ForegroundColor Yellow
+   }
+   else {
+      Write-Host "The image host is '$script:imageHost'" -ForegroundColor Yellow
+   }
 }
 
 function GeneratedParametersFile {
+   param(
+      [string] $imageRegistryKeyVaultName,
+      [string] $managedIdentityName,
+      [string] $imageHost,
+      [string] $appInsightsConnectionString
+   )
+
    $finalImageName = $dockerImageName
    if ([string]::IsNullOrEmpty($dockerUserOrOrgName) -eq $false) {
       $finalImageName = "$dockerUserOrOrgName/$dockerImageName"
@@ -369,7 +590,7 @@ param kvImageRegistryPassword = getSecret('$imageRegistryKvSubscriptionId', '$re
       $imageCredentials = @"
 {
    type: 'managedIdentity'
-   username: '$imageRegistryManagedIdentityName'
+   username: '$managedIdentityName'
 }
 "@
    }
@@ -378,6 +599,26 @@ param kvImageRegistryPassword = getSecret('$imageRegistryKvSubscriptionId', '$re
 {
    type: 'keyVault'
 }
+"@
+   }
+
+   $roleAssignmentUserParam = "";
+   if ($applyUserRoleAssignments) {
+      $userObjectId = (az ad signed-in-user show --query 'id' --output tsv)
+      $roleAssignmentUserParam = "roleAssignmentUserObjectId: '$userObjectId'";
+   }
+
+   $applicationInsightsSettings = ""
+   if (-not [string]::IsNullOrEmpty($appInsightsConnectionString)) {
+      $applicationInsightsSettings = @"
+      {
+      name: 'AzureMonitorMetricExporterEnabled' 
+      value: 'true'
+      }
+      {
+      name: 'APPLICATIONINSIGHTS_CONNECTION_STRING' 
+      value: '$appInsightsConnectionString'
+      }
 "@
    }
   
@@ -389,7 +630,9 @@ using 'main.bicep'
 $keyVaultParams
 param mainConfig = {
    appName: '$loopName'
+   $roleAssignmentUserParam
    environmentVars: [
+      $applicationInsightsSettings
       {
       name: 'ExperimentalUnitDuration'
       value: '0:0:10'
@@ -453,58 +696,16 @@ function TryVerifyDocker {
    }
 }
 
-function TryCreateCredentials {
-   # setup image registry credentials
-   if ($imageRegistryCredType -eq "ManagedIdentity") {
-      $identity = az identity show --name $imageRegistryManagedIdentityName --resource-group $resourceGroupName --query "name" --output tsv 2>$null
-      if ($null -eq $identity) {
-         Write-Host "Creating Managed Identity '$imageRegistryManagedIdentityName' in resource group '$resourceGroupName'." -ForegroundColor Yellow
-         $result = az identity create --name $imageRegistryManagedIdentityName --resource-group $resourceGroupName --location $location
-         if ($result) {
-            Write-Host "Managed Identity '$imageRegistryManagedIdentityName' created in resource group '$resourceGroupName'." -ForegroundColor Green
-         }
-         else {
-            throw "Failed to create Managed Identity '$imageRegistryManagedIdentityName' in resource group '$resourceGroupName'."
-         }
-      }
-      else {
-         Write-Host "Managed Identity '$imageRegistryManagedIdentityName' already exists in resource group '$resourceGroupName'." -FopregroundColor Green
-      }
-   }
-   elseif ($imageRegistryCredType -eq "KeyVault") {
-      $keyVault = az keyvault show --name $imageRegistryKeyVaultName --resource-group $resourceGroupName --query "name" --output tsv 2>$null
-      if ($null -eq $keyVault) {
-         Write-Host "Creating KeyVault '$imageRegistryKeyVaultName' in resource group '$resourceGroupName'." -ForegroundColor Yellow
-         $result = az keyvault create --name $imageRegistryKeyVaultName --resource-group $resourceGroupName --location $location
-         if ($result) {
-            Write-Host "KeyVault '$imageRegistryKeyVaultName' created in resource group '$resourceGroupName'." -ForegroundColor Green
-         }
-         else {
-            throw "Failed to create KeyVault '$imageRegistryKeyVaultName' in resource group '$resourceGroupName'."
-         }
-      }
-      else {
-         Write-Host "KeyVault '$imageRegistryKeyVaultName' already exists in resource group '$resourceGroupName'." -ForegroundColor Green
-      }
-   
-      $secretUsername = Read-Host -Prompt "Enter your username" -AsSecureString
-      $secretPassword = Read-Host -Prompt "Enter your password" -AsSecureString
-      $usernamePlainText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secretUsername))
-      $passwordPlainText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secretPassword))
-      $principalId = az ad signed-in-user show --query objectId --output tsv
-      if ($principalId) {
-         # todo: check success of the following
-         az keyvault set-policy --name $imageRegistryKeyVaultName --object-id $principalId --secret-permissions set get
-         az keyvault secret set --vault-name $imageRegistryKeyVaultName --name $imageRegistryKvUserNameId --value $usernamePlainText
-         az keyvault secret set --vault-name $imageRegistryKeyVaultName --name $imageRegistryKvPasswordId --value $passwordPlainText
-      }
-      $usernamePlainText = $null
-      $passwordPlainText = $null
-   }
-}
-
 function TryPushDockerImage
 {
+   param(
+      [string] $dockerImageTar,
+      [string] $dockerImageName,
+      [string] $dockerImageTag,
+      [string] $dockerUserOrOrgName,
+      [string] $acrName
+   )
+
    Write-Host "Loading docker image: $dockerImageTar" -ForegroundColor Yellow
    docker load -i $dockerImageTar
    if ($LASTEXITCODE -eq 0) {
@@ -571,22 +772,34 @@ function TrySetupEnvironment {
       $registryPassword = PromptSecure -Prompt "Enter the password for the image registry"
 
       $userObjectId = (az ad signed-in-user show --query 'id' --output tsv)
-      Write-Host "`texecuting az command: $azResult = az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName managedIdentityName=$imageRegistryManagedIdentityName keyVaultName=$imageRegistryKeyVaultName imageRegistryUsernameId=$imageRegistryKvUserNameId imageRegistryUsername=********** imageRegistryPasswordId=$imageRegistryKvPasswordId imageRegistryPassword=************ userObjectId=$userObjectId" -ForegroundColor Gray
+      Write-Host "`texecuting az command: $azResult = az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName doNotGenerateACRName=$doNotGenerateImageRepositoryName managedIdentityName=$managedIdentityName doNotGenerateManagedIdentityName=$doNotGenerateImageRepositoryName keyVaultName=$imageRegistryKeyVaultName imageRegistryUsernameId=$imageRegistryKvUserNameId imageRegistryUsername=********** imageRegistryPasswordId=$imageRegistryKvPasswordId imageRegistryPassword=************ userObjectId=$userObjectId createAppInsights=$createApplicationInsights" -ForegroundColor Gray
       $azResult = az deployment sub create `
-      --location $location `
-      --name "$loopName-environment" `
-      --template-file .\environment.bicep `
-      --parameters resourceGroupName=$resourceGroupName managedIdentityName=$imageRegistryManagedIdentityName keyVaultName=$imageRegistryKeyVaultName imageRegistryUsernameId=$imageRegistryKvUserNameId imageRegistryUsername=$registryUsername imageRegistryPasswordId=$imageRegistryKvPasswordId imageRegistryPassword=$registryPassword userObjectId=$userObjectId
+         --location $location `
+         --name "$loopName-environment" `
+         --template-file .\environment.bicep `
+         --parameters `
+            resourceGroupName=$resourceGroupName `
+            doNotGenerateACRName=$doNotGenerateImageRepositoryName `
+            doNotGenerateManagedIdentityName=$doNotGenerateImageRepositoryName `
+            managedIdentityName=$managedIdentityName `
+            keyVaultName=$imageRegistryKeyVaultName `
+            imageRegistryUsernameId=$imageRegistryKvUserNameId `
+            imageRegistryUsername=$registryUsername `
+            imageRegistryPasswordId=$imageRegistryKvPasswordId `
+            imageRegistryPassword=$registryPassword `
+            userObjectId=$userObjectId `
+            createAppInsights=$createApplicationInsights
+
       $registryPassword = $null
       $registryUsername = $null
-      }
+   }
    else {
-      Write-Host "`texecuting az command: az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$imageRegistryManagedIdentityName" -ForegroundColor Gray
+      Write-Host "`texecuting az command: az deployment sub create --location $location --name "$loopName-environment" --template-file .\environment.bicep --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$managedIdentityName createAppInsights=$createApplicationInsights" -ForegroundColor Gray
       $azResult = az deployment sub create `
       --location $location `
       --name "$loopName-environment" `
       --template-file .\environment.bicep `
-      --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$imageRegistryManagedIdentityName
+      --parameters resourceGroupName=$resourceGroupName acrName=$acrName managedIdentityName=$managedIdentityName createAppInsights=$createApplicationInsights
    }
    $azResultJson = $azResult | ConvertFrom-Json
    if ($azResultJson.properties.provisioningState -eq "Succeeded") {
@@ -595,6 +808,7 @@ function TrySetupEnvironment {
    else {
       throw "Environment deployment failed: $azResultJson"
    }
+   return $azResultJson
 }
 
 function TryDeployLoop {
@@ -608,6 +822,7 @@ function TryDeployLoop {
    else {
       throw "Deployment failed: $azResultJson" 
    }
+   return $azResultJson
 }
 
 function TryVerifyAccountInfo {
@@ -619,6 +834,66 @@ function TryVerifyAccountInfo {
    Write-Host ""
 }
 
+function TryGenerateRLSimConfigConnStr {
+   param (
+      [string] $connectionString
+   )
+
+   return @"
+{
+   "ApplicationID": "$loopName",
+   "IsExplorationEnabled": true,
+   "InitialExplorationEpsilon": 1.0,
+   "EventHubInteractionConnectionString": "$connectionString;EntityPath=interaction",
+   "EventHubObservationConnectionString": "$connectionString;EntityPath=observation",
+   "model.vw.initial_command_line": "--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::",
+   "protocol.version": 2,
+   "model.source": "FILE_MODEL_DATA"
+}
+"@
+}
+
+function TryGenerateRLSimConfigAZ {
+   param (
+      [string] $eventHubEndpoint
+   )
+
+   return @"
+{
+   "ApplicationID": "$loopName",
+   "IsExplorationEnabled": true,
+   "InitialExplorationEpsilon": 1.0,
+   "http.api.header.key.name": "Authorization",
+   "http.api.oauth.token.type": "Bearer",
+   "interaction.sender.implementation": "INTERACTION_HTTP_API_SENDER_OAUTH_AZ",
+   "interaction.eventhub.name": "interaction",
+   "interaction.http.api.host": "${eventHubEndpoint}interaction/messages",
+   "observation.sender.implementation": "OBSERVATION_HTTP_API_SENDER_OAUTH_AZ",
+   "observation.eventhub.name": "observation",
+   "observation.http.api.host": "${eventHubEndpoint}observation/messages",
+   "model.vw.initial_command_line": "--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::",
+   "protocol.version": 2,
+   "model.source": "FILE_MODEL_DATA"
+}
+"@
+}
+
+function TryGenerateRLSimConfig {
+   param(
+      [PSCustomObject] $deploymentProperties
+   )
+
+   $rlSimConfig = ""
+   if ($rlSimConfigType -eq "connStr") {
+      $rlSimConfig = TryGenerateRLSimConfigConnStr -eventHubConnStr "CONNECTION_STRING_PLACEHOLDER"
+   }
+   else {
+      $rlSimConfig = TryGenerateRLSimConfigAZ -eventHubEndpoint $deploymentProperties.eventHubEndpoint.value
+   }
+   $rlSimConfig | Out-File -FilePath $rlSimConfigFilename -Encoding utf8
+   Write-Host "RLSim config file generated: $rlSimConfigFilename" -ForegroundColor Yellow
+}
+
 #############################################################################
 # Main script
 try {
@@ -626,9 +901,9 @@ try {
    TryVerifyAccountInfo
    ValidateAndDefaultParameters
    DisplayParameters
-   GeneratedParametersFile
 
    if ($noDeploy) {
+      GeneratedParametersFile -imageRegistryKeyVaultName $imageRegistryKeyVaultName -managedIdentityName $managedIdentityName -imageHost $script:imageHost
       Write-Host "Done... skipping deployment (noDeploy: $noDeploy)" -ForegroundColor Yellow
       exit 0
    }
@@ -638,16 +913,32 @@ try {
       Write-Host "Deployment aborted by the user." -ForegroundColor Yellow
       exit 0
    }
+   Write-Host ""
 
-   if ($skipSetupEnvironemt -eq $false) {
-      TrySetupEnvironment
+   # default the final values for parameters that may have been generated
+   $finalACRName = $acrName
+   $finalKeyVaultName = $keyVaultName
+   $finalManagedIdentityName = $managedIdentityName
+   $finalAppInsightsConnectionString = $applicationInsightsConnectionString
+   if ($skipSetupEnvironment -eq $false) {
+      $envResult = TrySetupEnvironment
+
+      # get the final values for parameters that may have been generated
+      $finalACRName = $envResult.properties.outputs.acrName.value
+      $finalKeyVaultName = $envResult.properties.outputs.keyVaultName.value
+      $finalManagedIdentityName = $envResult.properties.outputs.managedIdentityName.value
+      $finalAppInsightsConnectionString = $envResult.properties.outputs.appInsightsConnectionString.value
+      $script:imageHost = MakeImageHost -hostType $script:imageHostType -acrName $finalACRName
    }
+
+   GeneratedParametersFile -imageRegistryKeyVaultName $finalKeyVaultName -managedIdentityName $finalManagedIdentityName -imageHost $imageHost -appInsightsConnectionString $finalAppInsightsConnectionString
 
    if ($loadAndPushDockerImage -eq $true) {
-      TryPushDockerImage
+      TryPushDockerImage -dockerImageTar $dockerImageTar -dockerImageName $dockerImageName -dockerImageTag $dockerImageTag -dockerUserOrOrgName $dockerUserOrOrgName -acrName $finalACRName
    }
 
-   TryDeployLoop
+   $loopDeployResult = TryDeployLoop
+   TryGenerateRLSimConfig -deploymentProperties $loopDeployResult.properties.outputs
 }
 catch {
     Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
