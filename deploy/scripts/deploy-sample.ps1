@@ -836,7 +836,8 @@ function TryVerifyAccountInfo {
 
 function TryGenerateRLSimConfigConnStr {
    param (
-      [string] $connectionString
+      [string] $eventHubConnStr,
+      [string] $storageBlobEndpoint
    )
 
    return @"
@@ -844,18 +845,20 @@ function TryGenerateRLSimConfigConnStr {
    "ApplicationID": "$loopName",
    "IsExplorationEnabled": true,
    "InitialExplorationEpsilon": 1.0,
-   "EventHubInteractionConnectionString": "$connectionString;EntityPath=interaction",
-   "EventHubObservationConnectionString": "$connectionString;EntityPath=observation",
+   "EventHubInteractionConnectionString": "$eventHubConnStr;EntityPath=interaction",
+   "EventHubObservationConnectionString": "$eventHubConnStr;EntityPath=observation",
    "model.vw.initial_command_line": "--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::",
    "protocol.version": 2,
-   "model.source": "FILE_MODEL_DATA"
+   "model.source": "HTTP_MODEL_DATA",
+   "model.blob.uri": "$storageBlobEndpoint/exported-models/current?TOKEN_PLACEHOLDER"
 }
 "@
 }
 
 function TryGenerateRLSimConfigAZ {
    param (
-      [string] $eventHubEndpoint
+      [string] $eventHubEndpoint,
+      [string] $storageBlobEndpoint
    )
 
    return @"
@@ -873,7 +876,8 @@ function TryGenerateRLSimConfigAZ {
    "observation.http.api.host": "${eventHubEndpoint}observation/messages",
    "model.vw.initial_command_line": "--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::",
    "protocol.version": 2,
-   "model.source": "FILE_MODEL_DATA"
+   "model.source": "HTTP_MODEL_DATA_OAUTH_AZ",
+   "model.blob.uri": "$storageBlobEndpoint/exported-models/current"
 }
 "@
 }
@@ -885,13 +889,26 @@ function TryGenerateRLSimConfig {
 
    $rlSimConfig = ""
    if ($rlSimConfigType -eq "connStr") {
-      $rlSimConfig = TryGenerateRLSimConfigConnStr -eventHubConnStr "CONNECTION_STRING_PLACEHOLDER"
+      $rlSimConfig = TryGenerateRLSimConfigConnStr -eventHubConnStr "CONNECTION_STRING_PLACEHOLDER" -storageBlobEndpoint $deploymentProperties.storageBlobEndpoint.value
    }
    else {
-      $rlSimConfig = TryGenerateRLSimConfigAZ -eventHubEndpoint $deploymentProperties.eventHubEndpoint.value
+      $rlSimConfig = TryGenerateRLSimConfigAZ -eventHubEndpoint $deploymentProperties.eventHubEndpoint.value -storageBlobEndpoint $deploymentProperties.storageBlobEndpoint.value
    }
    $rlSimConfig | Out-File -FilePath $rlSimConfigFilename -Encoding utf8
    Write-Host "RLSim config file generated: $rlSimConfigFilename" -ForegroundColor Yellow
+}
+
+function TryInitializeStorage {
+   param(
+      [PSCustomObject] $deploymentProperties
+   )
+
+   $storageAccountName = $deploymentProperties.storageAccountName.value
+
+   Write-Host "Initializing storage..." -ForegroundColor Yellow
+   New-Item -path current -ItemType File -Force >$null
+   az storage blob upload --account-name $storageAccountName --container-name $loopName/exported-models --file ./current
+   Write-Host "Storage initialized." -ForegroundColor Green
 }
 
 #############################################################################
@@ -939,6 +956,7 @@ try {
 
    $loopDeployResult = TryDeployLoop
    TryGenerateRLSimConfig -deploymentProperties $loopDeployResult.properties.outputs
+   TryInitializeStorage -deploymentProperties $loopDeployResult.properties.outputs
 }
 catch {
     Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
