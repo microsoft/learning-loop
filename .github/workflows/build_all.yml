@@ -408,7 +408,7 @@ jobs:
       - name: Download Nuget
         uses: actions/download-artifact@v4
         with:
-          name: nuget-artifacts-${{ matrix.build.build_type }}
+          name: nuget-artifacts-debug
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: List Downloaded Nuget Packages
@@ -421,7 +421,7 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Build ConsoleJoiner Example
-        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
+        run: dotnet build -c debug examples/ConsoleJoiner/ConsoleJoiner.csproj
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
