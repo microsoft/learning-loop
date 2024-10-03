@@ -337,3 +337,91 @@ jobs:
       - name: Build ConsoleJoiner Example
         run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
      
+  # analyze the csharp trainer code using codeql
+  analyze-trainer-csharp:
+    needs: build-binary-parser
+    name: CSharp Trainer Analysis
+    runs-on: windows-latest
+    env:
+      # vw binary pareser packages are organized by build type and os name
+      VW_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/vw-bin/debug
+      # locally vw binaries are re-orgnized for the build.  all binaries
+      # are flattened in the build artifacts under vw-bin
+      VW_BINARY_PATH: ${{github.workspace}}/vw-bin
+
+    steps:
+      # there's no need to check submodules since they are not needed in this job
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore Binary Parser Binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vw-binaries-*
+          merge-multiple: true
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Reorganize VW Binaries
+        run: |
+          mkdir -p ${{ env.VW_BINARY_PATH }}
+          cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: csharp
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Build Common
+        run: dotnet build -c debug Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+
+      - name: Build OnlineTrainer
+        run: dotnet build -c debug OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+
+      - name: Build Tests
+        run: dotnet build -c debug Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  # analyze the csharp example code using codeql
+  analyze-examples-csharp:
+    needs: nuget-package
+    name: CSharp Examples Analysis
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download Nuget
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.BUILD_ARTIFACTS }}
+
+      - name: List Downloaded Nuget Packages
+        run: ls -l ${{ env.BUILD_ARTIFACTS }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: csharp
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Build ConsoleJoiner Example
+        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
