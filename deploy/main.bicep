@@ -105,6 +105,7 @@ module storage 'modules/storage.bicep' = {
       kind: mainConfig.storage.kind
       blobContainerName: mainConfig.appName
       roleAssignmentPrincipalId: containerGroup.outputs.containerPrincipalId
+      storageUserObjectId: mainConfig.roleAssignmentUserObjectId
     }
   }
 }
@@ -127,3 +128,5 @@ module eventhubs 'modules/eventhubs.bicep' = {
 }
 
 output eventHubEndpoint string = eventhubs.outputs.eventHubEndpoint
+output storageBlobEndpoint string = storage.outputs.storageBlobEndpoint
+output storageAccountName string = storage.outputs.storageAccountName

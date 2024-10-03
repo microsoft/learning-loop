@@ -19,6 +19,8 @@ type storageConfigT = {
   blobContainerName: string
   @description('Principal ID for the role assignments')
   roleAssignmentPrincipalId: string
+  @description('User Object ID storage access role assignments')
+  storageUserObjectId: string?
 }
 
 param storageConfig storageConfigT
@@ -58,3 +60,16 @@ resource storageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-04-0
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
   }
 }
+
+// Add role assignment to storage account for user access
+resource storageUserRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (!empty(storageConfig.storageUserObjectId)) {
+  name: guid(subscription().subscriptionId, 'UserStorageBlobDataContributor', storageConfig.name)
+  scope: storageAccount
+  properties: {
+    principalId: storageConfig.storageUserObjectId!
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  }
+}
+
+output storageAccountName string = storageAccount.name
+output storageBlobEndpoint string = '${storageAccount.properties.primaryEndpoints.blob}${storageConfig.blobContainerName}'
