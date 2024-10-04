@@ -358,7 +358,7 @@ jobs:
       # there's no need to check submodules since they are not needed in this job
       - name: Checkout Code
         uses: actions/checkout@v4
-          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.pull_request.head.ref }}
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.event.pull_request.head.ref }}
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
@@ -411,7 +411,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.pull_request.head.ref }}
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.event.pull_request.head.ref }}
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
