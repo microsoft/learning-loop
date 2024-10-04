@@ -61,7 +61,7 @@ jobs:
 
     steps:
       # checkout the code with submodules for vcpkg, and reinforcment_learning
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - run: git -C ${{ github.workspace }}/ext_libs/vcpkg fetch --unshallow
@@ -131,7 +131,7 @@ jobs:
 
     steps:
       # there's no need to check submodules since they are not needed in this job
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
@@ -191,7 +191,7 @@ jobs:
       TEST_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/${{ matrix.build.build_type }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
@@ -229,7 +229,7 @@ jobs:
       DOCKER_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/docker
      
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
@@ -276,7 +276,7 @@ jobs:
       NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
@@ -316,7 +316,7 @@ jobs:
           - { build_type: "release" }
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
 
@@ -342,6 +342,11 @@ jobs:
     needs: build-binary-parser
     name: CSharp Trainer Analysis
     runs-on: windows-latest
+    permissions:
+      # required for all workflows
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
     env:
       # vw binary pareser packages are organized by build type and os name
       VW_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/vw-bin/debug
@@ -351,9 +356,10 @@ jobs:
 
     steps:
       # there's no need to check submodules since they are not needed in this job
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Checkout Code
+        uses: actions/checkout@v4
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.pull_request.head.ref }}
+
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
@@ -372,7 +378,7 @@ jobs:
           cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: csharp
           config-file: ./.github/codeql/codeql-config.yml
@@ -387,18 +393,25 @@ jobs:
         run: dotnet build -c debug Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: csharp
 
   # analyze the csharp example code using codeql
   analyze-examples-csharp:
     needs: nuget-package
     name: CSharp Examples Analysis
     runs-on: windows-latest
+    permissions:
+      # required for all workflows
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
+      - name: Checkout Code
+        uses: actions/checkout@v4
+          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.pull_request.head.ref }}
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
@@ -415,7 +428,7 @@ jobs:
         run: ls -l ${{ env.BUILD_ARTIFACTS }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: csharp
           config-file: ./.github/codeql/codeql-config.yml
@@ -424,4 +437,6 @@ jobs:
         run: dotnet build -c debug examples/ConsoleJoiner/ConsoleJoiner.csproj
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: csharp
