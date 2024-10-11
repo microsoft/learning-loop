@@ -1,3 +1,5 @@
+// Deploys a container group for Leaning Loop; the Leaning Loop configuration
+// can be supplied via the containerConfig parameters.
 import * as f from './functions.bicep'
 
 // container group setup

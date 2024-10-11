@@ -1,67 +1,103 @@
 # Deploy a Learning Loop
 
-The deploy folder contains bicep scripts for deploying a sample Loop. These scripts can be used to deploy a self-contained loop environment or can be included in a more customized configuration.
+The deploy folder contains Bicep scripts for deploying a sample Loop. These scripts can be used to deploy a self-contained loop environment or can be included in a more customized configuration.
 
 ## Prerequisites
 
-- [PowerShell installed](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4)
-- [Azure CLI installed and authenticated](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-- [Docker Engine installed and running](https://docs.docker.com/engine/install/)
+### Linux
 
-## Sample Deployment Script
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+- [Docker Engine](https://docs.docker.com/engine/install/)
 
-The deploy-sample.ps1 script sets up a resource group to deploy the Learning Loop image (see `get-help ./deploy/scripts/deploy-sample.ps1`). The script executes in three phases.
+### Windows
 
-- Phase 1 (optional) -
-  deploys a resource group environment where the Loop resources will be deployed. If using an Azure container repository, the repository will be created here. Since Managed Identity is used by the Loop to access storage and Event Hub resources, a Managed Identity will also be created. If these resources exist, this phase can be skipped using -skipSetupEnvironment.
+- [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4)
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+- [Docker Engine](https://docs.docker.com/engine/install/)
 
-- Phase 2 (optional) -
-  pushes the specified tarred Docker image to either an Azure container registry or a Docker Hub repository. If the image is already in a repository, this phase can be skipped using -loadAndPushDockerImage $false.
+## Quick Start
 
-- Phase 3 (optional) -
-  deploys the Loop container, the storage account, and the Event Hub. This phase may be skipped if -noDeploy is specified. In this case, a `parameters.bicepparam` file will be generated with the specified parameters; this file can be used to deploy the Loop using az directly.
+Use the deploy-sample script to set up a new resource group environment and deploy a sample loop. A successful deployment requires the ability to create and manage the following resources in your Azure Subscription
 
-A full deployment using the deploy-sample.ps1 will deploy all required resource and generate two files.
+- Create Resource Groups
+- Ability to assign roles within the Resource Group
+- Create an Azure Container Registry (ACR)
+- Create Managed Identities
+- Create Storage Accounts
+- Create EventHubs
+- Create KeyVaults
+- Create Azure Container Groups and Container Instances
+- Create Application Insights
 
-- \<loopName\>.bicep - contains the parameters for deploying the application environment; this includes the Learning Loop container, Event Hub, and the Storage Account. This parameters file is used with `main.bicep` and can be re-run independently of the script.
-- \<loopName\>.config.json - contains the json config parameters for use with `rl_sim_cpp`
+**Note: At this time `Quick Start` requires the ability to download the Learning-Loop Docker artifact (see step 1)**
 
-## Sample Deployment using an Azure ACR
+1) Download the learning-loop Docker image artifact from the [latest successful build](https://github.com/microsoft/learning-loop/actions?query=is%3Asuccess). Click on the link to the latest successful build, then click on the Artifacts link located in the header of the page (or scroll to the bottom of the page). Select the link labeled `docker-image-ubuntu-latest`. Note the file path of the downloaded artifact zip file for use in step 6.
 
-The sample deployment will set up a resource group for your environment, create an Azure ACR, push the Docker image to the ACR, and deploy the Learning Loop with storage and Event Hub.
+>If you are unable to access the artifacts, you will need to [build the project](BUILD.md) and [the Docker image](DOCKER.md); come back to this step when the image is built.
+>
+>Note: In the future, the Docker image will be accessible from a public repository and this step will be obsolete (hang in there)
 
-Deploy the Docker image from your build or get the Docker image from the GitHub build; currently located [under action runs](https://github.com/microsoft/learning-loop/actions); download the latest docker artifact.
+<img src="images/learning-loop-artifacts.png" alt="Learning-Loop Artifacts" width="50%" style="margin-left: 40px;"/>
 
-The general steps are:
-1. Start the docker engine
-2. Start PowerShell
-3. Login to Azure (--use-device-code is recommended)
-4. Navigate to the `deploy` directory
-5. Run the deploy-sample.sh script
+2) Clone the [learning-loop](https://github.com/microsoft/learning-loop) GitHub repository
 
-**Note:** add -createApplicationInsights to the deploy-sample command to deploy application insights
+  ```bash
+  git clone https://github.com/microsoft/learning-loop.git
+  cd learning-loop/deploy
+  ```
 
-### Sample Deploy (Linux - not WSL)
+3) Log in to Azure
 
-```powershell
-sudo systemctl start docker.service
-sudo pwsh
-az login --use-device-code
-cd deploy
-./scripts/deploy-sample.sh -dockerImageTar ../learning-loop-ubuntu-latest.tar
-```
+  ```bash
+  az login --use-device-code
+  ```
 
-### Sample Deploy (Windows / Linux - WSL)
+4) Start the Docker Engine
 
-Run the below commands in PowerShell and ensure the Docker Engine is running.
+#### Linux
 
-```powershell
-docker info
-az login --use-device-code
-cd deploy
-./scripts/deploy-sample.ps1 -dockerImageTar ../learning-loop-ubuntu-latest.tar
-```
+  ```bash
+  sudo systemctl start docker.service
+  ```
+
+#### Windows (and Linux/WSL2)
+
+Launch the Docker Desktop application
+
+6) Run the deploy-sample script substituting DOCKER-IMAGE-FILE-PATH with the Docker image artifact obtained from step 1.
+
+#### Linux
+
+    ```bash
+    chmod +x ./scripts/deploy-sample.sh
+    ./scripts/deploy-sample.sh --dockerImageFile DOCKER-IMAGE-FILE-PATH
+    ```
+
+#### Windows
+
+    ```bash
+    ./scripts/deploy-sample.ps1 -dockerImageFile DOCKER-IMAGE-FILE-PATH
+    ```
 
 ## Next Steps
 
 - [Send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md)
+
+## Sample Deployment Script Details
+
+The deploy-sample script sets up a resource group to deploy the Learning Loop image (see `get-help ./deploy/scripts/deploy-sample.ps1` or `./deploy/scripts/deploy-sample.sh --help`). The script executes in three phases.
+
+- **Phase 1**: deploys a resource group environment where the Loop resources will be deployed. If using an Azure Container Registry, the repository will be created here. Since Managed Identity is used by the Loop to access storage and Event Hub resources, a Managed Identity will also be created.
+
+- **Phase 2**: pushes the specified tar'd Docker image to either an Azure Container Registry or a Docker Hub repository.
+
+- **Phase 3**: deploys the Loop container, the storage account, and the Event Hub.
+
+A full deployment using the deploy-sample script will deploy all required resources and generate two files.
+
+- `<loopName>.bicep` - contains the parameters for deploying the application environment, including the Learning Loop container, Event Hub, and the Storage Account. This parameters file is used with `main.bicep` and can be re-run independently of the script.
+- `<loopName>.config.json` - contains the JSON config parameters for use with `rl_sim_cpp`
+
+## Customize a deployment
+
+See the Bicep scripts and [README](deploy/README.md) in the project deploy folder for deployment details.

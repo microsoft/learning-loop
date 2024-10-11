@@ -1,4 +1,4 @@
-// storage account setup
+// Learning Loop storage account setup
 @export()
 type storageSkuType = 'Premium_LRS' | 'Premium_ZRS' | 'Standard_GRS' | 'Standard_GZRS' | 'Standard_LRS' | 'Standard_RAGRS' | 'Standard_RAGZRS' | 'Standard_ZRS'
 @export()
