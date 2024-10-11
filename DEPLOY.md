@@ -37,7 +37,7 @@ Use the deploy-sample script to set up a new resource group environment and depl
 
     Note: In the future, the Docker image will be accessible from a public repository and this step will be obsolete (hang in there)
 
-<img src="images/learning-loop-artifacts.png" alt="Learning-Loop Artifacts" width="50%" style="margin-left: 40px;"/>
+    <img src="images/learning-loop-artifacts.png" alt="Learning-Loop Artifacts" width="50%"/>
 
 2) Clone the [learning-loop](https://github.com/microsoft/learning-loop) GitHub repository
 
