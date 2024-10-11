@@ -33,51 +33,51 @@ Use the deploy-sample script to set up a new resource group environment and depl
 
 1) Download the learning-loop Docker image artifact from the [latest successful build](https://github.com/microsoft/learning-loop/actions?query=is%3Asuccess). Click on the link to the latest successful build, then click on the Artifacts link located in the header of the page (or scroll to the bottom of the page). Select the link labeled `docker-image-ubuntu-latest`. Note the file path of the downloaded artifact zip file for use in step 6.
 
->If you are unable to access the artifacts, you will need to [build the project](BUILD.md) and [the Docker image](DOCKER.md); come back to this step when the image is built.
->
->Note: In the future, the Docker image will be accessible from a public repository and this step will be obsolete (hang in there)
+    If you are unable to access the artifacts, you will need to [build the project](BUILD.md) and [the Docker image](DOCKER.md); come back to this step when the image is built.
+
+    Note: In the future, the Docker image will be accessible from a public repository and this step will be obsolete (hang in there)
 
 <img src="images/learning-loop-artifacts.png" alt="Learning-Loop Artifacts" width="50%" style="margin-left: 40px;"/>
 
 2) Clone the [learning-loop](https://github.com/microsoft/learning-loop) GitHub repository
 
-  ```bash
-  git clone https://github.com/microsoft/learning-loop.git
-  cd learning-loop/deploy
-  ```
+    ```bash
+    git clone https://github.com/microsoft/learning-loop.git
+    cd learning-loop/deploy
+    ```
 
 3) Log in to Azure
 
-  ```bash
-  az login --use-device-code
-  ```
+    ```bash
+    az login --use-device-code
+    ```
 
 4) Start the Docker Engine
 
-  #### Linux - Start Docker
+    #### Linux - Start Docker
 
-  ```bash
-  sudo systemctl start docker.service
-  ```
+    ```bash
+    sudo systemctl start docker.service
+    ```
 
-  #### Windows (and Linux/WSL2)
+    #### Windows (and Linux/WSL2)
 
-Launch the Docker Desktop application
+    Launch the Docker Desktop application
 
 6) Run the deploy-sample script substituting DOCKER-IMAGE-FILE-PATH with the Docker image artifact obtained from step 1.
 
-  #### Linux Script
+    #### Linux Script
 
-  ```bash
-  chmod +x ./scripts/deploy-sample.sh
-  ./scripts/deploy-sample.sh --dockerImageFile DOCKER-IMAGE-FILE-PATH
-  ```
+    ```bash
+    chmod +x ./scripts/deploy-sample.sh
+    ./scripts/deploy-sample.sh --dockerImageFile DOCKER-IMAGE-FILE-PATH
+    ```
 
-  #### Windows Script
+    #### Windows Script
 
-  ```bash
-  ./scripts/deploy-sample.ps1 -dockerImageFile DOCKER-IMAGE-FILE-PATH
-  ```
+    ```bash
+    ./scripts/deploy-sample.ps1 -dockerImageFile DOCKER-IMAGE-FILE-PATH
+    ```
 
 ## Next Steps
 
