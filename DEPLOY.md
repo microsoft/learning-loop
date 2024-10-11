@@ -4,16 +4,21 @@ The deploy folder contains Bicep scripts for deploying a sample Loop. These scri
 
 ## Prerequisites
 
+Azure CLI, Docker Engine, and Git should be available on your system. Linux requires the jq command line tool. All of these prerequisites should be availble via your package manager; see the below links for the details of each.
+
 ### Linux
 
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 - [Docker Engine](https://docs.docker.com/engine/install/)
+- [Git](https://git-scm.com/downloads)
+- [jq](https://jqlang.github.io/jq/download/)
 
 ### Windows
 
 - [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 - [Docker Engine](https://docs.docker.com/engine/install/)
+- [Git](https://git-scm.com/downloads)
 
 ## Quick Start
 
