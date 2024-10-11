@@ -54,26 +54,26 @@ Use the deploy-sample script to set up a new resource group environment and depl
 
 4) Start the Docker Engine
 
-### Linux - Start Docker
+  #### Linux - Start Docker
 
   ```bash
   sudo systemctl start docker.service
   ```
 
-### Windows (and Linux/WSL2)
+  #### Windows (and Linux/WSL2)
 
 Launch the Docker Desktop application
 
 6) Run the deploy-sample script substituting DOCKER-IMAGE-FILE-PATH with the Docker image artifact obtained from step 1.
 
-### Linux Script
+  #### Linux Script
 
   ```bash
   chmod +x ./scripts/deploy-sample.sh
   ./scripts/deploy-sample.sh --dockerImageFile DOCKER-IMAGE-FILE-PATH
   ```
 
-### Windows Script
+  #### Windows Script
 
   ```bash
   ./scripts/deploy-sample.ps1 -dockerImageFile DOCKER-IMAGE-FILE-PATH
