@@ -59,7 +59,7 @@ Use the deploy-sample script to set up a new resource group environment and depl
 
 4) Start the Docker Engine
 
-    #### Linux - Start Docker
+    #### Linux (not Windows-WSL2)
 
     ```bash
     sudo systemctl start docker.service
