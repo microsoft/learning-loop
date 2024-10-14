@@ -10,7 +10,7 @@ param appInsightsConnectionString string
 
 // build the environment variables for the app container
 var environmentVars = !empty(config.loopConfig.environmentVars) ? config.loopConfig.environmentVars : []
-var environmentVarsStr = join(map(environmentVars!, e => format('\t\t{{\r\t\t\tname: \'{0}\'\r\t\t\tvalue: \'{1}\'\r\t\t}}\r', e.name, e.value)) , '')
+var environmentVarsStr = join(map(environmentVars!, e => format('\t\t{{\n\t\t\tname: \'{0}\'\n\t\t\tvalue: \'{1}\'\n\t\t}}', e.name, e.value)) , '\n')
 
 // generate key vault subscription id if needed
 var kvSubscriptionId = (config.image.properties.kind == 'dockerhub') ? config.image.properties.credentials!.keyVault!.kvSubscriptionId : ''
