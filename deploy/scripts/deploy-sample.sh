@@ -197,7 +197,7 @@ get_docker_image_tar() {
       echo "$dockerImageFile"
       ;;
    zip)
-      unzip -o "$dockerImageFile" -d .
+      unzip -o "$dockerImageFile" -d . > /dev/null
       local expectedGzFile="${expectedArchivedImageName}.tar.gz"
       if [ ! -f "$expectedGzFile" ]; then
          echo -e "${RED}Cannot find the gzip'd docker image file $expectedGzFile unpacked from $dockerImageFile${NC}" >&2
