@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "8989885918168161314"
+      "templateHash": "1844186992714941578"
     }
   },
   "functions": [
@@ -192,7 +192,7 @@
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "sample-loop-stg",
+      "defaultValue": "sampleloopstg",
       "metadata": {
         "description": "Storage Account name"
       }
