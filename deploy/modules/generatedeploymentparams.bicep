@@ -23,27 +23,21 @@ param kvImageRegistryPassword = getSecret('{subscriptionid}', '{resourcegroup}',
 ''', '{subscriptionid}', finalKvSubscriptionId)
 
 var keyVaultSecretsVar_1 = config.image.properties.kind == 'acr' ? '' : replace(keyVaultSecretsVar_0, '{resourcegroup}', config.resourceGroupName)
-
 var keyVaultSecretsVar_2 = config.image.properties.kind == 'acr' ? '' : replace(keyVaultSecretsVar_1, '{keyvaultname}', finalKeyVaultName)
-
 var keyVaultSecretsVar_3 = config.image.properties.kind == 'acr' ? '' : replace(keyVaultSecretsVar_2, '{usersecretid}', config.image.properties.credentials!.keyVault!.kvUserNameId)
-
-var keyVaultSecretsVar_4 = config.image.properties.kind == 'acr' ? '' : replace(keyVaultSecretsVar_3, '{passwordsecretid}', config.image.properties.credentials!.keyVault!.kvPasswordId)
-
-var keyVaultSecretsVarClean = replace(keyVaultSecretsVar_4, '\n', '')
-var keyVaultSecretsVar = keyVaultSecretsVarClean
+var keyVaultSecretsVarFinal = config.image.properties.kind == 'acr' ? '' : replace(keyVaultSecretsVar_3, '{passwordsecretid}', config.image.properties.credentials!.keyVault!.kvPasswordId)
+var keyVaultSecretsVar = keyVaultSecretsVarFinal
 
 // generate user role assignment principal id  if needed
-var roleAssignmentUserObjectIdVar_0 = empty(finalUserRoleAssignmentPrincipalId) ? '''
+var roleAssignmentUserObjectIdVarFinal = empty(finalUserRoleAssignmentPrincipalId) ? '''
 roleAssignmentUserObjectId: null
 ''' : replace('''
 roleAssignmentUserObjectId: '{0}'
 ''', '{0}', finalUserRoleAssignmentPrincipalId)
-var roleAssignmentUserObjectIdVarClean = replace(roleAssignmentUserObjectIdVar_0, '\n', '')
-var roleAssignmentUserObjectIdVar = roleAssignmentUserObjectIdVarClean
+var roleAssignmentUserObjectIdVar = roleAssignmentUserObjectIdVarFinal
 
 // generate app insights setup if needed
-var appInsightsEnvVar_0 = empty(appInsightsConnectionString) ? '' : replace('''
+var appInsightsEnvVarFinal = empty(appInsightsConnectionString) ? '' : replace('''
       {
         name: 'AzureMonitorMetricExporterEnabled' 
         value: 'true'
@@ -53,13 +47,12 @@ var appInsightsEnvVar_0 = empty(appInsightsConnectionString) ? '' : replace('''
         value: '{0}'
       }
 ''', '{0}', appInsightsConnectionString)
-var appInsightsEnvVarClean = replace(appInsightsEnvVar_0, '\n', '')
-var appInsightsEnvVar = appInsightsEnvVarClean
+var appInsightsEnvVar = appInsightsEnvVarFinal
 
 // generate image host and credentials if needed
 var imageHostVar = config.image.properties.kind == 'acr' ? '${finalAcrName}.azurecr.io' : 'docker.io'
 
-var imageCredsVar_0 = config.image.properties.kind == 'acr' ? replace('''
+var imageCredsVarFinal = config.image.properties.kind == 'acr' ? replace('''
           credentials: {
             type: 'managedIdentity'
             username: '{0}'
@@ -69,8 +62,7 @@ var imageCredsVar_0 = config.image.properties.kind == 'acr' ? replace('''
             type: 'keyVault'
           }
 '''
-var imageCredsVarClean = replace(imageCredsVar_0, '\n', '')
-var imageCredsVar = imageCredsVarClean
+var imageCredsVar = imageCredsVarFinal
 
 // generate the deployment parameters using replacement values
 var appDeploymentParams_0 = replace('''
@@ -126,10 +118,8 @@ var appDeploymentParams_9 = replace(appDeploymentParams_8, '{container-cpucores}
 var appDeploymentParams_10 = replace(appDeploymentParams_9, '{container-memorygig}', string(config.loopConfig.container.memoryGig))
 var appDeploymentParams_11 = replace(appDeploymentParams_10, '{image-name}', config.image.name)
 var appDeploymentParams_12 = replace(appDeploymentParams_11, '{image-tag}', config.image.tag)
-var appDeploymentParams_13 = replace(appDeploymentParams_12, '{environmentVarsString}', environmentVarsStr)
-
-var appDeploymentParamsClean = replace(appDeploymentParams_13, '\n', '')
-var appDeploymentParams = appDeploymentParamsClean
+var appDeploymentParamsFinal = replace(appDeploymentParams_12, '{environmentVarsString}', environmentVarsStr)
+var appDeploymentParams = appDeploymentParamsFinal
 
 output loopDeploymentParams string = appDeploymentParams
 output imageHost string = imageHostVar

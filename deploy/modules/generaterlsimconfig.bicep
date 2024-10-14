@@ -16,9 +16,8 @@ var rlSimConfigConnStrVal_0 = replace('''
    "model.blob.uri": "{storageBlobEndpoint}/exported-models/current?<TOKEN_PLACEHOLDER>"
 }
 ''', '{loopName}', loopName)
-var rlSimConfigConnStrVal_1 = replace(rlSimConfigConnStrVal_0, '{storageBlobEndpoint}', storageBlobEndpoint)
-var rlSimConfigConnStrValClean = replace(rlSimConfigConnStrVal_1, '\n', '')
-var rlSimConfigConnStrVal = rlSimConfigConnStrValClean
+var rlSimConfigConnStrValFinal = replace(rlSimConfigConnStrVal_0, '{storageBlobEndpoint}', storageBlobEndpoint)
+var rlSimConfigConnStrVal = rlSimConfigConnStrValFinal
 
 var rlSimConfigAzVal_0 = replace('''
 {
@@ -40,9 +39,8 @@ var rlSimConfigAzVal_0 = replace('''
 }
 ''', '{loopName}', loopName)
 var rlSimConfigAzVal_1 = replace(rlSimConfigAzVal_0, '{eventHubEndpoint}', eventHubEndpoint)
-var rlSimConfigAzVal_2 = replace(rlSimConfigAzVal_1, '{storageBlobEndpoint}', storageBlobEndpoint)
-var rlSimConfigAzValClean = replace(rlSimConfigAzVal_2, '\n', '')
-var rlSimConfigAzVal = rlSimConfigAzValClean
+var rlSimConfigAzValFinal = replace(rlSimConfigAzVal_1, '{storageBlobEndpoint}', storageBlobEndpoint)
+var rlSimConfigAzVal = rlSimConfigAzValFinal
 
 output rlSimConfigAz string = rlSimConfigAzVal
 output rlSimConfigConnStr string = rlSimConfigConnStrVal
