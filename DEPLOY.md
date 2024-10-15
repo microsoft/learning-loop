@@ -197,7 +197,7 @@ Create a Learning Loop manually. These steps will require you to login to the Az
 
 ## Docker Image Artifact
 
-The Docker image is currently built with GitHub Actions and does not currently reside in a public repository.  We are working make the image public and will update this document when complete.
+The Docker image is currently built with GitHub Actions and does not currently reside in a public repository.  We are working to make the image public and will update this document when complete.
 
 In the meantime, download the Learning Loop Docker image artifact from the [latest successful build](https://github.com/microsoft/learning-loop/actions?query=is%3Asuccess). Click on the link to the latest successful build, then click on the Artifacts link located in the header of the page (or scroll to the bottom of the page). Select the link labeled `docker-image-ubuntu-latest`.
 
