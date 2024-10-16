@@ -1,0 +1,1225 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "1844186992714941578"
+    }
+  },
+  "functions": [
+    {
+      "namespace": "_1",
+      "members": {
+        "makeAppContainerGroupName": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "prefix"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[_1.makeResourceName(take(parameters('prefix'), 48), 'cg')]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        },
+        "makeContainerImagePath": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "server"
+            },
+            {
+              "type": "string",
+              "name": "imageName"
+            },
+            {
+              "type": "string",
+              "name": "imageTag"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[format('{0}/{1}:{2}', parameters('server'), parameters('imageName'), parameters('imageTag'))]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        },
+        "makeEventHubName": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "prefix"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[_1.makeResourceName(take(parameters('prefix'), 35), 'eh')]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        },
+        "makeEventhubNamespace": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "eventHubName"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[format('{0}.servicebus.windows.net', parameters('eventHubName'))]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        },
+        "makeResourceName": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "prefix"
+            },
+            {
+              "type": "string",
+              "name": "suffix"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[format('{0}{1}{2}', parameters('prefix'), uniqueString(resourceGroup().id), parameters('suffix'))]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        },
+        "makeStorageAccountName": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "prefix"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[_1.makeResourceName(take(parameters('prefix'), 8), 'stg')]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        },
+        "makeStorageAccountUrl": {
+          "parameters": [
+            {
+              "type": "string",
+              "name": "storageAccountName"
+            }
+          ],
+          "output": {
+            "type": "string",
+            "value": "[format('https://{0}.blob.{1}', parameters('storageAccountName'), environment().suffixes.storage)]"
+          },
+          "metadata": {
+            "__bicep_imported_from!": {
+              "sourceTemplate": "modules/functions.bicep"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "loopName": {
+      "type": "string",
+      "defaultValue": "sample-loop",
+      "metadata": {
+        "description": "Learning Loop name"
+      }
+    },
+    "containerGroupName": {
+      "type": "string",
+      "defaultValue": "sample-loop-cg",
+      "metadata": {
+        "description": "Container Group name"
+      }
+    },
+    "containerCpuCores": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "Container CPU Cores"
+      }
+    },
+    "containerMemoryGig": {
+      "type": "int",
+      "defaultValue": 16,
+      "metadata": {
+        "description": "Container Memory in GB"
+      }
+    },
+    "managedIdentityName": {
+      "type": "string",
+      "defaultValue": "[format('mi-sample-loop-{0}', uniqueString(tenant().tenantId))]",
+      "metadata": {
+        "description": "Managed Identity name"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "sampleloopstg",
+      "metadata": {
+        "description": "Storage Account name"
+      }
+    },
+    "storageAccountSku": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage Account SKU"
+      }
+    },
+    "eventhubsName": {
+      "type": "string",
+      "defaultValue": "sample-loop-eh",
+      "metadata": {
+        "description": "Event Hubs name"
+      }
+    },
+    "eventhubsCapacity": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "Event Hubs capacity"
+      }
+    },
+    "eventhubsPartitionCount": {
+      "type": "int",
+      "defaultValue": 16,
+      "metadata": {
+        "description": "Event Hubs partition count"
+      }
+    },
+    "eventhubsRetentionDays": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Event Hubs retention days"
+      }
+    },
+    "containerImageName": {
+      "type": "string",
+      "defaultValue": "learning-loop",
+      "metadata": {
+        "description": "Container Image name"
+      }
+    },
+    "containerImageTag": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Container Image tag"
+      }
+    },
+    "registryHost": {
+      "type": "string",
+      "defaultValue": "[format('acrsampleloop{0}.azurecr.io', uniqueString(tenant().tenantId))]",
+      "metadata": {
+        "description": "Registry Host"
+      }
+    },
+    "userRoleAssignmentPrincipalId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Principal ID for the role assignments"
+      }
+    },
+    "appInsightsEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Application Insights"
+      }
+    },
+    "appInsightsConnectionString": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Application Insights Connection String"
+      }
+    },
+    "loopEnvVarExperimentalUnitDuration": {
+      "type": "string",
+      "defaultValue": "0:0:10",
+      "metadata": {
+        "description": "Loop Experimental Unit Duration"
+      }
+    },
+    "loopEnvVarTrainerEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Loop Trainer Enabled"
+      }
+    },
+    "loopEnvVarJoinerEnabled": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Loop Joiner Enabled"
+      }
+    },
+    "loopEnvVarMachineLearningArguments": {
+      "type": "string",
+      "defaultValue": "--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::",
+      "metadata": {
+        "description": "Loop Machine Learning Arguments"
+      }
+    },
+    "loopEnvVarLastConfigurationEditDate": {
+      "type": "string",
+      "defaultValue": "2024-01-01",
+      "metadata": {
+        "description": "Loop Last Configuration Edit Date"
+      }
+    },
+    "resourceTags": {
+      "type": "object",
+      "defaultValue": {
+        "deploymentGroupName": "sample-loop"
+      },
+      "metadata": {
+        "description": "Tag for all resources"
+      }
+    }
+  },
+  "variables": {
+    "containerEnvironmentVars": [
+      {
+        "name": "AppId",
+        "value": "[parameters('loopName')]"
+      },
+      {
+        "name": "StorageAccountUrl",
+        "value": "[_1.makeStorageAccountUrl(parameters('storageAccountName'))]"
+      },
+      {
+        "name": "FullyQualifiedEventHubNamespace",
+        "value": "[_1.makeEventhubNamespace(parameters('eventhubsName'))]"
+      },
+      {
+        "name": "AzureMonitorMetricExporterEnabled",
+        "value": "[string(parameters('appInsightsEnabled'))]"
+      },
+      {
+        "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+        "value": "[parameters('appInsightsConnectionString')]"
+      },
+      {
+        "name": "ExperimentalUnitDuration",
+        "value": "[parameters('loopEnvVarExperimentalUnitDuration')]"
+      },
+      {
+        "name": "TrainerEnabled",
+        "value": "[parameters('loopEnvVarTrainerEnabled')]"
+      },
+      {
+        "name": "JoinerEnabled",
+        "value": "[parameters('loopEnvVarJoinerEnabled')]"
+      },
+      {
+        "name": "MachineLearningArguments",
+        "value": "[parameters('loopEnvVarMachineLearningArguments')]"
+      },
+      {
+        "name": "LastConfigurationEditDate",
+        "value": "[parameters('loopEnvVarLastConfigurationEditDate')]"
+      }
+    ],
+    "containerImage": {
+      "name": "[parameters('containerImageName')]",
+      "tag": "[parameters('containerImageTag')]",
+      "registry": {
+        "host": "[parameters('registryHost')]",
+        "credentials": {
+          "isManagedIdentity": true,
+          "username": "[parameters('managedIdentityName')]",
+          "password": null
+        }
+      }
+    }
+  },
+  "resources": {
+    "containerGroup": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "container",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "containerConfig": {
+            "value": {
+              "name": "[parameters('containerGroupName')]",
+              "resourceTags": "[parameters('resourceTags')]",
+              "location": "[parameters('location')]",
+              "environmentVars": "[variables('containerEnvironmentVars')]",
+              "cpuCores": "[parameters('containerCpuCores')]",
+              "memoryGig": "[parameters('containerMemoryGig')]",
+              "image": "[variables('containerImage')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "2062366557412561617"
+            }
+          },
+          "definitions": {
+            "containerConfigT": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Name of the container group"
+                  }
+                },
+                "resourceTags": {
+                  "type": "object",
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Tags applied to each deployed resource"
+                  }
+                },
+                "location": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Location for the container group"
+                  }
+                },
+                "environmentVars": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "metadata": {
+                    "description": "Environment variables for the container application"
+                  }
+                },
+                "cpuCores": {
+                  "type": "int",
+                  "metadata": {
+                    "description": "Number of CPU cores to allocate for the container"
+                  }
+                },
+                "memoryGig": {
+                  "type": "int",
+                  "metadata": {
+                    "description": "Amount of memory in GB to allocate for the container"
+                  }
+                },
+                "image": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "The name of the container image"
+                      }
+                    },
+                    "tag": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "The tag of the container image"
+                      }
+                    },
+                    "registry": {
+                      "type": "object",
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "metadata": {
+                            "description": "The host of the container registry (e.g. myregistry.azurecr.io)"
+                          }
+                        },
+                        "credentials": {
+                          "type": "object",
+                          "properties": {
+                            "isManagedIdentity": {
+                              "type": "bool",
+                              "metadata": {
+                                "description": "Indicates if the container registry credentials are managed identity or username/password"
+                              }
+                            },
+                            "username": {
+                              "type": "securestring",
+                              "metadata": {
+                                "description": "The username for the container registry if not using managed identity; otherwise, the managed identity name"
+                              }
+                            },
+                            "password": {
+                              "type": "securestring",
+                              "nullable": true,
+                              "metadata": {
+                                "description": "The password for the container registry"
+                              }
+                            }
+                          },
+                          "metadata": {
+                            "description": "The credentials for the container registry"
+                          }
+                        }
+                      },
+                      "metadata": {
+                        "description": "The registry configuration for the container image"
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "description": "The image configuration for the container instance"
+                  }
+                }
+              }
+            }
+          },
+          "functions": [
+            {
+              "namespace": "_1",
+              "members": {
+                "makeAppContainerGroupName": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "prefix"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[_1.makeResourceName(take(parameters('prefix'), 48), 'cg')]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                },
+                "makeContainerImagePath": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "server"
+                    },
+                    {
+                      "type": "string",
+                      "name": "imageName"
+                    },
+                    {
+                      "type": "string",
+                      "name": "imageTag"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[format('{0}/{1}:{2}', parameters('server'), parameters('imageName'), parameters('imageTag'))]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                },
+                "makeEventHubName": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "prefix"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[_1.makeResourceName(take(parameters('prefix'), 35), 'eh')]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                },
+                "makeEventhubNamespace": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "eventHubName"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[format('{0}.servicebus.windows.net', parameters('eventHubName'))]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                },
+                "makeResourceName": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "prefix"
+                    },
+                    {
+                      "type": "string",
+                      "name": "suffix"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[format('{0}{1}{2}', parameters('prefix'), uniqueString(resourceGroup().id), parameters('suffix'))]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                },
+                "makeStorageAccountName": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "prefix"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[_1.makeResourceName(take(parameters('prefix'), 8), 'stg')]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                },
+                "makeStorageAccountUrl": {
+                  "parameters": [
+                    {
+                      "type": "string",
+                      "name": "storageAccountName"
+                    }
+                  ],
+                  "output": {
+                    "type": "string",
+                    "value": "[format('https://{0}.blob.{1}', parameters('storageAccountName'), environment().suffixes.storage)]"
+                  },
+                  "metadata": {
+                    "__bicep_imported_from!": {
+                      "sourceTemplate": "functions.bicep"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "parameters": {
+            "containerConfig": {
+              "$ref": "#/definitions/containerConfigT"
+            }
+          },
+          "variables": {
+            "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
+            "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
+            "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
+          },
+          "resources": {
+            "acrPullIdentity": {
+              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
+              "existing": true,
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('containerConfig').image.registry.credentials.username]"
+            },
+            "containerGroup": {
+              "type": "Microsoft.ContainerInstance/containerGroups",
+              "apiVersion": "2021-09-01",
+              "name": "[parameters('containerConfig').name]",
+              "location": "[parameters('containerConfig').location]",
+              "tags": "[parameters('containerConfig').resourceTags]",
+              "identity": {
+                "type": "[variables('containerGroupIdentityType')]",
+                "userAssignedIdentities": "[variables('userAssignedIdentities')]"
+              },
+              "properties": {
+                "containers": [
+                  {
+                    "name": "[parameters('containerConfig').name]",
+                    "properties": {
+                      "image": "[variables('containerImagePath')]",
+                      "environmentVariables": "[parameters('containerConfig').environmentVars]",
+                      "resources": {
+                        "requests": {
+                          "cpu": "[parameters('containerConfig').cpuCores]",
+                          "memoryInGB": "[parameters('containerConfig').memoryGig]"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "osType": "Linux",
+                "restartPolicy": "OnFailure",
+                "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
+              },
+              "dependsOn": [
+                "acrPullIdentity"
+              ]
+            }
+          },
+          "outputs": {
+            "containerPrincipalId": {
+              "type": "string",
+              "value": "[reference('containerGroup', '2021-09-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      }
+    },
+    "storage": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "storage",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageConfig": {
+            "value": {
+              "name": "[parameters('storageAccountName')]",
+              "resourceTags": "[parameters('resourceTags')]",
+              "location": "[parameters('location')]",
+              "sku": "[parameters('storageAccountSku')]",
+              "kind": "StorageV2",
+              "blobContainerName": "[parameters('loopName')]",
+              "roleAssignmentPrincipalId": "[reference('containerGroup').outputs.containerPrincipalId.value]",
+              "storageUserObjectId": "[parameters('userRoleAssignmentPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "16700941072054243492"
+            }
+          },
+          "definitions": {
+            "storageSkuType": {
+              "type": "string",
+              "allowedValues": [
+                "Premium_LRS",
+                "Premium_ZRS",
+                "Standard_GRS",
+                "Standard_GZRS",
+                "Standard_LRS",
+                "Standard_RAGRS",
+                "Standard_RAGZRS",
+                "Standard_ZRS"
+              ],
+              "metadata": {
+                "__bicep_export!": true
+              }
+            },
+            "storageKindType": {
+              "type": "string",
+              "allowedValues": [
+                "BlobStorage",
+                "BlockBlobStorage",
+                "FileStorage",
+                "Storage",
+                "StorageV2"
+              ],
+              "metadata": {
+                "__bicep_export!": true
+              }
+            },
+            "storageConfigT": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Name of the storage account"
+                  }
+                },
+                "resourceTags": {
+                  "type": "object",
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Tags applied to each deployed resource"
+                  }
+                },
+                "location": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Location for the storage account"
+                  }
+                },
+                "sku": {
+                  "$ref": "#/definitions/storageSkuType",
+                  "metadata": {
+                    "description": "SKU for the storage account (e.g. Standard_LRS)"
+                  }
+                },
+                "kind": {
+                  "$ref": "#/definitions/storageKindType",
+                  "metadata": {
+                    "description": "Kind of storage account (e.g. StorageV2)"
+                  }
+                },
+                "blobContainerName": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Name of the blob container to create"
+                  }
+                },
+                "roleAssignmentPrincipalId": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Principal ID for the role assignments"
+                  }
+                },
+                "storageUserObjectId": {
+                  "type": "string",
+                  "nullable": true,
+                  "metadata": {
+                    "description": "User Object ID storage access role assignments"
+                  }
+                }
+              }
+            }
+          },
+          "parameters": {
+            "storageConfig": {
+              "$ref": "#/definitions/storageConfigT"
+            }
+          },
+          "resources": {
+            "storageAccount::blob_stg::appContainer": {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2019-06-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageConfig').name, 'default', parameters('storageConfig').blobContainerName)]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "storageAccount::blob_stg"
+              ]
+            },
+            "storageAccount::blob_stg": {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2019-06-01",
+              "name": "[format('{0}/{1}', parameters('storageConfig').name, 'default')]",
+              "dependsOn": [
+                "storageAccount"
+              ]
+            },
+            "storageAccount": {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[parameters('storageConfig').name]",
+              "location": "[parameters('storageConfig').location]",
+              "tags": "[parameters('storageConfig').resourceTags]",
+              "sku": {
+                "name": "[parameters('storageConfig').sku]"
+              },
+              "kind": "[parameters('storageConfig').kind]",
+              "properties": {
+                "allowBlobPublicAccess": false,
+                "accessTier": "Hot"
+              }
+            },
+            "storageRoleAssigment": {
+              "condition": "[not(empty(parameters('storageConfig').roleAssignmentPrincipalId))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageConfig').name)]",
+              "name": "[guid(subscription().subscriptionId, 'StorageBlobDataContributor', parameters('storageConfig').name)]",
+              "properties": {
+                "principalId": "[parameters('storageConfig').roleAssignmentPrincipalId]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+              },
+              "dependsOn": [
+                "storageAccount"
+              ]
+            },
+            "storageUserRoleAssigment": {
+              "condition": "[not(empty(parameters('storageConfig').storageUserObjectId))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageConfig').name)]",
+              "name": "[guid(subscription().subscriptionId, 'UserStorageBlobDataContributor', parameters('storageConfig').name)]",
+              "properties": {
+                "principalId": "[parameters('storageConfig').storageUserObjectId]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+              },
+              "dependsOn": [
+                "storageAccount"
+              ]
+            }
+          },
+          "outputs": {
+            "storageAccountName": {
+              "type": "string",
+              "value": "[parameters('storageConfig').name]"
+            },
+            "storageBlobEndpoint": {
+              "type": "string",
+              "value": "[format('{0}{1}', reference('storageAccount').primaryEndpoints.blob, parameters('storageConfig').blobContainerName)]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "containerGroup"
+      ]
+    },
+    "eventhubs": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "eventhubs",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "eventhubsConfig": {
+            "value": {
+              "name": "[parameters('eventhubsName')]",
+              "resourceTags": "[parameters('resourceTags')]",
+              "location": "[parameters('location')]",
+              "sku": "Basic",
+              "capacity": "[parameters('eventhubsCapacity')]",
+              "messageRetentionDays": "[parameters('eventhubsRetentionDays')]",
+              "partitionCount": "[parameters('eventhubsPartitionCount')]",
+              "roleAssignmentPrincipalId": "[reference('containerGroup').outputs.containerPrincipalId.value]",
+              "senderReceiverUserObjectId": "[parameters('userRoleAssignmentPrincipalId')]"
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "3492701728021921226"
+            }
+          },
+          "definitions": {
+            "eventhubSkuType": {
+              "type": "string",
+              "allowedValues": [
+                "Basic",
+                "Premium",
+                "Standard"
+              ],
+              "metadata": {
+                "__bicep_export!": true
+              }
+            },
+            "eventhubsConfigT": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Name of the event hub namespace"
+                  }
+                },
+                "resourceTags": {
+                  "type": "object",
+                  "nullable": true,
+                  "metadata": {
+                    "description": "Tags applied to each deployed resource"
+                  }
+                },
+                "location": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Location for the event hub namespace"
+                  }
+                },
+                "sku": {
+                  "$ref": "#/definitions/eventhubSkuType",
+                  "metadata": {
+                    "description": "SKU for the event hub namespace (e.g. Standard)"
+                  }
+                },
+                "capacity": {
+                  "type": "int",
+                  "minValue": 0,
+                  "maxValue": 20,
+                  "metadata": {
+                    "description": "The capacity of the event hub"
+                  }
+                },
+                "messageRetentionDays": {
+                  "type": "int",
+                  "minValue": 1,
+                  "maxValue": 7,
+                  "metadata": {
+                    "description": "Number of days to retain the events for this Event Hub, value should be 1 to 7 days"
+                  }
+                },
+                "partitionCount": {
+                  "type": "int",
+                  "minValue": 1,
+                  "maxValue": 32,
+                  "metadata": {
+                    "description": "The number of partitions in the Event Hub"
+                  }
+                },
+                "roleAssignmentPrincipalId": {
+                  "type": "string",
+                  "metadata": {
+                    "description": "Principal ID for the role assignments"
+                  }
+                },
+                "senderReceiverUserObjectId": {
+                  "type": "string",
+                  "nullable": true,
+                  "metadata": {
+                    "description": "User Object ID for the sender/receiver role assignments"
+                  }
+                }
+              }
+            }
+          },
+          "parameters": {
+            "eventhubsConfig": {
+              "$ref": "#/definitions/eventhubsConfigT"
+            }
+          },
+          "variables": {
+            "observationEventHubName": "observation",
+            "interactionEventHubName": "interaction",
+            "minTlsVersion": "1.2"
+          },
+          "resources": {
+            "eventHub::observationEventHub": {
+              "type": "Microsoft.EventHub/namespaces/eventhubs",
+              "apiVersion": "2023-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('eventhubsConfig').name, variables('observationEventHubName'))]",
+              "properties": {
+                "messageRetentionInDays": "[parameters('eventhubsConfig').messageRetentionDays]",
+                "partitionCount": "[parameters('eventhubsConfig').partitionCount]"
+              },
+              "dependsOn": [
+                "eventHub"
+              ]
+            },
+            "eventHub::interactionEventHub": {
+              "type": "Microsoft.EventHub/namespaces/eventhubs",
+              "apiVersion": "2023-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('eventhubsConfig').name, variables('interactionEventHubName'))]",
+              "properties": {
+                "messageRetentionInDays": "[parameters('eventhubsConfig').messageRetentionDays]",
+                "partitionCount": "[parameters('eventhubsConfig').partitionCount]"
+              },
+              "dependsOn": [
+                "eventHub"
+              ]
+            },
+            "eventHub": {
+              "type": "Microsoft.EventHub/namespaces",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[parameters('eventhubsConfig').name]",
+              "tags": "[parameters('eventhubsConfig').resourceTags]",
+              "location": "[parameters('eventhubsConfig').location]",
+              "sku": {
+                "name": "[parameters('eventhubsConfig').sku]",
+                "tier": "[parameters('eventhubsConfig').sku]",
+                "capacity": "[parameters('eventhubsConfig').capacity]"
+              },
+              "properties": {
+                "minimumTlsVersion": "[variables('minTlsVersion')]"
+              }
+            },
+            "eventHubRoleAssignment": {
+              "condition": "[not(empty(parameters('eventhubsConfig').roleAssignmentPrincipalId))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.EventHub/namespaces/{0}', parameters('eventhubsConfig').name)]",
+              "name": "[guid(subscription().subscriptionId, 'AzureEventHubDataReceiver', parameters('eventhubsConfig').name)]",
+              "properties": {
+                "principalId": "[parameters('eventhubsConfig').roleAssignmentPrincipalId]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]"
+              },
+              "dependsOn": [
+                "eventHub"
+              ]
+            },
+            "eventHubUserReceiverRoleAssignment": {
+              "condition": "[not(empty(parameters('eventhubsConfig').senderReceiverUserObjectId))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.EventHub/namespaces/{0}', parameters('eventhubsConfig').name)]",
+              "name": "[guid(subscription().subscriptionId, 'AzureUserEventHubDataReceiver', parameters('eventhubsConfig').name)]",
+              "properties": {
+                "principalId": "[parameters('eventhubsConfig').senderReceiverUserObjectId]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]"
+              },
+              "dependsOn": [
+                "eventHub"
+              ]
+            },
+            "eventHubUserSenderRoleAssignment": {
+              "condition": "[not(empty(parameters('eventhubsConfig').senderReceiverUserObjectId))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.EventHub/namespaces/{0}', parameters('eventhubsConfig').name)]",
+              "name": "[guid(subscription().subscriptionId, 'AzureUserEventHubDataSender', parameters('eventhubsConfig').name)]",
+              "properties": {
+                "principalId": "[parameters('eventhubsConfig').senderReceiverUserObjectId]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2b629674-e913-4c01-ae53-ef4638d8f975')]"
+              },
+              "dependsOn": [
+                "eventHub"
+              ]
+            }
+          },
+          "outputs": {
+            "eventHubEndpoint": {
+              "type": "string",
+              "value": "[reference('eventHub').serviceBusEndpoint]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "containerGroup"
+      ]
+    },
+    "rlSimConfig": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "rlSimConfig",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "loopName": {
+            "value": "[parameters('loopName')]"
+          },
+          "eventHubEndpoint": {
+            "value": "[reference('eventhubs').outputs.eventHubEndpoint.value]"
+          },
+          "storageBlobEndpoint": {
+            "value": "[reference('storage').outputs.storageBlobEndpoint.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "14629634265176639517"
+            }
+          },
+          "parameters": {
+            "loopName": {
+              "type": "string"
+            },
+            "eventHubEndpoint": {
+              "type": "string"
+            },
+            "storageBlobEndpoint": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "rlSimConfigConnStrVal_0": "[replace('{\n   \"ApplicationID\": \"{loopName}\",\n   \"IsExplorationEnabled\": true,\n   \"InitialExplorationEpsilon\": 1.0,\n   \"EventHubInteractionConnectionString\": \"<EVENTHUB_CONNECTION_STRING>;EntityPath=interaction\",\n   \"EventHubObservationConnectionString\": \"<EVENTHUB_CONNECTION_STRING>;EntityPath=observation\",\n   \"model.vw.initial_command_line\": \"--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::\",\n   \"protocol.version\": 2,\n   \"model.source\": \"HTTP_MODEL_DATA\",\n   \"model.blob.uri\": \"{storageBlobEndpoint}/exported-models/current?<TOKEN_PLACEHOLDER>\"\n}\n', '{loopName}', parameters('loopName'))]",
+            "rlSimConfigConnStrValFinal": "[replace(variables('rlSimConfigConnStrVal_0'), '{storageBlobEndpoint}', parameters('storageBlobEndpoint'))]",
+            "rlSimConfigConnStrVal": "[variables('rlSimConfigConnStrValFinal')]",
+            "rlSimConfigAzVal_0": "[replace('{\n   \"ApplicationID\": \"{loopName}\",\n   \"IsExplorationEnabled\": true,\n   \"InitialExplorationEpsilon\": 1.0,\n   \"http.api.header.key.name\": \"Authorization\",\n   \"http.api.oauth.token.type\": \"Bearer\",\n   \"interaction.sender.implementation\": \"INTERACTION_HTTP_API_SENDER_OAUTH_AZ\",\n   \"interaction.eventhub.name\": \"interaction\",\n   \"interaction.http.api.host\": \"{eventHubEndpoint}interaction/messages\",\n   \"observation.sender.implementation\": \"OBSERVATION_HTTP_API_SENDER_OAUTH_AZ\",\n   \"observation.eventhub.name\": \"observation\",\n   \"observation.http.api.host\": \"{eventHubEndpoint}observation/messages\",\n   \"model.vw.initial_command_line\": \"--cb_explore_adf --epsilon 0.2 --power_t 0 -l 0.001 --cb_type ips -q ::\",\n   \"protocol.version\": 2,\n   \"model.source\": \"HTTP_MODEL_DATA_OAUTH_AZ\",\n   \"model.blob.uri\": \"{storageBlobEndpoint}/exported-models/current\"\n}\n', '{loopName}', parameters('loopName'))]",
+            "rlSimConfigAzVal_1": "[replace(variables('rlSimConfigAzVal_0'), '{eventHubEndpoint}', parameters('eventHubEndpoint'))]",
+            "rlSimConfigAzValFinal": "[replace(variables('rlSimConfigAzVal_1'), '{storageBlobEndpoint}', parameters('storageBlobEndpoint'))]",
+            "rlSimConfigAzVal": "[variables('rlSimConfigAzValFinal')]"
+          },
+          "resources": [],
+          "outputs": {
+            "rlSimConfigAz": {
+              "type": "string",
+              "value": "[variables('rlSimConfigAzVal')]"
+            },
+            "rlSimConfigConnStr": {
+              "type": "string",
+              "value": "[variables('rlSimConfigConnStrVal')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "eventhubs",
+        "storage"
+      ]
+    }
+  },
+  "outputs": {
+    "rlSimConfigAz": {
+      "type": "string",
+      "value": "[reference('rlSimConfig').outputs.rlSimConfigAz.value]"
+    },
+    "rlSimConfigConnStr": {
+      "type": "string",
+      "value": "[reference('rlSimConfig').outputs.rlSimConfigConnStr.value]"
+    }
+  }
+}
