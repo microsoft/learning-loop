@@ -1,0 +1,8 @@
+name: "CodeQL config"
+
+# Specify the paths to ignore
+paths-ignore:
+  - 'ext_libs/'
+
+# Specify the minimum disk space required
+min-disk-free: 2048 # Adjust as necessary. This value is in MB.
