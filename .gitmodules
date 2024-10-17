@@ -1,6 +1,3 @@
 [submodule "ext_libs/reinforcement_learning"]
 	path = ext_libs/reinforcement_learning
 	url = https://github.com/VowpalWabbit/reinforcement_learning.git
-[submodule "ext_libs/vcpkg"]
-	path = ext_libs/vcpkg
-	url = https://github.com/Microsoft/vcpkg.git

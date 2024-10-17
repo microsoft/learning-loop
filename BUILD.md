@@ -22,7 +22,9 @@ git submodule update --init --recursive
 ```
 
 Build the assemblies. The build will invoke the Vowpal Wabbit binary parser build needed by the OnlineTrainer.
+
 ```powershell
+mkdir artifacts
 dotnet build ./learning-loop.sln -c Release
 ```
 

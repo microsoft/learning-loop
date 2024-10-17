@@ -40,6 +40,9 @@ set(CMAKE_CXX_STANDARD ${RL_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(RL_OPENSSL_SYS_DEP "Use system-wide openssl library" OFF)
+option(RL_CPPRESTSDK_SYS_DEP "Use system-wide cpprestsdk library" OFF)
+
 if(UNIX AND NOT APPLE)
   # Temporary workaround for VW 9.6 missing size_t on Linux builds
   # TODO remove when VW submodule is updated
@@ -80,7 +83,7 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/nprocs.txt ${NumProcessors})
 # This provides the variables such as CMAKE_INSTALL_LIBDIR for installation paths.
 include(GNUInstallDirs)
 
-include(reinforcement_learning/ext_libs/ext_libs.cmake)
+include(ext_libs.cmake)
 
 add_subdirectory(reinforcement_learning/external_parser)
 add_subdirectory(reinforcement_learning/rlclientlib)

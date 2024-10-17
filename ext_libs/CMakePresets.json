@@ -13,7 +13,11 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "FILEPATH",
-          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          "value": "${sourceDir}/reinforcement_learning/ext_libs/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        },
+        "VCPKG_MANIFEST_DIR": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/reinforcement_learning"
         },
         "rlclientlib_BUILD_DOTNET": {
           "type": "BOOL",
@@ -117,10 +121,6 @@
           "type": "STRING",
           "value": "x64-linux"
         },
-        "STATIC_LINK_BINARY_PARSER": {
-          "type": "BOOL",
-          "value": "ON"
-        },
         "RL_STATIC_DEPS": {
           "type": "BOOL",
           "value": "ON"
@@ -144,10 +144,6 @@
         "VCPKG_TARGET_TRIPLET": {
           "type": "STRING",
           "value": "x64-osx"
-        },
-        "STATIC_LINK_BINARY_PARSER": {
-          "type": "BOOL",
-          "value": "ON"
         },
         "RL_STATIC_DEPS": {
           "type": "BOOL",
