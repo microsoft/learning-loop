@@ -1,0 +1,348 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "5660043905479698568"
+    }
+  },
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "rg-sample-loop",
+      "metadata": {
+        "description": "The new resource group for the learning loop deployment."
+      }
+    },
+    "managedIdentityName": {
+      "type": "string",
+      "defaultValue": "[format('mi-sample-loop-{0}', uniqueString(tenant().tenantId))]",
+      "metadata": {
+        "description": "The managed identity name for learning loop role assignments."
+      }
+    },
+    "acrName": {
+      "type": "string",
+      "defaultValue": "[format('acrsampleloop{0}', uniqueString(tenant().tenantId))]",
+      "metadata": {
+        "description": "The Azure Container Registry name."
+      }
+    },
+    "appInsightsName": {
+      "type": "string",
+      "defaultValue": "[format('ai-metrics-{0}', uniqueString(tenant().tenantId))]",
+      "metadata": {
+        "description": "Application Insights name."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[deployment().location]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "managedIdentity",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[parameters('managedIdentityName')]"
+          },
+          "createManagedIdentity": {
+            "value": true
+          },
+          "location": {
+            "value": "[deployment().location]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "1005270708651379085"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location where the resources will be deployed"
+              }
+            },
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the managed identity"
+              }
+            },
+            "createManagedIdentity": {
+              "type": "bool",
+              "defaultValue": true
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('createManagedIdentity')]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "principalId": {
+              "type": "string",
+              "value": "[if(parameters('createManagedIdentity'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2018-11-30').principalId, reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2018-11-30').principalId)]"
+            },
+            "managedIdentityName": {
+              "type": "string",
+              "value": "[if(parameters('createManagedIdentity'), parameters('name'), parameters('name'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "containerRegistry",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "createAcr": {
+            "value": true
+          },
+          "acrName": {
+            "value": "[parameters('acrName')]"
+          },
+          "location": {
+            "value": "[deployment().location]"
+          },
+          "roleAssignmentPrincipalId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentity'), '2022-09-01').outputs.principalId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "6969755161473020621"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location where the resources will be deployed."
+              }
+            },
+            "acrName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Azure Container Registry."
+              }
+            },
+            "createAcr": {
+              "type": "bool",
+              "metadata": {
+                "description": "Create the Acr or retrieve an existing acr and assign the role."
+              }
+            },
+            "roleAssignmentPrincipalId": {
+              "type": "string",
+              "metadata": {
+                "description": "The principal ID for the role assignment."
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('createAcr')]",
+              "type": "Microsoft.ContainerRegistry/registries",
+              "apiVersion": "2023-01-01-preview",
+              "name": "[parameters('acrName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "adminUserEnabled": false
+              }
+            },
+            {
+              "condition": "[parameters('createAcr')]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('acrName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), 'AcrPull', parameters('acrName'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                "principalId": "[parameters('roleAssignmentPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
+              ]
+            },
+            {
+              "condition": "[not(parameters('createAcr'))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('acrName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), 'AcrPull', parameters('acrName'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                "principalId": "[parameters('roleAssignmentPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ],
+          "outputs": {
+            "acrName": {
+              "type": "string",
+              "value": "[if(parameters('createAcr'), parameters('acrName'), parameters('acrName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentity')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "appInsights",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "create": {
+            "value": true
+          },
+          "generateName": {
+            "value": true
+          },
+          "insightsName": {
+            "value": "[parameters('appInsightsName')]"
+          },
+          "location": {
+            "value": "[deployment().location]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "11229016089804553556"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location where the Key Vault will be deployed."
+              }
+            },
+            "insightsName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Application Insights instance."
+              }
+            },
+            "generateName": {
+              "type": "bool",
+              "metadata": {
+                "description": "If true, a unique name will be generated for the Application Insights instance."
+              }
+            },
+            "create": {
+              "type": "bool",
+              "metadata": {
+                "description": "If true, the Application Insights instance will be created; otherwise, the existing resource will be used."
+              }
+            }
+          },
+          "variables": {
+            "finalAppInsightsName": "[if(parameters('generateName'), format('ai-{0}-{1}', take(parameters('insightsName'), 128), uniqueString(subscription().tenantId, parameters('location'))), parameters('insightsName'))]"
+          },
+          "resources": [
+            {
+              "condition": "[parameters('create')]",
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('finalAppInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web"
+              }
+            }
+          ],
+          "outputs": {
+            "applicationInsightsConnectionString": {
+              "type": "string",
+              "value": "[if(parameters('create'), reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').ConnectionString, reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').ConnectionString)]"
+            },
+            "applicationInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[if(parameters('create'), reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').InstrumentationKey, reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').InstrumentationKey)]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "managedIdentityName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentity'), '2022-09-01').outputs.managedIdentityName.value]"
+    },
+    "acrName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry'), '2022-09-01').outputs.acrName.value]"
+    },
+    "appInsightsConnectionString": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'appInsights'), '2022-09-01').outputs.applicationInsightsConnectionString.value]"
+    }
+  }
+}

@@ -24,7 +24,7 @@ param kvImageRegistryPassword string
 param managedIdentityPrincipalId string
 
 @description('The principal ID of the deployment user.')
-param userPrincipalId string
+param userPrincipalId string?
 
 param secrets array = [
   {
@@ -37,6 +37,28 @@ param secrets array = [
   }
 ]
 
+var userAccessPolicy = !empty(userPrincipalId) ? {
+    tenantId: subscription().tenantId
+    objectId: userPrincipalId
+    permissions: {
+      keys: []
+      secrets: ['get', 'list', 'set', 'delete']
+      certificates: []
+    }
+  } : {}
+
+var managedIdentityAcessPolicy = {
+  tenantId: subscription().tenantId
+  objectId: managedIdentityPrincipalId
+  permissions: {
+    keys: []
+    secrets: ['get', 'list']
+    certificates: []
+  }
+}
+
+var finalAccessPolicies = !empty(userPrincipalId) ? [ userAccessPolicy, managedIdentityAcessPolicy ] : [ managedIdentityAcessPolicy ]
+
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName
   location: location
@@ -48,26 +70,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     tenantId: subscription().tenantId
     enableSoftDelete: false
     enabledForTemplateDeployment: true
-    accessPolicies: [
-      {
-        tenantId: subscription().tenantId
-        objectId: userPrincipalId
-        permissions: {
-          keys: []
-          secrets: ['get', 'list', 'set', 'delete']
-          certificates: []
-        }
-      }
-      {
-        tenantId: subscription().tenantId
-        objectId: managedIdentityPrincipalId
-        permissions: {
-          keys: []
-          secrets: ['get', 'list']
-          certificates: []
-        }
-      }
-    ]
+    accessPolicies: finalAccessPolicies
   }
 }
 
@@ -79,4 +82,4 @@ resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2021-10-01' = [for s
   }
 }]
 
-output keyVaultName string = keyVault.name
+output keyVaultName string = empty(keyVault) ? '' : keyVault.name

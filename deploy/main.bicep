@@ -127,6 +127,17 @@ module eventhubs 'modules/eventhubs.bicep' = {
   }
 }
 
+module rlSimConfig 'modules/generaterlsimconfig.bicep' = {
+  name: 'rlSimConfig'
+  params: {
+    loopName: mainConfig.appName
+    eventHubEndpoint: eventhubs.outputs.eventHubEndpoint
+    storageBlobEndpoint: storage.outputs.storageBlobEndpoint
+  }
+}
+
 output eventHubEndpoint string = eventhubs.outputs.eventHubEndpoint
 output storageBlobEndpoint string = storage.outputs.storageBlobEndpoint
 output storageAccountName string = storage.outputs.storageAccountName
+output rlSimConfigAz string = rlSimConfig.outputs.rlSimConfigAz
+output rlSimConfigConnStr string = rlSimConfig.outputs.rlSimConfigConnStr

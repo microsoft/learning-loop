@@ -1,8 +1,9 @@
-// integration environment parameters
+// Sample Learning Loop deployment bicepparam
+// MODIFY THE PARAMETERS BELOW TO MATCH YOUR ENVIRONMENT
 using 'main.bicep'
 
-param kvImageRegistryUsername = getSecret('mysubscriptionid', 'myresourcegroup', 'keyvaultname', 'imageRegistryUsername')
-param kvImageRegistryPassword = getSecret('mysubscriptionid', 'myresourcegroup', 'keyvaultname', 'imageRegistryPassword')
+param kvImageRegistryUsername = getSecret('my-subscription-id', 'my-resource-group-name', 'my-key-vault-name', 'my-secret-name-id')
+param kvImageRegistryPassword = getSecret('my-subscription-id', 'my-resource-group-name', 'my-key-vault-name', 'my-secret-password-id')
 
 param mainConfig = {
   appName: 'sampleloop'

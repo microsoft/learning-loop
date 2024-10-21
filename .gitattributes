@@ -1,0 +1,5 @@
+*.bicep text eol=lf
+*.bicepparam text eol=lf
+*.sh text eol=lf
+deploy/acr-environment.json text eol=lf
+deploy/acr-main.json text eol=lf
