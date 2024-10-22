@@ -269,54 +269,6 @@ jobs:
           name: docker-image-ubuntu-latest
           path: ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar.gz
 
-  # package the nuget package for the common assembly that can be used to include
-  # and configure the learning-loop components in a .NET application
-  nuget-package:
-    needs: build-assemblies
-    name: nuget-${{ matrix.build.build_type }}
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        build:
-          - { build_type: "debug" }
-          - { build_type: "release" }
-    env:
-      NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - uses: nuget/setup-nuget@v2
-        with:
-          nuget-version: '6.x'
-
-      - name: Download Tests Binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts-${{ matrix.build.build_type }}
-          path: ${{ env.BUILD_ARTIFACTS }}
-
-      - name: List Downloaded Binaries
-        run: ls -l ${{ env.BUILD_ARTIFACTS }}/Common
-
-      ##- name: Pack Nuget
-      ##  run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common;version=1.0.0;targetframework=${{ env.TARGET_FRAMEWORK }}" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }} -verbosity detailed
-      - name: Pack Nuget
-        run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=1.0.0 -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
-
-      - name: Save Nuget Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuget-artifacts-${{ matrix.build.build_type }}
-          path: ${{ env.NUGET_ARTIFACTS_PATH }}
-
   # build the example projects for all platforms and configurations
   build-example:
     needs: nuget-package
