@@ -295,7 +295,7 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Pack Nuget
-        run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common;version=1.0.0;targetframework=${{ env.TARGET_FRAMEWORK }}" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }}
+        run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common;version=1.0.0;targetframework=${{ env.TARGET_FRAMEWORK }}" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }} -verbosity detailed
 
       - name: Save Nuget Artifacts
         uses: actions/upload-artifact@v4
