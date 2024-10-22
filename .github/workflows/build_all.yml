@@ -284,6 +284,10 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - uses: nuget/setup-nuget@v2
+        with:
+          nuget-version: '6.x'
+
       - name: Download Tests Binaries
         uses: actions/download-artifact@v4
         with:
