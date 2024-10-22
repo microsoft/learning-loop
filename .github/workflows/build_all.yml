@@ -297,8 +297,10 @@ jobs:
       - name: List Downloaded Binaries
         run: ls -l ${{ env.BUILD_ARTIFACTS }}/Common
 
+      ##- name: Pack Nuget
+      ##  run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common;version=1.0.0;targetframework=${{ env.TARGET_FRAMEWORK }}" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }} -verbosity detailed
       - name: Pack Nuget
-        run: nuget.exe pack Common/Microsoft.DecisionService.Common.nuspec -Properties "PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common;version=1.0.0;targetframework=${{ env.TARGET_FRAMEWORK }}" -OutputDirectory ${{ env.NUGET_ARTIFACTS_PATH }} -verbosity detailed
+        run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=1.0.0 -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
 
       - name: Save Nuget Artifacts
         uses: actions/upload-artifact@v4
