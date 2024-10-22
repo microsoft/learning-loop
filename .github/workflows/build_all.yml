@@ -128,6 +128,7 @@ jobs:
       VW_BINARY_PATH: ${{github.workspace}}/vw-bin
       # base directory for the assemebly artifacts
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
+      NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
 
     steps:
       # there's no need to check submodules since they are not needed in this job
@@ -155,6 +156,8 @@ jobs:
         run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
+      - name: Pack Nuget
+        run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=1.0.0 -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
 
       - name: Build OnlineTrainer
         run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
@@ -171,6 +174,12 @@ jobs:
         with:
           name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+
+      - name: Save Nuget Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-artifacts-${{ matrix.build.build_type }}
+          path: ${{ env.NUGET_ARTIFACTS_PATH }}
 
   # pull the test assemblies and run the tests on all platforms for all confirgurations
   unit-test:
