@@ -271,7 +271,7 @@ jobs:
 
   # build the example projects for all platforms and configurations
   build-example:
-    needs: nuget-package
+    needs: build-assemblies
     name: build-example-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -371,7 +371,7 @@ jobs:
 
   # analyze the csharp example code using codeql
   analyze-examples-csharp:
-    needs: nuget-package
+    needs: build-assemblies
     name: CSharp Examples Analysis
     runs-on: windows-latest
     permissions:
