@@ -108,7 +108,7 @@ jobs:
         run: |
           mkdir -p ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}
           cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
-          mkdir ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}
+          mkdir -p ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}
           cp ${{ env.RLSIM_BIN_SRC_PATH }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
       - name: Save VW Parser Binaries
         uses: actions/upload-artifact@v4
