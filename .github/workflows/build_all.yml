@@ -84,8 +84,6 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/reinforcement_learning/vcpkg.json"
-          # vcpkgCommitId: 'HEAD'
-          # doNotUpdateVcpkg: true
       # build the binary parser only - the presets are convenient for consistent build settings for local and CI builds
       - name: Configure
         run: >
