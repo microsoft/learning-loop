@@ -66,7 +66,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      #- run: git -C ${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg fetch --unshallow
+      - run: git -C ${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg fetch --unshallow
       - name: Setup MSVC Developer Command Prompt
         if: ${{ startsWith(matrix.config.os, 'windows') }}
         uses: ilammy/msvc-dev-cmd@v1
