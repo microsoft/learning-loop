@@ -72,7 +72,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
       - uses: lukka/get-cmake@latest
       - run: echo "VCPKG_COMMIT=$(git rev-parse :ext_libs/reinforcement_learning)" >> $GITHUB_ENV
-       shell: bash
+        shell: bash
       - run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
       - uses: actions/cache@v3
         env:
