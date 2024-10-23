@@ -38,7 +38,7 @@ jobs:
   # build vw binary parser for all platforms and configurations
   # the binaries are used by the assemblies and tests across platforms
   # from a single assembly package
-  build-binary-parser:
+  build-rl-binaries:
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -48,16 +48,18 @@ jobs:
           # Note: os is used to specify the runner OS, os_name is used to specify the
           #       os name in the matrix and for the build artifacts normilzing the 
           #       os name to be used in the build artifacts path
-          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64" }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe", rlsim_bin_src: "rl_sim_cpp.out.exe", vw_bin_dest: "rl_sim-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64", rlsim_bin_src: "rl_sim_cpp.out", vw_bin_dest: "rl_sim-linux-x64" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64", rlsim_bin_src: "rl_sim_cpp.out", vw_bin_dest: "rl_sim-macos-x64"  }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
       VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
-      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+      VW_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+      RLSIM_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/examples/rl_sim_cpp
+      RLSIM_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/rl_sim/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
 
     steps:
       # checkout the code with submodules for vcpkg, and reinforcment_learning
@@ -95,23 +97,27 @@ jobs:
       - name: Copy binaries (windows)
         if: startsWith(matrix.config.os, 'windows') == true
         run: |
-          mkdir ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
-          copy ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+          mkdir ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}
+          copy ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+          mkdir ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}
+          copy ${{ env.RLSIM_BIN_SRC_PATH }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
       - name: Copy binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          mkdir -p ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
-          cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+          mkdir -p ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}
+          cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+          mkdir ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}
+          cp ${{ env.RLSIM_BIN_SRC_PATH }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
       - name: Save VW Parser Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: vw-binaries-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+          name: rl-binaries-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
   # build debug and release assemblies on linux used by all supported platforms.
   # this job generates a single debug and release package.
   build-assemblies:
-    needs: build-binary-parser
+    needs: build-rl-binaries
     name: build-assemblies-${{ matrix.build.build_type }}
     runs-on: ubuntu-latest
     strategy:
@@ -126,6 +132,11 @@ jobs:
       # locally vw binaries are re-orgnized for the build.  all binaries
       # are flattened in the build artifacts under vw-bin
       VW_BINARY_PATH: ${{github.workspace}}/vw-bin
+      # rlsim binaries are organized by build type and os name
+      RLSIM_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/rl_sim/${{ matrix.build.build_type }}
+      # locally vw binaries are re-orgnized for the build.  all binaries
+      # are flattened in the build artifacts under assembly/rl_sim and will become part of build-artifacts-*
+      RLSIM_BINARY_PATH: ${{github.workspace}}/assembly/rl_sim
       # base directory for the assemebly artifacts
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
       NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
@@ -143,14 +154,16 @@ jobs:
       - name: Restore Binary Parser Binaries
         uses: actions/download-artifact@v4
         with:
-          pattern: vw-binaries-*
+          pattern: rl-binaries-*
           merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
-      - name: Reorganize VW Binaries
+      - name: Reorganize Binaries
         run: |
           mkdir -p ${{ env.VW_BINARY_PATH }}
           cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
+          mkdir -p ${{ env.RLSIM_BINARY_PATH }}
+          cp ${{ env.RLSIM_ARTIFACTS_PATH }}/**/* ${{ env.RLSIM_BINARY_PATH }}
 
       - name: Build Common
         run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
@@ -168,6 +181,9 @@ jobs:
         run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
       - name: Publish Tests
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
+
+      - name: List Assembly Artifacts
+        run: ls -lR ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Build Artifacts
         uses: actions/upload-artifact@v4
@@ -255,11 +271,12 @@ jobs:
       - run: mkdir -p ${{ env.DOCKER_ARTIFACTS_PATH }}
 
       - name: Build Docker Image
-        run: docker build -t learning-loop:latest --build-arg SRC_PATH=artifacts/OnlineTrainer -f ./OnlineTrainerExe/Dockerfile .
+        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=artifacts/OnlineTrainer RLSIM_SRC_PATH=artifacts/rl_sim -f ./OnlineTrainerExe/Dockerfile .
 
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
 
+      # todo: remove the gzip step
       - name: GZip tar
         run: gzip -9 ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
 
@@ -309,7 +326,7 @@ jobs:
      
   # analyze the csharp trainer code using codeql
   analyze-trainer-csharp:
-    needs: build-binary-parser
+    needs: build-rl-binaries
     name: CSharp Trainer Analysis
     runs-on: windows-latest
     permissions:
@@ -340,7 +357,7 @@ jobs:
       - name: Restore Binary Parser Binaries
         uses: actions/download-artifact@v4
         with:
-          pattern: vw-binaries-*
+          pattern: rl-binaries-*
           merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
