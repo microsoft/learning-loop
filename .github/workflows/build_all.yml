@@ -278,15 +278,11 @@ jobs:
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
 
-      # todo: remove the gzip step
-      - name: GZip tar
-        run: gzip -9 ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
-
       - name: Save Docker Zipped Iamge
         uses: actions/upload-artifact@v4
         with:
           name: docker-image-ubuntu-latest
-          path: ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar.gz
+          path: ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
 
   # build the example projects for all platforms and configurations
   build-example:
