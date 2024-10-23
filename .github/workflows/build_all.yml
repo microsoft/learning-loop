@@ -83,7 +83,8 @@ jobs:
       - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg'
-          vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/reinforcement_learning/vcpkg.json"
+          vcpkgJsonGlob: '${{ github.workspace }}/ext_libs/reinforcement_learning/vcpkg.json'
+          vcpkgCommitId: '${{ env.VCPKG_COMMIT }}'
       # build the binary parser only - the presets are convenient for consistent build settings for local and CI builds
       - name: Configure
         run: >
