@@ -80,11 +80,12 @@ jobs:
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
           key: ${{ matrix.config.os_name }}-${{ matrix.build.build_type }}-build-${{ env.cache-name }}-${{ hashFiles('**/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
-      - uses: lukka/run-vcpkg@v11
+      - uses: lukka/run-vcpkg@v10
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/reinforcement_learning/vcpkg.json"
-          doNotUpdateVcpkg: true        
+          vcpkgCommitId: '${{ env.VCPKG_COMMIT }}'
+          doNotUpdateVcpkg: true
       # build the binary parser only - the presets are convenient for consistent build settings for local and CI builds
       - name: Configure
         run: >
