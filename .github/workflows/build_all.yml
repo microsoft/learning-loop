@@ -71,7 +71,12 @@ jobs:
         if: ${{ startsWith(matrix.config.os, 'windows') }}
         uses: ilammy/msvc-dev-cmd@v1
       - uses: lukka/get-cmake@latest
-      - run: echo "VCPKG_COMMIT=$(git rev-parse :ext_libs/reinforcement_learning/ext_libs/vcpkg)" >> $GITHUB_ENV
+      # - run: echo "VCPKG_COMMIT=$(git rev-parse :ext_libs/reinforcement_learning/ext_libs/vcpkg)" >> $GITHUB_ENV
+        shell: bash
+      - name: bootstrap vcpkg
+        run: |
+          cd ${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg
+          ./bootstrap-vcpkg.sh
         shell: bash
       #- run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
       # - uses: actions/cache@v3
@@ -84,6 +89,7 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg'
           vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/reinforcement_learning/vcpkg.json"
+          vcpkgCommitId: 'HEAD'
       # build the binary parser only - the presets are convenient for consistent build settings for local and CI builds
       - name: Configure
         run: >
