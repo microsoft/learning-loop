@@ -48,9 +48,9 @@ jobs:
           # Note: os is used to specify the runner OS, os_name is used to specify the
           #       os name in the matrix and for the build artifacts normilzing the 
           #       os name to be used in the build artifacts path
-          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe", rlsim_bin_src: "rl_sim_cpp.out.exe", vw_bin_dest: "rl_sim-win-x64.exe" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64", rlsim_bin_src: "rl_sim_cpp.out", vw_bin_dest: "rl_sim-linux-x64" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64", rlsim_bin_src: "rl_sim_cpp.out", vw_bin_dest: "rl_sim-macos-x64"  }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe", rlsim_bin_src: "rl_sim_cpp.out.exe", rlsim_bin_dest: "rl_sim-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64", rlsim_bin_src: "rl_sim_cpp.out", rlsim_bin_dest: "rl_sim-linux-x64" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64", rlsim_bin_src: "rl_sim_cpp.out", rlsim_bin_dest: "rl_sim-macos-x64"  }
         build:
           - { build_type: "debug" }
           - { build_type: "release" }
