@@ -138,7 +138,7 @@ jobs:
       RLSIM_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/rl_sim/${{ matrix.build.build_type }}
       # locally vw binaries are re-orgnized for the build.  all binaries
       # are flattened in the build artifacts under assembly/rl_sim and will become part of build-artifacts-*
-      RLSIM_BINARY_PATH: ${{github.workspace}}/assembly/rl_sim
+      RLSIM_BINARY_PATH: ${{github.workspace}}/artifacts/assembly/rl_sim
       # base directory for the assemebly artifacts
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
       NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
