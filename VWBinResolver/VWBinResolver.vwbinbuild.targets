@@ -15,8 +15,11 @@
         <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --preset=$(VWPresets)" />
         <Exec WorkingDirectory="$(ProjectDir)..\ext_libs" Command="cmake --build --preset=$(VWPresets) --config $(Configuration)" />
         <Copy Condition="$([MSBuild]::IsOSPlatform('Windows'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw.exe" DestinationFiles="$(TargetDir)vw-bin\vw-win-x64.exe" />
+        <Copy Condition="$([MSBuild]::IsOSPlatform('Windows'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\examples\rl_sim_cpp\rl_sim_cpp.out.exe" DestinationFiles="$(ProjectDir)..\artifacts\rl_sim\rl_sim-win-x64.exe" />
         <Copy Condition="$([MSBuild]::IsOSPlatform('Linux'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw" DestinationFiles="$(TargetDir)vw-bin\vw-linux-x64" />
+        <Copy Condition="$([MSBuild]::IsOSPlatform('Linux'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\examples\rl_sim_cpp\rl_sim_cpp.out" DestinationFiles="$(ProjectDir)..\artifacts\rl_sim\rl_sim-linux-x64" />
         <Copy Condition="$([MSBuild]::IsOSPlatform('OSX'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\external_parser\vw" DestinationFiles="$(TargetDir)vw-bin\vw-macos-x64" />
+        <Copy Condition="$([MSBuild]::IsOSPlatform('OSX'))" SourceFiles="$(ProjectDir)..\ext_libs\build\reinforcement_learning\examples\rl_sim_cpp\rl_sim_cpp.out" DestinationFiles="$(ProjectDir)..\artifacts\rl_sim\rl_sim-macos-x64" />
     </Target>
     <ItemGroup>
         <VWBinBinaries Include="$(TargetDir)vw-bin/*.*" />

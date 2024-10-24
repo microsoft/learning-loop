@@ -6,14 +6,28 @@ As part of the [deployment](DEPLOY.md), an rl_sim_cpp client configuration is `g
 
 rl_sim_cpp must be built with `RL_LINK_AZURE_LIBS` to use Azure Credentials. Alternatively, a connection string can be used.
 
+You can obtain binaries from the Leaning Loop GitHub repository build artifacts named `build-artifacts-release`. If you are unable to access build artifacts, you will need to build the [Reinforcement Leanring](https://github.com/VowpalWabbit/reinforcement_learning/blob/master/README.md) project with the following commands.
+
+   The following presets are availabe depending on your platform:
+
+   - vcpkg-azure-static-linux
+   - vcpkg-azure-static-windows
+   - vcpkg-azure-static-macos
+
+```bash
+git clone https://github.com/VowpalWabbit/reinforcement_learning.git
+cd reinforcement_learning
+git submodule update --init --recursive
+cmake --preset=vcpkg-azure-static-linux
+cmake --build --preset=vcpkg-azure-static-linux
+```
+
 ## rl_sim_cpp with Azure Credentials
 
-To use Azure Credentials with rl_sim_cpp, the logged-in user should have the following roles:
+To use Azure Credentials with rl_sim_cpp, the logged-in user should have the following roles. These roles are applied by default with the [sample-deploy](DEPLOY.md) script.
 
 - `Azure Event Hubs Data Sender`
 - `Azure Event Hubs Data Receiver`
-
-These roles are applied by default with the [sample-deploy](DEPLOY.md) script.
 
 The following is an example config file:
 

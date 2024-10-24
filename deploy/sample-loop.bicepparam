@@ -30,6 +30,7 @@ param mainConfig = {
       value: '2024-01-01'
     }
   ]
+  deployRlSimContainer: true
   resourceTags: {
     deploymentGroupName: 'sample_loop'
   }

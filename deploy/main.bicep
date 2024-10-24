@@ -19,10 +19,17 @@ param kvImageRegistryPassword string?
 @description('Main configuration for the deployment')
 param mainConfig conf.mainConfigT
 
-module formatContainerName 'modules/formatcontainername.bicep' = {
-  name: 'formatContainerNameModule'
+module formatLoopContainerName 'modules/formatcontainername.bicep' = {
+  name: 'formatLoopContainerNameModule'
   params: {
     containerName: f.makeAppContainerGroupName(mainConfig.appName)
+  }
+}
+
+module formatRlSimContainerName 'modules/formatcontainername.bicep' = {
+  name: 'formatRlSimContainerNameModule'
+  params: {
+    containerName: f.makeAppContainerGroupName('${mainConfig.appName}-rlsim')
   }
 }
 
@@ -55,7 +62,7 @@ var defaultEnvironmentVars = [
     value: f.makeEventhubNamespace(formatEventHubName.outputs.formattedEventHubName)
   }
 ]
-var containerEnvironmentVars = concat(defaultEnvironmentVars, mainConfig.environmentVars ?? [])
+var loopContainerEnvironmentVars = concat(defaultEnvironmentVars, mainConfig.environmentVars ?? [])
 
 var containerImage = {
   name: mainConfig.container!.image.name
@@ -78,22 +85,6 @@ var containerImage = {
   }
 } 
 
-// Deploy the container group, storage account, and event hub
-module containerGroup 'modules/containergroup.bicep' = {
-  name: 'container'
-  params: {
-    containerConfig: {
-      name: formatContainerName.outputs.formattedContainerName
-      resourceTags: mainConfig.resourceTags
-      location: location
-      environmentVars: containerEnvironmentVars
-      cpuCores: mainConfig.container!.cpuCores
-      memoryGig: mainConfig.container!.memoryGig
-      image: containerImage
-    }
-  }
-}
-
 module storage 'modules/storage.bicep' = {
   name: 'storage'
   params: {
@@ -104,8 +95,6 @@ module storage 'modules/storage.bicep' = {
       sku: mainConfig.storage.sku
       kind: mainConfig.storage.kind
       blobContainerName: mainConfig.appName
-      roleAssignmentPrincipalId: containerGroup.outputs.containerPrincipalId
-      storageUserObjectId: mainConfig.roleAssignmentUserObjectId
     }
   }
 }
@@ -121,8 +110,6 @@ module eventhubs 'modules/eventhubs.bicep' = {
       capacity: mainConfig.eventhub.capacity
       messageRetentionDays: mainConfig.eventhub.messageRetentionDays
       partitionCount: mainConfig.eventhub.partitionCount
-      roleAssignmentPrincipalId: containerGroup.outputs.containerPrincipalId
-      senderReceiverUserObjectId: mainConfig.roleAssignmentUserObjectId
     }
   }
 }
@@ -136,6 +123,78 @@ module rlSimConfig 'modules/generaterlsimconfig.bicep' = {
   }
 }
 
+// Deploy the container group, storage account, and event hub
+module loopContainerGroup 'modules/containergroup.bicep' = {
+  name: 'loopContainer'
+  params: {
+    containerConfig: {
+      name: formatLoopContainerName.outputs.formattedContainerName
+      resourceTags: mainConfig.resourceTags
+      location: location
+      environmentVars: loopContainerEnvironmentVars
+      cpuCores: mainConfig.container!.cpuCores
+      memoryGig: mainConfig.container!.memoryGig
+      image: containerImage
+    }
+  }
+}
+
+module loopRollassignments 'modules/containerrollassignments.bicep' = {
+  name: 'loopRollassignments'
+  params: {
+    assignedRolePrincipalId: loopContainerGroup.outputs.containerPrincipalId
+    storageAccountName: storage.outputs.storageAccountName
+    eventHubsName: eventhubs.outputs.eventHubsName
+  }
+}
+
+// rl_sim container instance environment variables
+var rlsimContainerEnvironmentVars = mainConfig.deployRlSimContainer ? [
+  {
+    name: 'RL_START_WITH'
+    value: 'rl_sim.sh'
+  }
+  {
+    name: 'RL_SIM_CONFIG'
+    value: rlSimConfig.outputs.rlSimConfigAz
+  }
+] : []
+
+// Deploy the rl_sim container group
+module rlsimContainerGroup 'modules/containergroup.bicep' = if (mainConfig.deployRlSimContainer) {
+  name: 'rlsimContainer'
+  params: {
+    containerConfig: {
+      name: formatRlSimContainerName.outputs.formattedContainerName
+      resourceTags: mainConfig.resourceTags
+      location: location
+      environmentVars: rlsimContainerEnvironmentVars
+      cpuCores: mainConfig.container!.cpuCores
+      memoryGig: mainConfig.container!.memoryGig
+      image: containerImage
+    }
+  }
+}
+
+module rlSimRollassignments 'modules/containerrollassignments.bicep' = if (mainConfig.deployRlSimContainer) {
+  name: 'rlSimRollassignments'
+  params: {
+    assignedRolePrincipalId: rlsimContainerGroup.outputs.containerPrincipalId
+    storageAccountName: storage.outputs.storageAccountName
+    eventHubsName: eventhubs.outputs.eventHubsName
+  }
+}
+
+module userRollassignments 'modules/userrollassignments.bicep' = if (!empty(mainConfig.roleAssignmentUserObjectId)) {
+  name: 'userRollassignments'
+  params: {
+    userRoleAssignmentPrincipalId: mainConfig.roleAssignmentUserObjectId!
+    storageAccountName: storage.outputs.storageAccountName
+    eventHubsName: eventhubs.outputs.eventHubsName
+  }
+}
+
+output rlSimContainerDeployed bool = mainConfig.deployRlSimContainer
 output eventHubEndpoint string = eventhubs.outputs.eventHubEndpoint
 output storageBlobEndpoint string = storage.outputs.storageBlobEndpoint
 output storageAccountName string = storage.outputs.storageAccountName
