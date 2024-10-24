@@ -12,32 +12,4 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
   </ItemGroup>
-
-<!--
-  ==================================================================================================
-	BEGIN WORKAROUND: Microsoft.DecisionService.Common
-  ==================================================================================================
-	although the Microsoft.DecisionService.Common package contains instructions to unpack
-	the vw binary files, the files are not copied to the output directory by default and
-	the project attempts to compile them. This causes a build error. To fix this, we remove
-	the files from the compilation and add them to the content files to be copied to the output.
--->
-  <ItemGroup>
-    <Compile Remove="..\..\packages\microsoft.decisionservice.common\1.0.0\contentFiles\any\any\vw-bin\vw-linux-x64" />
-    <Compile Remove="..\..\packages\microsoft.decisionservice.common\1.0.0\contentFiles\any\any\vw-bin\vw-macos-x64" />
-    <Compile Remove="..\..\packages\microsoft.decisionservice.common\1.0.0\contentFiles\any\any\vw-bin\vw-win-x64.exe" />
-  </ItemGroup>
-	
-  <ItemGroup>
-	<Content Include="..\..\packages\microsoft.decisionservice.common\1.0.0\contentFiles\any\any\vw-bin\*">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-	  <Link>vw-bin\%(Filename)%(Extension)</Link>
-	</Content>
-  </ItemGroup>
-<!--
-  ==================================================================================================
-	END WORKAROUND: Microsoft.DecisionService.Common
-  ==================================================================================================
--->
 </Project>

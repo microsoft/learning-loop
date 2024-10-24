@@ -17,10 +17,6 @@ type storageConfigT = {
   kind: storageKindType
   @description('Name of the blob container to create')
   blobContainerName: string
-  @description('Principal ID for the role assignments')
-  roleAssignmentPrincipalId: string
-  @description('User Object ID storage access role assignments')
-  storageUserObjectId: string?
 }
 
 param storageConfig storageConfigT
@@ -48,26 +44,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
         publicAccess: 'None'
       }
     }
-  }
-}
-
-// Add role assignment to storage account for Storage Blob Data Contributor
-resource storageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (!empty(storageConfig.roleAssignmentPrincipalId)) {
-  name: guid(subscription().subscriptionId, 'StorageBlobDataContributor', storageConfig.name)
-  scope: storageAccount
-  properties: {
-    principalId: storageConfig.roleAssignmentPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-  }
-}
-
-// Add role assignment to storage account for user access
-resource storageUserRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (!empty(storageConfig.storageUserObjectId)) {
-  name: guid(subscription().subscriptionId, 'UserStorageBlobDataContributor', storageConfig.name)
-  scope: storageAccount
-  properties: {
-    principalId: storageConfig.storageUserObjectId!
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
   }
 }
 

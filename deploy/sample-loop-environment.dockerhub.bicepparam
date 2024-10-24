@@ -32,6 +32,7 @@ param config = {
         value: '2024-01-01'
       }
     ]
+    deployRlSim: true
     eventHub: {
       capacity: 4
       partitionCount: 16

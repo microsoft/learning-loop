@@ -22,6 +22,9 @@ type environmentConfigT = {
     @description('Application environment variables from TrainerConfig, JoinerConfig, LogRetentionConfig, and TrainingMonitoringConfig')
     environmentVars: object[]?
 
+    @description('True if the reinforcement learning simulator should be deployed.')
+    deployRlSim: bool
+
     @description('Event hub parameters')
     eventHub: {
       capacity: int

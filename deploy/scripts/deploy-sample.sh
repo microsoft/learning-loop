@@ -199,14 +199,12 @@ get_docker_image_tar() {
    zip)
       unzip -o "$dockerImageFile" -d . > /dev/null
       local expectedGzFile="${expectedArchivedImageName}.tar.gz"
-      if [ ! -f "$expectedGzFile" ]; then
-         echo -e "${RED}Cannot find the gzip'd docker image file $expectedGzFile unpacked from $dockerImageFile${NC}" >&2
-         exit 1
-      fi
       local dockerImageTar="${expectedGzFile%.gz}"
-      expand_gzip "$expectedGzFile" "$dockerImageTar"
+      if [ -f "$expectedGzFile" ]; then
+         expand_gzip "$expectedGzFile" "$dockerImageTar"
+      fi
       if [ ! -f "$dockerImageTar" ]; then
-         echo -e "${RED}Cannot find the tar'd docker image file $dockerImageTar unpacked from $expectedGzFile${NC}" >&2
+         echo -e "${RED}Cannot find the docker image file $dockerImageTar while unpacking $dockerImageFile${NC}" >&2
          exit 1
       fi
       echo "$dockerImageTar"
@@ -215,7 +213,7 @@ get_docker_image_tar() {
       local dockerImageTar="${dockerImageFile%.gz}"
       expand_gzip "$dockerImageFile" "$dockerImageTar"
       if [ ! -f "$dockerImageTar" ]; then
-         echo -e "${RED}Cannot find the tar'd docker image file $dockerImageTar unpacked from $dockerImageFile${NC}" >&2
+         echo -e "${RED}Cannot find the tar'd docker image file $dockerImageTar while unpacking $dockerImageFile${NC}" >&2
          exit 1
       fi
       echo "$dockerImageTar"
@@ -465,6 +463,12 @@ main() {
    echo -e "\trl_sim_cpp -j $rlSimConfigFile"
    if [ "$rlSimConfigType" == "connstr" ]; then
       echo "The RL simulation configuration is set to \"connstr\". You must update $rlSimConfigFile with the connection string before running rl_sim."
+   fi
+
+   rlSimContainerDeployed=$(echo "$deployMainProperties" | jq -r '.outputs.rlSimContainerDeployed.value')
+   if [ "$rlSimContainerDeployed" == "true" ]; then
+      echo
+      echo -e "${GREEN}The RL simulation container is deployed. You many need to start the container instance to begin the simulation.${NC}"
    fi
 }
 

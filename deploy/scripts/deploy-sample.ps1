@@ -67,16 +67,26 @@
 # Licensed under the MIT License.
 ###############################################################################
 param(
-   [string]$location = "westus2",
-   [ValidateScript({ Test-Path $_ })]
-   [string]$environmentParamsFile = './sample-loop-environment.acr.bicepparam',
-   [string]$mainDeployParamsFile = "./main-deploy.bicepparam",
-   [ValidateScript({ Test-Path $_ })]
-   [string]$dockerImageFile = "./docker-image-ubuntu-latest.zip",
+   [string] $location = "westus2",
+   [ValidateScript({
+      if (-not (Test-Path $_)) {
+          throw "The specified file '$($_)' does not exist. Please provide a valid file path."
+      }
+      $true
+   })]
+   [System.IO.FileInfo] $environmentParamsFile = './sample-loop-environment.acr.bicepparam',
+   [string] $mainDeployParamsFile = "./main-deploy.bicepparam",
+   [ValidateScript({
+      if (-not (Test-Path $_)) {
+          throw "The specified file '$($_)' does not exist. Please provide a valid file path."
+      }
+      $true
+   })]
+   [System.IO.FileInfo] $dockerImageFile = "./docker-image-ubuntu-latest.zip",
    [ValidateSet("az", "connstr")]
    [string]$rlSimConfigType = "az",
-   [string]$rlSimConfigFile = "./rl-sim-config.json",
-   [string]$expectedArchivedImageName = "./learning-loop-ubuntu-latest"
+   [System.IO.FileInfo] $rlSimConfigFile = "./rl-sim-config.json",
+   [string] $expectedArchivedImageName = "./learning-loop-ubuntu-latest"
 )
 
 <#
@@ -118,9 +128,6 @@ function Get-SecureString {
 .PARAMETER gzipFile
    The path to the Gzip file that needs to be decompressed.
 
-.PARAMETER destination
-   The path to the destination file where the decompressed contents will be saved.
-
 .EXAMPLE
    Expand-Gzip -gzipFile "C:\path\to\file.gz" -destination "C:\path\to\output\file.txt"
    This example decompresses the file.gz file and saves the output to file.txt.
@@ -130,20 +137,22 @@ function Get-SecureString {
 #>
 function Expand-Gzip {
    param (
-      [string]$gzipFile,
-      [string]$destination
+      [string] $gzipFile
    )
+   $destination = [System.IO.Path]::ChangeExtension($gzipFile, $null)
+   Write-Host "Decompressing $gzipFile to $destination" -ForegroundColor Yellow
    $gzipStream = $null
    try {
-      [System.IO.Compression.GzipStream]::new([System.IO.File]::OpenRead($gzipFile), [System.IO.Compression.CompressionMode]::Decompress) | 
-      ForEach-Object {
-          $outputFile = [System.IO.File]::Create($destination)
-          $_.CopyTo($outputFile)
-          $outputFile.Close()
-      }
+      $gzipStream = [System.IO.Compression.GzipStream]::new([System.IO.File]::OpenRead($gzipFile), [System.IO.Compression.CompressionMode]::Decompress)
+      $outputFile = [System.IO.File]::Create($destination)
+      $gzipStream.CopyTo($outputFile)
+      $outputFile.Close()
    }
    catch {
-      if ($gzipStream) { $gzipStream.Dispose() }
+      Write-Host "Failed to decompress $gzipFile to $destination" -ForegroundColor Red
+   }
+   if ($gzipStream) {
+      $gzipStream.Dispose()
    }
 }
 
@@ -239,28 +248,31 @@ function Get-DockerImageTar {
       $imagePackageUrl = Get-LatestDockerImageUrl
       throw "Cannot find docker image file $dockerImageFile.  Download the docker image file from the GitHub Actions artifacts page ($imagePackageUrl)."
    }
+   $expectedGzFile = [System.IO.Path]::ChangeExtension($expectedArchivedImageName, ".tar.gz")
+   $expectedTarFile = [System.IO.Path]::ChangeExtension($expectedArchivedImageName, ".tar")
+
    $imageFileType = [System.IO.Path]::GetExtension($dockerImageFile).ToLower()
    if ($imageFileType -eq ".tar") {
       return $dockerImageFile
    }
    elseif ($imageFileType -eq ".zip") {
       Expand-Archive -Path $dockerImageFile -DestinationPath . -Force
-      $expectedGzFile = [System.IO.Path]::ChangeExtension($expectedArchivedImageName, ".tar.gz")
-      if (-Not (Test-Path $expectedGzFile)) {
-         throw "Cannot find the gzip'd docker image file $expectedGzFile unpacked from $dockerImageFile"
+      if (Test-Path $expectedGzFile) {
+         $expectedGzFile = (Get-Item $expectedGzFile).FullName
+         Expand-Gzip $expectedGzFile
       }
-      $expectedGzFile = (Get-Item $expectedGzFile).FullName
-      $dockerImageTar = $expectedGzFile.TrimEnd(".gz")
-      Expand-Gzip $expectedGzFile $dockerImageTar
-      if (-Not (Test-Path $dockerImageTar)) {
-         throw "Cannot find the tar'd docker image file $dockerImageTar unpacked from $expectedGzFile"
+      if (Test-Path $expectedTarFile) {
+         $expectedTarFile = (Get-Item $expectedTarFile).FullName
+         return $expectedTarFile
       }
-      return $dockerImageTar
+      else {
+         throw "Cannot find the docker image file in $dockerImageFile"
+      }
    }
    elseif ($imageFileType -eq ".gz") {
       $expectedGzFile = (Get-Item $dockerImageFile).FullName
       $dockerImageTar = [System.IO.Path]::ChangeExtension($expectedGzFile, $null)
-      Expand-Gzip $expectedGzFile $dockerImageTar
+      Expand-Gzip $expectedGzFile
       if (-Not (Test-Path $dockerImageTar)) {
          throw "Cannot find the tar'd docker image file $dockerImageTar unpacked from $expectedGzFile"
       }
@@ -546,6 +558,10 @@ try {
    Write-Host "`trl_sim_cpp -j $rlSimConfigFile"
    if ($rlSimConfigType -eq "connstr") {
       Write-Host "The RL simulation configuration is set to `"connstr`". You must update $rlSimConfigFile with the connection string before running rl_sim."
+   }
+   if ($deployMainProperties.outputs.rlSimContainerDeployed.value -eq "true") {
+      Write-Host ""
+      Write-Host "The RL simulation container is deployed. You many need to start the container instance to begin the simulation." -ForegroundColor Green
    }
 }
 catch {
