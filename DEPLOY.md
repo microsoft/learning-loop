@@ -7,6 +7,8 @@ The deploy folder contains Bicep scripts for deploying a sample Loop. These scri
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Manual Deployment](#manual-deployment-steps)
+- [Sample Deployment Script Details](#sample-deployment-script-details)
+- [Customize a deployment](#customize-a-deployment)
 
 ## Prerequisites
 
@@ -98,26 +100,7 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 
 By default the sample deployment script is configured to deploy a container instance that runs rl_sim_cpp.  You may need to restart the container after the deployment.
 
-- [Send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md)
-
-## Sample Deployment Script Details
-
-The deploy-sample script sets up a resource group to deploy the Learning Loop image (see `get-help ./deploy/scripts/deploy-sample.ps1` or `./deploy/scripts/deploy-sample.sh --help`). The script executes in three phases.
-
-- **Phase 1**: creates a Resource Group where the Loop resources will be deployed. If using an Azure Container Registry, the repository will be created here. Since Managed Identity is used by the Loop to access storage and EventHub resources, a Managed Identity will also be created.
-
-- **Phase 2**: pushes the specified tar'd Docker image to either an Azure Container Registry or a Docker Hub repository.
-
-- **Phase 3**: deploys the Azure Container, the Storage Account, and the EventHub.
-
-A full deployment using the deploy-sample script will deploy all required resources and generate two files.
-
-- `<loopName>.bicep` - contains the parameters for deploying the application environment, including the Learning Loop container, EventHub, and the Storage Account. This parameters file is used with `main.bicep` and can be re-run independently of the script.
-- `<loopName>.config.json` - contains the JSON config parameters for use with `rl_sim_cpp`
-
-## Customize a deployment
-
-See the Bicep scripts and [README](deploy/README.md) in the project deploy folder for deployment details.
+See [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md) to run the simulator application directly.
 
 ## Manual Deployment Steps
 
@@ -213,7 +196,7 @@ Create a Learning Loop manually. These steps will require you to login to the Az
 
 By default the sample deployment is configured to deploy a container instance that runs rl_sim_cpp.  You may need to restart the container after the deployment.
 
-- [Send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md)
+See [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md) to run the simulator application directly.
 
 ## Docker Image Artifact
 
@@ -236,3 +219,22 @@ If you downloaded the Docker image artifact from GitHub, you will have a zip fil
     ```
 
 `learning-loop-ubuntu-latest.tar` is Learning Loop Docker image tar file needed for [Manual Deployment Steps](#manual-deployment-steps)
+
+## Sample Deployment Script Details
+
+The deploy-sample script sets up a resource group to deploy the Learning Loop image (see `get-help ./deploy/scripts/deploy-sample.ps1` or `./deploy/scripts/deploy-sample.sh --help`). The script executes in three phases.
+
+- **Phase 1**: creates a Resource Group where the Loop resources will be deployed. If using an Azure Container Registry, the repository will be created here. Since Managed Identity is used by the Loop to access storage and EventHub resources, a Managed Identity will also be created.
+
+- **Phase 2**: pushes the specified tar'd Docker image to either an Azure Container Registry or a Docker Hub repository.
+
+- **Phase 3**: deploys the Azure Container, the Storage Account, and the EventHub.
+
+A full deployment using the deploy-sample script will deploy all required resources and generate two files.
+
+- `<loopName>.bicep` - contains the parameters for deploying the application environment, including the Learning Loop container, EventHub, and the Storage Account. This parameters file is used with `main.bicep` and can be re-run independently of the script.
+- `<loopName>.config.json` - contains the JSON config parameters for use with `rl_sim_cpp`
+
+## Customize a deployment
+
+See the Bicep scripts and [README](deploy/README.md) in the project deploy folder for deployment details.
