@@ -1,12 +1,12 @@
 # Deploy a Learning Loop
 
-The deploy folder contains Bicep scripts for deploying a sample Loop. These scripts can be used to deploy a self contained loop environment or can be included in a more customized configuration.
+The deploy folder contains Bicep scripts that facilitate deploying a sample Loop environment. These scripts are designed to create a self-contained deployment of the Loop, but they can also be incorporated into a larger or more customized Azure configuration. This document guides users through prerequisites, quick deployment, manual deployment, and customization options for their environment.
 
-**Note:** This document contains:
+## This Document Contains:
 
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
-- [Manual Deployment](#manual-deployment-steps)
+- [Manual Deployment](#manual-deployment)
 - [Sample Deployment Script Details](#sample-deployment-script-details)
 - [Customize a deployment](#customize-a-deployment)
 
@@ -14,33 +14,58 @@ The deploy folder contains Bicep scripts for deploying a sample Loop. These scri
 
 Before you begin, ensure you have the following:
 
-1. **A Learning Loop Docker image.** See the [Docker Image Artifact](#docker-image-artifact).
+1. **A Learning Loop Docker Image**  
+   Make sure you have access to the Docker image. See the [Docker Image Artifact](#docker-image-artifact) for more details.
 
-2. **Required Tools:**
-   - **Azure CLI**
-   - **Docker Engine**
-   - **Git** (Quick Start only)
-   - **jq** (Linux only)
+2. **Required Tools**  
+   The tools listed below are necessary for setup. You can install each one via your package manager:
 
-    All of these prerequisites should be available via your package manager. See the below links for the details of each.
+   - **Azure CLI** - [Installation Guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+   - **Docker Engine** - [Installation Guide](https://docs.docker.com/engine/install/)
+        
+        **Note:** For Linux users, you need to have the necessary permissions to execute Docker commands (e.g., being part of the docker group) to ensure that deployment commands work smoothly.
+   - **Git** (required for Quick Start only) - [Installation Guide](https://git-scm.com/downloads)
+   - **jq** (Linux only) - [Installation Guide](https://jqlang.github.io/jq/download/)
 
-    ### Linux
+   ### Linux Installation Commands
+   You can use the following commands to install the tools on Linux:
 
-    - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-    - [Docker Engine](https://docs.docker.com/engine/install/)
-    - [Git](https://git-scm.com/downloads)
-    - [jq](https://jqlang.github.io/jq/download/)
+   - **Azure CLI**:  
+     ```sh
+     sudo apt-get install azure-cli
+     ```
+   - **Docker Engine**:  
+     Follow the instructions here: [Docker Engine Install](https://docs.docker.com/engine/install/).
+   - **Git**:  
+     ```sh
+     sudo apt-get install git
+     ```
+   - **jq**:  
+     ```sh
+     sudo apt-get install jq
+     ```
 
-    ### Windows
+   ### Windows Installation Commands
+   You can use the following commands to install the tools on Windows:
 
-    - [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4)
-    - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-    - [Docker Engine](https://docs.docker.com/engine/install/)
-    - [Git](https://git-scm.com/downloads)
+   - **PowerShell**:  
+     Follow the instructions here: [PowerShell Install](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4).
+   - **Azure CLI**:  
+     ```powershell
+     winget install --id Microsoft.AzureCLI
+     ```
+   - **Docker Engine**:  
+     Follow the instructions here: [Docker Engine Install](https://docs.docker.com/engine/install/).
+   - **Git**:  
+     ```powershell
+     winget install --id Git.Git
+     ```
+
+   For Windows users, PowerShell is essential for command-line management of Docker containers.
 
 ## Quick Start
 
-Use the deploy-sample script to set up a new Resource Group and deploy a sample loop. A successful deployment requires the ability to create and manage the following resources in your Azure Subscription
+Follow these steps to set up a new Resource Group and deploy a sample loop using the deploy-sample script. A successful deployment requires permissions to create and manage resources such as Resource Groups, Storage Accounts, Azure Container Registry (ACR), Managed Identities, and KeyVaults in your Azure Subscription.
 
 - Create Resource Groups
 - Ability to assign roles within the Resource Group
@@ -52,9 +77,11 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 - Create Azure Container Groups/Instances
 - Create Application Insights
 
-**Note: At this time `Quick Start` requires the ability to download the Learning-Loop Docker artifact (see step 1)**
+### Quick Start Steps
 
-1) <a id="quick-start-step1"></a>Download the Learning Loop Docker image artifact. See [Docker Image Artifact](#docker-image-artifact) section. Note the file path of the downloaded artifact zip file for use in step 6.
+1) <a id="quick-start-step1"></a>Download the Learning Loop Docker image artifact.
+
+    See [Docker Image Artifact](#docker-image-artifact) section. Note the file path of the downloaded artifact zip file for use in step 6.
 
 2) Clone the [learning-loop](https://github.com/microsoft/learning-loop) GitHub repository
 
@@ -71,11 +98,13 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 
 4) Start the Docker Engine
 
-    #### Linux (not Windows/WSL2)
+    #### Linux
 
     ```bash
-    sudo systemctl start docker.service
+    systemctl start docker.service
     ```
+    
+    **Note**: If you are using Docker under WSL2 you will need to use Docker Desktop to manage Docker in WSL2.
 
     #### Windows (and Linux/WSL2)
 
@@ -98,13 +127,15 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 
 ## Next Steps
 
-By default the sample deployment script is configured to deploy a container instance that runs rl_sim_cpp.  You may need to restart the container after the deployment.
+The sample deployment script deploys a container instance running `rl_sim_cpp` by default. After deployment, you may need to restart the container to resolve any timing issues related to the deployed resources.
 
-See [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md) to run the simulator application directly.
+For instructions on running the simulator application directly, see [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md).
 
-## Manual Deployment Steps
+## Manual Deployment
 
 Create a Learning Loop manually. These steps will require you to login to the Azure Portal using your web browser and in a terminal session. And, as noted in the [Quick Start](#quick-start-step1) section, you will need to [download the Learning Loop artifact](#docker-image-artifact) or build the Docker image.
+
+### Manual Deployment Steps
 
 1) Use the `Deploy to Azure` button below to create a Resource Group, Managed Identity, Azure Insights, and an Azure Container Registry.
 
