@@ -81,6 +81,7 @@ param mainConfig = {
 {environmentVarsString}
    ]
    deployRlSimContainer: {deployRlSim}
+   rlSimArgs: '{rlSimArgs}'
    resourceTags: {
       deploymentGroupName: '{loopname}'
    }
@@ -122,7 +123,8 @@ var appDeploymentParams_10 = replace(appDeploymentParams_9, '{container-memorygi
 var appDeploymentParams_11 = replace(appDeploymentParams_10, '{image-name}', config.image.name)
 var appDeploymentParams_12 = replace(appDeploymentParams_11, '{image-tag}', config.image.tag)
 var appDeploymentParams_13 = replace(appDeploymentParams_12, '{environmentVarsString}', environmentVarsStr)
-var appDeploymentParamsFinal = replace(appDeploymentParams_13, '{deployRlSim}', deployRlSimStr)
+var appDeploymentParams_14 = replace(appDeploymentParams_13, '{deployRlSim}', deployRlSimStr)
+var appDeploymentParamsFinal = replace(appDeploymentParams_14, '{rlSimArgs}', config.loopConfig.rlSimArgs)
 var appDeploymentParams = appDeploymentParamsFinal
 
 output loopDeploymentParams string = appDeploymentParams

@@ -33,6 +33,7 @@ param config = {
       }
     ]
     deployRlSim: true
+    rlSimArgs: ''
     eventHub: {
       capacity: 4
       partitionCount: 16

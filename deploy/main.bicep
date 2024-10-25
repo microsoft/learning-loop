@@ -158,6 +158,18 @@ var rlsimContainerEnvironmentVars = mainConfig.deployRlSimContainer ? [
     name: 'RL_SIM_CONFIG'
     value: rlSimConfig.outputs.rlSimConfigAz
   }
+  {
+    name: 'RL_SIM_ARGS'
+    value: mainConfig.rlSimArgs
+  }
+  {
+    name: 'LEARNING_LOOP_NAME'
+    value: mainConfig.appName
+  }
+  {
+    name: 'STORAGE_ACCOUNT_NAME'
+    value: storage.outputs.storageAccountName
+  }
 ] : []
 
 // Deploy the rl_sim container group

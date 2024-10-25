@@ -1,7 +1,8 @@
 #!/bin/bash
-if [[ -n "$RL_START_WITH" && -x "$RL_START_WITH" ]]; then
-   echo "Starting up with: $RL_START_WITH"
-  ./"$RL_START_WITH"
-else
-  ./onlinetrainer.sh
+START_CMD="onlinetrainer.sh"
+if [[ -n "$RL_START_WITH" && -f "$RL_START_WITH" && -x "$RL_START_WITH" ]]; then
+  START_CMD=$RL_START_WITH
 fi
+
+echo "Starting up with: $RL_START_WITH"
+./"$START_CMD"

@@ -24,6 +24,8 @@ type environmentConfigT = {
 
     @description('True if the reinforcement learning simulator should be deployed.')
     deployRlSim: bool
+    @description('Additional arguments for the reinforcement learning simulator')
+    rlSimArgs: string
 
     @description('Event hub parameters')
     eventHub: {

@@ -55,6 +55,8 @@ param resourceTags object = {
 }
 @description('Deploy the reinforcement learning simulator')
 param deployRlSim bool = true
+@description('Additional arguments for the reinforcement learning simulator')
+param rlSimArgs string = ''
 
 // Generate the default environment variables and combine with the main configuration environment variables
 var loopContainerEnvironmentVars = [
@@ -185,6 +187,10 @@ var rlsimContainerEnvironmentVars = deployRlSim ? [
     {
       name: 'RL_SIM_CONFIG'
       value: rlSimConfig.outputs.rlSimConfigAz
+    }
+    {
+      name: 'RL_SIM_ARGS'
+      value: rlSimArgs
     }
     {
       name: 'LEARNING_LOOP_NAME'

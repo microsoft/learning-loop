@@ -31,6 +31,7 @@ param mainConfig = {
     }
   ]
   deployRlSimContainer: true
+  rlSimArgs: ''
   resourceTags: {
     deploymentGroupName: 'sample_loop'
   }

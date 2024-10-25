@@ -13,6 +13,8 @@ type mainConfigT = {
   environmentVars: object[]?
   @description('True if the rl_sim container should be deployed')
   deployRlSimContainer: bool
+  @description('Additional arguments for the rl_sim container')
+  rlSimArgs: string
   @description('The name of the user-assigned managed identity for the tester (used for test ci/cd testing)')
   testerIdentityName: string?
   @description('Tags applied to each deployed resource')
