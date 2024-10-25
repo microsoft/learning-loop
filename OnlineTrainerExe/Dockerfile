@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+RUN apt-get update && apt-get install -y azure-cli && apt-get clean
 ARG TRAINER_SRC_PATH=bin/onlinetrainer
 ARG RLSIM_SRC_PATH=../artifacts/rl_sim
 ARG IMAGE_ENVIRONMENT=Production

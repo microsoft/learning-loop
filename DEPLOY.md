@@ -225,9 +225,9 @@ Create a Learning Loop manually. These steps will require you to login to the Az
 
 ### Next Steps
 
-By default the sample deployment is configured to deploy a container instance that runs rl_sim_cpp.  You may need to restart the container after the deployment.
+The manual deployment steps deploys a container instance running `rl_sim_cpp` by default. After deployment, you may need to restart the container to resolve any timing issues related to the deployed resources.
 
-See [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md) to run the simulator application directly.
+For instructions on running the simulator application directly, see [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md).
 
 ## Docker Image Artifact
 

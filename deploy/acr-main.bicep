@@ -186,6 +186,14 @@ var rlsimContainerEnvironmentVars = deployRlSim ? [
       name: 'RL_SIM_CONFIG'
       value: rlSimConfig.outputs.rlSimConfigAz
     }
+    {
+      name: 'LEARNING_LOOP_NAME'
+      value: loopName
+    }
+    {
+      name: 'STORAGE_ACCOUNT_NAME'
+      value: storageAccountName
+    }
   ] : []
 
 

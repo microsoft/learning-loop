@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "2502198006459564883"
+      "templateHash": "8907780728548787314"
     }
   },
   "functions": [
@@ -1213,7 +1213,7 @@
               "name": "[format('rlsim-{0}', parameters('loopContainerGroupName'))]",
               "resourceTags": "[parameters('resourceTags')]",
               "location": "[parameters('location')]",
-              "environmentVars": "[if(parameters('deployRlSim'), createArray(createObject('name', 'RL_START_WITH', 'value', 'rl_sim.sh'), createObject('name', 'RL_SIM_CONFIG', 'value', reference('rlSimConfig').outputs.rlSimConfigAz.value)), createArray())]",
+              "environmentVars": "[if(parameters('deployRlSim'), createArray(createObject('name', 'RL_START_WITH', 'value', 'rl_sim.sh'), createObject('name', 'RL_SIM_CONFIG', 'value', reference('rlSimConfig').outputs.rlSimConfigAz.value), createObject('name', 'LEARNING_LOOP_NAME', 'value', parameters('loopName')), createObject('name', 'STORAGE_ACCOUNT_NAME', 'value', parameters('storageAccountName'))), createArray())]",
               "cpuCores": "[parameters('containerCpuCores')]",
               "memoryGig": "[parameters('containerMemoryGig')]",
               "image": "[variables('containerImage')]"
