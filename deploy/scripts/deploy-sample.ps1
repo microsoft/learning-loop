@@ -53,6 +53,11 @@
    from a zipped or gzipped Docker archive.
    Default: "./learning-loop-ubuntu-latest"
 
+.PARAMETER initStorage
+   Initialize the storage account to allow rl_sim to start. Use this switch if you are running
+   rl_sim manually and a model does not already exist in the storage account.
+   Default: false
+
 .EXAMPLE
    .\deploy-sample.ps1
    Deploys the sample Learning Loop environment to the "westus2" location using the sample parameter file
@@ -86,7 +91,8 @@ param(
    [ValidateSet("az", "connstr")]
    [string]$rlSimConfigType = "az",
    [System.IO.FileInfo] $rlSimConfigFile = "./rl-sim-config.json",
-   [string] $expectedArchivedImageName = "./learning-loop-ubuntu-latest"
+   [string] $expectedArchivedImageName = "./learning-loop-ubuntu-latest",
+   [switch] $initStorage = $false
 )
 
 <#
@@ -549,9 +555,13 @@ try {
    Out-File -FilePath $rlSimConfigFile -InputObject $rlSimConfig -Encoding ascii
 
    Write-Host "Deployment completed successfully" -ForegroundColor Green
-   Write-Host
-   # try to initialize the storage account to allow rl_sim to start
-   TryInitializeStorage -StorageAccountName $deployMainProperties.outputs.storageAccountName.value -LoopName $deployEnvProperties.outputs.loopName.value
+
+   if ($initStorage) {
+      # try to initialize the storage account to allow rl_sim to start
+      Write-Host
+      TryInitializeStorage -StorageAccountName $deployMainProperties.outputs.storageAccountName.value -LoopName $deployEnvProperties.outputs.loopName.value
+   }
+
    Write-Host 
    Write-Host "The RL simulation configuration file is saved at $rlSimConfigFile" -ForegroundColor Yellow
    Write-Host "rl_sim usage:" -ForegroundColor Yellow

@@ -39,6 +39,7 @@ dockerImageFile="./docker-image-ubuntu-latest.zip"
 rlSimConfigType="az"
 rlSimConfigFile="./rl-sim-config.json"
 expectedArchivedImageName="./learning-loop-ubuntu-latest"
+init_storage=false
 
 print_usage() {
    echo "Usage: $0 [options]"
@@ -52,6 +53,7 @@ print_usage() {
    echo "  --rlSimConfigType <type>             The type of generated RL simulation configuration (az or connstr) (default: $rlSimConfigType)"
    echo "  --rlSimConfigFile <file>             The file to save the RL simulation configuration (default: $rlSimConfigFile)"
    echo "  --expectedArchivedImageName <name>   The expected name of the archived Docker image (default: $expectedArchivedImageName)"
+   echo "  --init-storage                       Initialize the storage account to allow rl_sim to start (default is false)"
    echo
    echo "A successful deployment will create/overwrite a file named 'main-deploy.bicepparam' (default) in the current directory,"
    echo "and a RL simulation configuration file 'rl-sim-config.json' (default) in the current directory."
@@ -97,6 +99,9 @@ parse_arguments() {
       --expectedArchivedImageName)
          expectedArchivedImageName="$2"
          shift
+         ;;
+      --init-storage)
+         init_storage=true
          ;;
       --help)
          print_usage
@@ -449,14 +454,18 @@ main() {
    echo -e "${YELLOW}Saving the RL simulation configuration to $rlSimConfigFile${NC}"
    rlSimConfig=$(echo "$deployMainProperties" | jq -r '.outputs.rlSimConfigAz.value')
    echo "$rlSimConfig" >"$rlSimConfigFile"
-
    echo -e "${GREEN}Deployment completed successfully${NC}"
-   echo
-   storageAccountName=$(echo "$deployMainProperties" | jq -r '.outputs.storageAccountName.value')
-   loopName=$(echo "$deployEnvProperties" | jq -r '.outputs.loopName.value')
 
-   # try to initialize the storage account to allow rl_sim to start
-   initialize_storage_account "$storageAccountName" "$loopName"
+   if [ "$init_storage" == true ]; then
+      # try to initialize the storage account to allow rl_sim to start
+      echo
+      storageAccountName=$(echo "$deployMainProperties" | jq -r '.outputs.storageAccountName.value')
+      loopName=$(echo "$deployEnvProperties" | jq -r '.outputs.loopName.value')
+      echo
+      echo -e "${YELLOW}Initializing storage account to allow rl_sim to start${NC}"
+      initialize_storage_account "$storageAccountName" "$loopName"
+   fi
+
    echo
    echo -e "${YELLOW}The RL simulation configuration file is saved at $rlSimConfigFile${NC}"
    echo "rl_sim usage:"

@@ -211,15 +211,29 @@ Create a Learning Loop manually. These steps will require you to login to the Az
 
 5) Prepare the Learning Loop's storage for the Learning Loop simulator.
 
-    Since the Azure Storage Blob is newly created, it needs to be prepared for use with rl_sim_cpp by copying an empty model file as follows.
+    **Note** Skip this step if the rl_sim container instance was deployed (this is the default).
 
-    If you deployed with different Storage Account name or Learning Loop name, change the command below to match. For example:
 
-    *az storage blob upload --account-name MY-STORAGE-ACCOUNT-NAME --container-name "MY-LEARNING-LOOP-NAME/exported-models" --file ./empty_model --name "current"*
+    To prepare the newly created Azure Storage Blob for use with rl_sim_cpp, an empty model file must be uploaded. This step initializes the blob container to be ready for the learning loop.
+
+    Create an empty file.
+
+    #### Linux
+    ```bash
+    touch ./empty_model
+    ```
+
+    #### Windows
+    ```bash
+    new-item -path ./empty_model -ItemType File -Force
+    ```
+
+    Initialize storage
+
+    Replace the storage account name according to your deployment.
 
     ```bash
-    echo '' > ./empty_model
-    az storage blob upload --account-name sampleloopstg --container-name "sample-loop/exported-models" --file ./empty_model --name "current"
+    az storage blob upload --account-name <YOUR-STORAGE-ACCOUNT-NAME> --container-name "sample-loop/exported-models" --file ./empty_model --name "current"
     rm ./empty_model
     ```
 
