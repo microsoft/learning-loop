@@ -64,6 +64,8 @@ var imageCredsVarFinal = config.image.properties.kind == 'acr' ? replace('''
 '''
 var imageCredsVar = imageCredsVarFinal
 
+var deployRlSimStr = config.loopConfig.deployRlSim ? 'true' : 'false'
+
 // generate the deployment parameters using replacement values
 var appDeploymentParams_0 = replace('''
 //
@@ -78,6 +80,8 @@ param mainConfig = {
 {appInsightsEnv}
 {environmentVarsString}
    ]
+   deployRlSimContainer: {deployRlSim}
+   rlSimArgs: '{rlSimArgs}'
    resourceTags: {
       deploymentGroupName: '{loopname}'
    }
@@ -118,7 +122,9 @@ var appDeploymentParams_9 = replace(appDeploymentParams_8, '{container-cpucores}
 var appDeploymentParams_10 = replace(appDeploymentParams_9, '{container-memorygig}', string(config.loopConfig.container.memoryGig))
 var appDeploymentParams_11 = replace(appDeploymentParams_10, '{image-name}', config.image.name)
 var appDeploymentParams_12 = replace(appDeploymentParams_11, '{image-tag}', config.image.tag)
-var appDeploymentParamsFinal = replace(appDeploymentParams_12, '{environmentVarsString}', environmentVarsStr)
+var appDeploymentParams_13 = replace(appDeploymentParams_12, '{environmentVarsString}', environmentVarsStr)
+var appDeploymentParams_14 = replace(appDeploymentParams_13, '{deployRlSim}', deployRlSimStr)
+var appDeploymentParamsFinal = replace(appDeploymentParams_14, '{rlSimArgs}', config.loopConfig.rlSimArgs)
 var appDeploymentParams = appDeploymentParamsFinal
 
 output loopDeploymentParams string = appDeploymentParams

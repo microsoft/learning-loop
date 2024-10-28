@@ -38,6 +38,8 @@
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="ThirdPartyNotices.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="onlinetrainer.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="rl_sim.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="start-app.sh" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="PrintPackagesAndParents" DependsOnTargets="RunResolvePackageDependencies">

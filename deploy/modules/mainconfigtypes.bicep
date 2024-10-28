@@ -7,10 +7,14 @@ type credentialType = 'managedIdentity' | 'usernamePassword' | 'keyVault'
 
 @export()
 type mainConfigT = {
-  @description('Application name defining a namespace for messaging and storage')
+  @description('Loop name defining a namespace for messaging and storage')
   appName: string
-  @description('Application environment variables from TrainerConfig, JoinerConfig, LogRetentionConfig, and TrainingMonitoringConfig')
+  @description('Loop container instance environment variables (values defined in TrainerConfig, JoinerConfig, LogRetentionConfig, and TrainingMonitoringConfig)')
   environmentVars: object[]?
+  @description('True if the rl_sim container should be deployed')
+  deployRlSimContainer: bool
+  @description('Additional arguments for the rl_sim container')
+  rlSimArgs: string
   @description('The name of the user-assigned managed identity for the tester (used for test ci/cd testing)')
   testerIdentityName: string?
   @description('Tags applied to each deployed resource')

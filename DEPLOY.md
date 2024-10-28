@@ -1,28 +1,71 @@
 # Deploy a Learning Loop
 
-The deploy folder contains Bicep scripts for deploying a sample Loop. These scripts can be used to deploy a self contained loop environment or can be included in a more customized configuration.
+The deploy folder contains Bicep scripts that facilitate deploying a sample Loop environment. These scripts are designed to create a self-contained deployment of the Loop, but they can also be incorporated into a larger or more customized Azure configuration. This document guides users through prerequisites, quick deployment, manual deployment, and customization options for their environment.
+
+## This Document Contains:
+
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Manual Deployment](#manual-deployment)
+- [Sample Deployment Script Details](#sample-deployment-script-details)
+- [Customize a deployment](#customize-a-deployment)
 
 ## Prerequisites
 
-Azure CLI, Docker Engine, and Git should be available on your system. Linux requires the jq command-line tool. All of these prerequisites should be available via your package manager, see the below links for the details of each.
+Before you begin, ensure you have the following:
 
-### Linux
+1. **A Learning Loop Docker Image**  
+   Make sure you have access to the Docker image. See the [Docker Image Artifact](#docker-image-artifact) for more details.
 
-- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-- [Docker Engine](https://docs.docker.com/engine/install/)
-- [Git](https://git-scm.com/downloads)
-- [jq](https://jqlang.github.io/jq/download/)
+2. **Required Tools**  
+   The tools listed below are necessary for setup. You can install each one via your package manager:
 
-### Windows
+   - **Azure CLI** - [Installation Guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+   - **Docker Engine** - [Installation Guide](https://docs.docker.com/engine/install/)
+        
+        **Note:** For Linux users, you need to have the necessary permissions to execute Docker commands (e.g., being part of the docker group) to ensure that deployment commands work smoothly.
+   - **Git** (required for Quick Start only) - [Installation Guide](https://git-scm.com/downloads)
+   - **jq** (Linux only) - [Installation Guide](https://jqlang.github.io/jq/download/)
 
-- [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4)
-- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-- [Docker Engine](https://docs.docker.com/engine/install/)
-- [Git](https://git-scm.com/downloads)
+   ### Linux Installation Commands
+   You can use the following commands to install the tools on Linux:
+
+   - **Azure CLI**:  
+     ```sh
+     sudo apt-get install azure-cli
+     ```
+   - **Docker Engine**:  
+     Follow the instructions here: [Docker Engine Install](https://docs.docker.com/engine/install/).
+   - **Git**:  
+     ```sh
+     sudo apt-get install git
+     ```
+   - **jq**:  
+     ```sh
+     sudo apt-get install jq
+     ```
+
+   ### Windows Installation Commands
+   You can use the following commands to install the tools on Windows:
+
+   - **PowerShell**:  
+     Follow the instructions here: [PowerShell Install](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.4).
+   - **Azure CLI**:  
+     ```powershell
+     winget install --id Microsoft.AzureCLI
+     ```
+   - **Docker Engine**:  
+     Follow the instructions here: [Docker Engine Install](https://docs.docker.com/engine/install/).
+   - **Git**:  
+     ```powershell
+     winget install --id Git.Git
+     ```
+
+   For Windows users, PowerShell is essential for command-line management of Docker containers.
 
 ## Quick Start
 
-Use the deploy-sample script to set up a new Resource Group and deploy a sample loop. A successful deployment requires the ability to create and manage the following resources in your Azure Subscription
+Follow these steps to set up a new Resource Group and deploy a sample loop using the deploy-sample script. A successful deployment requires permissions to create and manage resources such as Resource Groups, Storage Accounts, Azure Container Registry (ACR), Managed Identities, and KeyVaults in your Azure Subscription.
 
 - Create Resource Groups
 - Ability to assign roles within the Resource Group
@@ -34,9 +77,11 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 - Create Azure Container Groups/Instances
 - Create Application Insights
 
-**Note: At this time `Quick Start` requires the ability to download the Learning-Loop Docker artifact (see step 1)**
+### Quick Start Steps
 
-1) <a id="quick-start-step1"></a>Download the Learning Loop Docker image artifact. See [Docker Image Artifact](#docker-image-artifact) section. Note the file path of the downloaded artifact zip file for use in step 6.
+1) <a id="quick-start-step1"></a>Download the Learning Loop Docker image artifact.
+
+    See [Docker Image Artifact](#docker-image-artifact) section. Note the file path of the downloaded artifact zip file for use in step 6.
 
 2) Clone the [learning-loop](https://github.com/microsoft/learning-loop) GitHub repository
 
@@ -53,11 +98,13 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 
 4) Start the Docker Engine
 
-    #### Linux (not Windows/WSL2)
+    #### Linux
 
     ```bash
-    sudo systemctl start docker.service
+    systemctl start docker.service
     ```
+    
+    **Note**: If you are using Docker under WSL2 you will need to use Docker Desktop to manage Docker in WSL2.
 
     #### Windows (and Linux/WSL2)
 
@@ -80,30 +127,15 @@ Use the deploy-sample script to set up a new Resource Group and deploy a sample 
 
 ## Next Steps
 
-- [Send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md)
+The sample deployment script deploys a container instance running `rl_sim_cpp` by default. After deployment, you may need to restart the container to resolve any timing issues related to the deployed resources.
 
-## Sample Deployment Script Details
+For instructions on running the simulator application directly, see [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md).
 
-The deploy-sample script sets up a resource group to deploy the Learning Loop image (see `get-help ./deploy/scripts/deploy-sample.ps1` or `./deploy/scripts/deploy-sample.sh --help`). The script executes in three phases.
-
-- **Phase 1**: creates a Resource Group where the Loop resources will be deployed. If using an Azure Container Registry, the repository will be created here. Since Managed Identity is used by the Loop to access storage and EventHub resources, a Managed Identity will also be created.
-
-- **Phase 2**: pushes the specified tar'd Docker image to either an Azure Container Registry or a Docker Hub repository.
-
-- **Phase 3**: deploys the Azure Container, the Storage Account, and the EventHub.
-
-A full deployment using the deploy-sample script will deploy all required resources and generate two files.
-
-- `<loopName>.bicep` - contains the parameters for deploying the application environment, including the Learning Loop container, EventHub, and the Storage Account. This parameters file is used with `main.bicep` and can be re-run independently of the script.
-- `<loopName>.config.json` - contains the JSON config parameters for use with `rl_sim_cpp`
-
-## Customize a deployment
-
-See the Bicep scripts and [README](deploy/README.md) in the project deploy folder for deployment details.
-
-## Manual Deployment Steps
+## Manual Deployment
 
 Create a Learning Loop manually. These steps will require you to login to the Azure Portal using your web browser and in a terminal session. And, as noted in the [Quick Start](#quick-start-step1) section, you will need to [download the Learning Loop artifact](#docker-image-artifact) or build the Docker image.
+
+### Manual Deployment Steps
 
 1) Use the `Deploy to Azure` button below to create a Resource Group, Managed Identity, Azure Insights, and an Azure Container Registry.
 
@@ -179,21 +211,37 @@ Create a Learning Loop manually. These steps will require you to login to the Az
 
 5) Prepare the Learning Loop's storage for the Learning Loop simulator.
 
-    Since the Azure Storage Blob is newly created, it needs to be prepared for use with rl_sim_cpp by copying an empty model file as follows.
+    **Note** Skip this step if the rl_sim container instance was deployed (this is the default).
 
-    If you deployed with different Storage Account name or Learning Loop name, change the command below to match. For example:
 
-    *az storage blob upload --account-name MY-STORAGE-ACCOUNT-NAME --container-name "MY-LEARNING-LOOP-NAME/exported-models" --file ./empty_model --name "current"*
+    To prepare the newly created Azure Storage Blob for use with rl_sim_cpp, an empty model file must be uploaded. This step initializes the blob container to be ready for the learning loop.
+
+    Create an empty file.
+
+    #### Linux
+    ```bash
+    touch ./empty_model
+    ```
+
+    #### Windows
+    ```bash
+    new-item -path ./empty_model -ItemType File -Force
+    ```
+
+    Initialize storage
+
+    Replace the storage account name according to your deployment.
 
     ```bash
-    echo '' > ./empty_model
-    az storage blob upload --account-name sampleloopstg --container-name "sample-loop/exported-models" --file ./empty_model --name "current"
+    az storage blob upload --account-name <YOUR-STORAGE-ACCOUNT-NAME> --container-name "sample-loop/exported-models" --file ./empty_model --name "current"
     rm ./empty_model
     ```
 
 ### Next Steps
 
-- [Send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md)
+The manual deployment steps deploys a container instance running `rl_sim_cpp` by default. After deployment, you may need to restart the container to resolve any timing issues related to the deployed resources.
+
+For instructions on running the simulator application directly, see [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md).
 
 ## Docker Image Artifact
 
@@ -207,7 +255,7 @@ In the meantime, download the Learning Loop Docker image artifact from the [late
 
 ### Unpack the tar'd Docker image
 
-If you downloaded the Docker image artifact from GitHub, you will have a zip file containing a gzip'd tar file.  For the [Quick Start](#quick-start) steps this is all you need. For the [Manual Deployment Steps](#manual-deployment-steps), you will need to unpack the tar file as follows.
+If you downloaded the Docker image artifact from GitHub, you will have a zip file containing the Docker image tar file.  For the [Quick Start](#quick-start) steps this is all you need. For the [Manual Deployment Steps](#manual-deployment-steps), you will need to manually unzip the file.
 
 - unzip the artifacts file.
 
@@ -215,10 +263,23 @@ If you downloaded the Docker image artifact from GitHub, you will have a zip fil
     unzip docker-image-ubuntu-latest.zip
     ```
 
-- Unpack the gz file.
-
-    ```bash
-    gunzip learning-loop-ubuntu-latest.tar.gz
-    ```
-
 `learning-loop-ubuntu-latest.tar` is Learning Loop Docker image tar file needed for [Manual Deployment Steps](#manual-deployment-steps)
+
+## Sample Deployment Script Details
+
+The deploy-sample script sets up a resource group to deploy the Learning Loop image (see `get-help ./deploy/scripts/deploy-sample.ps1` or `./deploy/scripts/deploy-sample.sh --help`). The script executes in three phases.
+
+- **Phase 1**: creates a Resource Group where the Loop resources will be deployed. If using an Azure Container Registry, the repository will be created here. Since Managed Identity is used by the Loop to access storage and EventHub resources, a Managed Identity will also be created.
+
+- **Phase 2**: pushes the specified tar'd Docker image to either an Azure Container Registry or a Docker Hub repository.
+
+- **Phase 3**: deploys the Azure Container, the Storage Account, and the EventHub.
+
+A full deployment using the deploy-sample script will deploy all required resources and generate two files.
+
+- `<loopName>.bicep` - contains the parameters for deploying the application environment, including the Learning Loop container, EventHub, and the Storage Account. This parameters file is used with `main.bicep` and can be re-run independently of the script.
+- `<loopName>.config.json` - contains the JSON config parameters for use with `rl_sim_cpp`
+
+## Customize a deployment
+
+See the Bicep scripts and [README](deploy/README.md) in the project deploy folder for deployment details.

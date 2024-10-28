@@ -10,7 +10,7 @@ type containerConfigT = {
   resourceTags: object?
   @description('Location for the container group')
   location: string
-  @description('Environment variables for the container application')
+  @description('Environment variables for the container instance')
   environmentVars: object[]
   @description('Number of CPU cores to allocate for the container')
   cpuCores: int

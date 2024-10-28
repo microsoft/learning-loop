@@ -7,8 +7,8 @@ param location string = resourceGroup().location
 
 @description('Learning Loop name')
 param loopName string = 'sample-loop'
-@description('Container Group name')
-param containerGroupName string = 'sample-loop-cg'
+@description('Loop Container Group name')
+param loopContainerGroupName string = 'sample-loop-cg'
 @description('Container CPU Cores')
 param containerCpuCores int = 4
 @description('Container Memory in GB')
@@ -53,9 +53,13 @@ param loopEnvVarLastConfigurationEditDate string = '2024-01-01'
 param resourceTags object = {
   deploymentGroupName: 'sample-loop'
 }
+@description('Deploy the reinforcement learning simulator')
+param deployRlSim bool = true
+@description('Additional arguments for the reinforcement learning simulator')
+param rlSimArgs string = ''
 
 // Generate the default environment variables and combine with the main configuration environment variables
-var containerEnvironmentVars = [
+var loopContainerEnvironmentVars = [
   {
     name: 'AppId'
     value: loopName
@@ -111,22 +115,6 @@ var containerImage = {
   }
 } 
 
-// Deploy the container group, storage account, and event hub
-module containerGroup 'modules/containergroup.bicep' = {
-  name: 'container'
-  params: {
-    containerConfig: {
-      name: containerGroupName
-      resourceTags: resourceTags
-      location: location
-      environmentVars: containerEnvironmentVars
-      cpuCores: containerCpuCores
-      memoryGig: containerMemoryGig
-      image: containerImage
-    }
-  }
-}
-
 module storage 'modules/storage.bicep' = {
   name: 'storage'
   params: {
@@ -137,8 +125,6 @@ module storage 'modules/storage.bicep' = {
       sku: storageAccountSku
       kind: 'StorageV2'
       blobContainerName: loopName
-      roleAssignmentPrincipalId: containerGroup.outputs.containerPrincipalId
-      storageUserObjectId: userRoleAssignmentPrincipalId
     }
   }
 }
@@ -154,9 +140,32 @@ module eventhubs 'modules/eventhubs.bicep' = {
       capacity: eventhubsCapacity
       messageRetentionDays: eventhubsRetentionDays
       partitionCount: eventhubsPartitionCount
-      roleAssignmentPrincipalId: containerGroup.outputs.containerPrincipalId
-      senderReceiverUserObjectId: userRoleAssignmentPrincipalId
     }
+  }
+}
+
+// Deploy the container group with a loop container instance
+module loopContainerGroup 'modules/containergroup.bicep' = {
+  name: 'loopContainer'
+  params: {
+    containerConfig: {
+      name: loopContainerGroupName
+      resourceTags: resourceTags
+      location: location
+      environmentVars: loopContainerEnvironmentVars
+      cpuCores: containerCpuCores
+      memoryGig: containerMemoryGig
+      image: containerImage
+    }
+  }
+}
+
+module loopRollassignments 'modules/containerrollassignments.bicep' = {
+  name: 'loopRollAssignments'
+  params: {
+    assignedRolePrincipalId: loopContainerGroup.outputs.containerPrincipalId
+    storageAccountName: storage.outputs.storageAccountName
+    eventHubsName: eventhubs.outputs.eventHubsName
   }
 }
 
@@ -166,6 +175,65 @@ module rlSimConfig 'modules/generaterlsimconfig.bicep' = {
     loopName: loopName
     eventHubEndpoint: eventhubs.outputs.eventHubEndpoint
     storageBlobEndpoint: storage.outputs.storageBlobEndpoint
+  }
+}
+
+// rl_sim container instance environment variables
+var rlsimContainerEnvironmentVars = deployRlSim ? [
+    {
+      name: 'RL_START_WITH'
+      value: 'rl_sim.sh'
+    }
+    {
+      name: 'RL_SIM_CONFIG'
+      value: rlSimConfig.outputs.rlSimConfigAz
+    }
+    {
+      name: 'RL_SIM_ARGS'
+      value: rlSimArgs
+    }
+    {
+      name: 'LEARNING_LOOP_NAME'
+      value: loopName
+    }
+    {
+      name: 'STORAGE_ACCOUNT_NAME'
+      value: storageAccountName
+    }
+  ] : []
+
+
+// Deploy the rl_sim container group
+module rlsimContainerGroup 'modules/containergroup.bicep' = if (deployRlSim) {
+  name: 'rlsimContainer'
+  params: {
+    containerConfig: {
+      name: 'rlsim-${loopContainerGroupName}'
+      resourceTags: resourceTags
+      location: location
+      environmentVars: rlsimContainerEnvironmentVars
+      cpuCores: containerCpuCores
+      memoryGig: containerMemoryGig
+      image: containerImage
+    }
+  }
+}
+
+module rlSimRollassignments 'modules/containerrollassignments.bicep' = if (deployRlSim) {
+  name: 'rlSimRollassignments'
+  params: {
+    assignedRolePrincipalId: rlsimContainerGroup.outputs.containerPrincipalId
+    storageAccountName: storage.outputs.storageAccountName
+    eventHubsName: eventhubs.outputs.eventHubsName
+  }
+}
+
+module userRollassignments 'modules/userrollassignments.bicep' = if (!empty(userRoleAssignmentPrincipalId)) {
+  name: 'userRollassignments'
+  params: {
+    userRoleAssignmentPrincipalId: userRoleAssignmentPrincipalId
+    storageAccountName: storage.outputs.storageAccountName
+    eventHubsName: eventhubs.outputs.eventHubsName
   }
 }
 

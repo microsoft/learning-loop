@@ -9,12 +9,19 @@
     {
       "name": "default",
       "generator": "Ninja",
-
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "FILEPATH",
-          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          "value": "${sourceDir}/reinforcement_learning/ext_libs/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        },
+        "VCPKG_MANIFEST_DIR": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/reinforcement_learning"
+        },
+        "rlclientlib_BUILD_DOTNET": {
+          "type": "BOOL",
+          "value": "OFF"
         },
         "BUILD_FLATBUFFERS": {
           "type": "BOOL",
@@ -23,6 +30,10 @@
         "WARNING_AS_ERROR": {
           "type": "BOOL",
           "value": "OFF"
+        },
+        "RAPIDJSON_SYS_DEP": {
+          "type": "BOOL",
+          "value": "ON"
         },
         "DO_NOT_BUILD_VW_C_WRAPPER": {
           "type": "BOOL",
@@ -47,6 +58,26 @@
         "BUILD_BINARY_PARSER_TESTS": {
           "type": "BOOL",
           "value": "OFF"
+        },
+        "RL_LINK_AZURE_LIBS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "RL_STATIC_DEPS": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "RL_OPENSSL_SYS_DEP": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "RL_USE_ZSTD": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "vw_USE_AZURE_FACTORIES": {
+          "type": "BOOL",
+          "value": "ON"
         }
       }
     },
@@ -58,11 +89,23 @@
       "name": "vcpkg-x64-windows-static",
       "inherits": "default",
       "cacheVariables": {
+        "CMAKE_MSVC_RUNTIME_LIBRARY": {
+          "type": "STRING",
+          "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+        },
         "VCPKG_TARGET_TRIPLET": {
           "type": "STRING",
-          "value": "x64-windows-static-md"
+          "value": "x64-windows-static"
+        },
+        "VCPKG_HOST_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-windows-static"
+        },
+        "RL_STATIC_DEPS": {
+          "type": "BOOL",
+          "value": "ON"
         }
-      }
+     }
     },
     {
       "name": "vcpkg-x64-linux",
@@ -82,7 +125,7 @@
           "type": "STRING",
           "value": "x64-linux"
         },
-        "STATIC_LINK_BINARY_PARSER": {
+        "RL_STATIC_DEPS": {
           "type": "BOOL",
           "value": "ON"
         }
@@ -106,7 +149,7 @@
           "type": "STRING",
           "value": "x64-osx"
         },
-        "STATIC_LINK_BINARY_PARSER": {
+        "RL_STATIC_DEPS": {
           "type": "BOOL",
           "value": "ON"
         }
