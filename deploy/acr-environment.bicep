@@ -18,7 +18,7 @@ param managedIdentityName string = 'mi-sample-loop-${uniqueString(tenant().tenan
 param acrName string = 'acrsampleloop${uniqueString(tenant().tenantId)}'
 
 @description('Application Insights name.')
-param appInsightsName string = 'ai-metrics-${uniqueString(tenant().tenantId)}'
+param appInsightsName string = 'ai-metrics-${uniqueString(tenant().tenantId, deployment().location)}'
 
 // create the resource in the deployment location
 resource learningLoopRg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -53,7 +53,7 @@ module appInsights './modules/appinsights.bicep' = {
   scope: learningLoopRg
   params: {
     create: true
-    generateName: true
+    generateName: false
     insightsName: appInsightsName
     location: deployment().location
   }

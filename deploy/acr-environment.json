@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "5660043905479698568"
+      "templateHash": "2345888219195440589"
     }
   },
   "parameters": {
@@ -32,7 +32,7 @@
     },
     "appInsightsName": {
       "type": "string",
-      "defaultValue": "[format('ai-metrics-{0}', uniqueString(tenant().tenantId))]",
+      "defaultValue": "[format('ai-metrics-{0}', uniqueString(tenant().tenantId, deployment().location))]",
       "metadata": {
         "description": "Application Insights name."
       }
@@ -249,7 +249,7 @@
             "value": true
           },
           "generateName": {
-            "value": true
+            "value": false
           },
           "insightsName": {
             "value": "[parameters('appInsightsName')]"
