@@ -16,11 +16,11 @@ param containerMemoryGig int = 16
 @description('Managed Identity name')
 param managedIdentityName string = 'mi-sample-loop-${uniqueString(tenant().tenantId)}'
 @description('Storage Account name')
-param storageAccountName string = 'sampleloopstg'
+param storageAccountName string = 'stgsmpllp${uniqueString(tenant().tenantId)}'
 @description('Storage Account SKU')
 param storageAccountSku string = 'Standard_LRS'
 @description('Event Hubs name')
-param eventhubsName string = 'sample-loop-eh'
+param eventhubsName string = 'eh-sample-loop-${uniqueString(tenant().tenantId)}'
 @description('Event Hubs capacity')
 param eventhubsCapacity int = 4
 @description('Event Hubs partition count')

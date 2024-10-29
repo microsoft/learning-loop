@@ -337,6 +337,9 @@ main() {
       "az account show > /dev/null" \
       "echo 'Please run \"az login --use-device-code\" to authenticate with Azure before running this script' >&2; exit 1"
 
+   subscription=$(az account show --query "name" -o tsv)
+   echo -e "\tUsing subscription name: $subscription"
+
    invoke_cmd_with_logging "Verifying Azure Bicep status" \
       "az bicep version > /dev/null" \
       "echo 'Please install Azure Bicep before running this script' >&2; exit 1"
@@ -378,7 +381,7 @@ main() {
    deployEnvProperties=$(invoke_cmd_with_logging "Deploying the environment with params $environmentParamsFile" \
       "az deployment sub create \
          --location \"$location\" \
-         --name 'learning-loop-deploy-environment' \
+         --name 'learning-loop-deploy-environment-$location' \
          --parameters \"$environmentParamsFile\" \
          --parameters userObjectIdOverride=\"$userObjectId\" \
          --parameters imageRegistryUsername=\"$imageRepoUsername\" \
@@ -435,7 +438,7 @@ main() {
    deployMainProperties=$(invoke_cmd_with_logging "Deploying the application with params $mainDeployParamsFile" \
       "az deployment group create \
          --resource-group \"$resourceGroupName\" \
-         --name 'learning-loop-deploy-app' \
+         --name 'learning-loop-deploy-app-$location' \
          --parameters \"$mainDeployParamsFile\" \
          --query 'properties' \
          --output json | jq '.'" \

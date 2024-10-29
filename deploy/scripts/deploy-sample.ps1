@@ -425,6 +425,9 @@ try {
       throw "Please run 'az login --use-device-code' to authenticate with Azure before running this script"
    }
 
+   $subscription = (az account show --query "name" -o tsv)
+   Write-Host "`tUsing subscription name: $subscription"
+
    Invoke-CmdWithLogging "Verifying Azure Bicep status" {
       az bicep version *> $null
    } {
@@ -474,7 +477,7 @@ try {
       }
       $deployEnvProperties = az deployment sub create `
          --location $location `
-         --name "learning-loop-deploy-environment" `
+         --name "learning-loop-deploy-environment-$location" `
          --parameters ${environmentParamsFile} `
          --parameters userObjectIdOverride="$userObjectId" `
          --parameters imageRegistryUsername="$imageRepoUsername" `
@@ -537,7 +540,7 @@ try {
 
    # deploy the Leaning Loop application, storage, and event hub resources
    $deployMainProperties = Invoke-CmdWithLogging "Deploying the application with params $mainDeployParamsFile" {
-      $deployMainProperties = az deployment group create --resource-group $deployEnvProperties.outputs.resourceGroupName.value --name "learning-loop-deploy-app" --parameters $mainDeployParamsFile --query 'properties' --output json | ConvertFrom-Json
+      $deployMainProperties = az deployment group create --resource-group $deployEnvProperties.outputs.resourceGroupName.value --name "learning-loop-deploy-app-$location" --parameters $mainDeployParamsFile --query 'properties' --output json | ConvertFrom-Json
       if ($deployMainProperties.provisioningState -ne "Succeeded") {
          throw "Deployment failed: ${deployMainProperties.error.message}"
       }

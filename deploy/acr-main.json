@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "10703916937287832225"
+      "templateHash": "12286122899772911907"
     }
   },
   "functions": [
@@ -192,7 +192,7 @@
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "sampleloopstg",
+      "defaultValue": "[format('stgsmpllp{0}', uniqueString(tenant().tenantId))]",
       "metadata": {
         "description": "Storage Account name"
       }
@@ -206,7 +206,7 @@
     },
     "eventhubsName": {
       "type": "string",
-      "defaultValue": "sample-loop-eh",
+      "defaultValue": "[format('eh-sample-loop-{0}', uniqueString(tenant().tenantId))]",
       "metadata": {
         "description": "Event Hubs name"
       }
