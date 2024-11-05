@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "6878942369271043977"
+      "templateHash": "15663906306587194902"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "7204123151086782512"
+              "templateHash": "10402148787367325439"
             }
           },
           "definitions": {
@@ -1182,7 +1182,21 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "containerGroupIdentity": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject('type', variables('containerGroupIdentityType'), 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject())), createObject('type', variables('containerGroupIdentityType')))]"
+            "theContainers": [
+              {
+                "name": "[parameters('containerConfig').name]",
+                "properties": {
+                  "image": "[variables('containerImagePath')]",
+                  "environmentVariables": "[parameters('containerConfig').environmentVars]",
+                  "resources": {
+                    "requests": {
+                      "cpu": "[parameters('containerConfig').cpuCores]",
+                      "memoryInGB": "[parameters('containerConfig').memoryGig]"
+                    }
+                  }
+                }
+              }
+            ]
           },
           "resources": {
             "acrPullIdentity": {
@@ -1192,32 +1206,44 @@
               "apiVersion": "2023-01-31",
               "name": "[parameters('containerConfig').image.registry.credentials.username]"
             },
-            "containerGroup": {
+            "containerGroupMI": {
+              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
               "type": "Microsoft.ContainerInstance/containerGroups",
               "apiVersion": "2021-09-01",
               "name": "[parameters('containerConfig').name]",
               "location": "[parameters('containerConfig').location]",
               "tags": "[parameters('containerConfig').resourceTags]",
-              "identity": "[variables('containerGroupIdentity')]",
+              "identity": {
+                "type": "[variables('containerGroupIdentityType')]",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))]": {}
+                }
+              },
               "properties": {
-                "containers": [
-                  {
-                    "name": "[parameters('containerConfig').name]",
-                    "properties": {
-                      "image": "[variables('containerImagePath')]",
-                      "environmentVariables": "[parameters('containerConfig').environmentVars]",
-                      "resources": {
-                        "requests": {
-                          "cpu": "[parameters('containerConfig').cpuCores]",
-                          "memoryInGB": "[parameters('containerConfig').memoryGig]"
-                        }
-                      }
-                    }
-                  }
-                ],
+                "containers": "[variables('theContainers')]",
                 "osType": "Linux",
                 "restartPolicy": "OnFailure",
-                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(and(parameters('containerConfig').image.registry.credentials.isManagedIdentity, not(empty(reference('acrPullIdentity', '2023-01-31', 'full')))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(empty(reference('acrPullIdentity', '2023-01-31', 'full')), null(), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+              },
+              "dependsOn": [
+                "acrPullIdentity"
+              ]
+            },
+            "containerGroupNonMI": {
+              "condition": "[not(parameters('containerConfig').image.registry.credentials.isManagedIdentity)]",
+              "type": "Microsoft.ContainerInstance/containerGroups",
+              "apiVersion": "2021-09-01",
+              "name": "[parameters('containerConfig').name]",
+              "location": "[parameters('containerConfig').location]",
+              "tags": "[parameters('containerConfig').resourceTags]",
+              "identity": {
+                "type": "[variables('containerGroupIdentityType')]"
+              },
+              "properties": {
+                "containers": "[variables('theContainers')]",
+                "osType": "Linux",
+                "restartPolicy": "OnFailure",
+                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(empty(reference('acrPullIdentity', '2023-01-31', 'full')), null(), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
               },
               "dependsOn": [
                 "acrPullIdentity"
@@ -1227,7 +1253,7 @@
           "outputs": {
             "containerPrincipalId": {
               "type": "string",
-              "value": "[reference('containerGroup', '2021-09-01', 'full').identity.principalId]"
+              "value": "[if(empty(reference('containerGroupMI', '2021-09-01', 'full')), reference('containerGroupNonMI', '2021-09-01', 'full').identity.principalId, reference('containerGroupNonMI', '2021-09-01', 'full').identity.principalId)]"
             }
           }
         }
@@ -1422,7 +1448,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "7204123151086782512"
+              "templateHash": "10402148787367325439"
             }
           },
           "definitions": {
@@ -1679,7 +1705,21 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "containerGroupIdentity": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject('type', variables('containerGroupIdentityType'), 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject())), createObject('type', variables('containerGroupIdentityType')))]"
+            "theContainers": [
+              {
+                "name": "[parameters('containerConfig').name]",
+                "properties": {
+                  "image": "[variables('containerImagePath')]",
+                  "environmentVariables": "[parameters('containerConfig').environmentVars]",
+                  "resources": {
+                    "requests": {
+                      "cpu": "[parameters('containerConfig').cpuCores]",
+                      "memoryInGB": "[parameters('containerConfig').memoryGig]"
+                    }
+                  }
+                }
+              }
+            ]
           },
           "resources": {
             "acrPullIdentity": {
@@ -1689,32 +1729,44 @@
               "apiVersion": "2023-01-31",
               "name": "[parameters('containerConfig').image.registry.credentials.username]"
             },
-            "containerGroup": {
+            "containerGroupMI": {
+              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
               "type": "Microsoft.ContainerInstance/containerGroups",
               "apiVersion": "2021-09-01",
               "name": "[parameters('containerConfig').name]",
               "location": "[parameters('containerConfig').location]",
               "tags": "[parameters('containerConfig').resourceTags]",
-              "identity": "[variables('containerGroupIdentity')]",
+              "identity": {
+                "type": "[variables('containerGroupIdentityType')]",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))]": {}
+                }
+              },
               "properties": {
-                "containers": [
-                  {
-                    "name": "[parameters('containerConfig').name]",
-                    "properties": {
-                      "image": "[variables('containerImagePath')]",
-                      "environmentVariables": "[parameters('containerConfig').environmentVars]",
-                      "resources": {
-                        "requests": {
-                          "cpu": "[parameters('containerConfig').cpuCores]",
-                          "memoryInGB": "[parameters('containerConfig').memoryGig]"
-                        }
-                      }
-                    }
-                  }
-                ],
+                "containers": "[variables('theContainers')]",
                 "osType": "Linux",
                 "restartPolicy": "OnFailure",
-                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(and(parameters('containerConfig').image.registry.credentials.isManagedIdentity, not(empty(reference('acrPullIdentity', '2023-01-31', 'full')))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(empty(reference('acrPullIdentity', '2023-01-31', 'full')), null(), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+              },
+              "dependsOn": [
+                "acrPullIdentity"
+              ]
+            },
+            "containerGroupNonMI": {
+              "condition": "[not(parameters('containerConfig').image.registry.credentials.isManagedIdentity)]",
+              "type": "Microsoft.ContainerInstance/containerGroups",
+              "apiVersion": "2021-09-01",
+              "name": "[parameters('containerConfig').name]",
+              "location": "[parameters('containerConfig').location]",
+              "tags": "[parameters('containerConfig').resourceTags]",
+              "identity": {
+                "type": "[variables('containerGroupIdentityType')]"
+              },
+              "properties": {
+                "containers": "[variables('theContainers')]",
+                "osType": "Linux",
+                "restartPolicy": "OnFailure",
+                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(empty(reference('acrPullIdentity', '2023-01-31', 'full')), null(), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
               },
               "dependsOn": [
                 "acrPullIdentity"
@@ -1724,7 +1776,7 @@
           "outputs": {
             "containerPrincipalId": {
               "type": "string",
-              "value": "[reference('containerGroup', '2021-09-01', 'full').identity.principalId]"
+              "value": "[if(empty(reference('containerGroupMI', '2021-09-01', 'full')), reference('containerGroupNonMI', '2021-09-01', 'full').identity.principalId, reference('containerGroupNonMI', '2021-09-01', 'full').identity.principalId)]"
             }
           }
         }

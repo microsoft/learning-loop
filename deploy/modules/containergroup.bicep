@@ -51,48 +51,63 @@ resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   name: containerConfig.image.registry.credentials.username
 }
 
+var acrPullIdentityId = empty(acrPullIdentity) ? null : acrPullIdentity.id
+
 // setup the identity type and user assigned identities for the container group
 var containerGroupIdentityType = containerConfig.image.registry.credentials.isManagedIdentity ? 'SystemAssigned, UserAssigned' : 'SystemAssigned'
-
-var containerGroupIdentity = containerConfig.image.registry.credentials.isManagedIdentity ? {
-    type: containerGroupIdentityType
-    userAssignedIdentities: { '${acrPullIdentity.id}': {} }
-  } : {
-    type: containerGroupIdentityType
-  }
 
 // setup the image registry credentials
 var imageRegistryCredentials = containerConfig.image.registry.credentials.isManagedIdentity ? [{
     server: containerConfig.image.registry.host
-    identity: containerConfig.image.registry.credentials.isManagedIdentity && !empty(acrPullIdentity) ? acrPullIdentity.id : null
+    identity: acrPullIdentityId
   }] : (!empty(containerConfig.image.registry.credentials.username)) ? [{
     server: containerConfig.image.registry.host
     username: containerConfig.image.registry.credentials.username
     password: containerConfig.image.registry.credentials.password
   }] : []
 
+var theContainers = [
+  {
+    name: containerConfig.name
+    properties: {
+      image: containerImagePath
+      environmentVariables: containerConfig.environmentVars
+      resources: {
+        requests: {
+          cpu: containerConfig.cpuCores
+          memoryInGB: containerConfig.memoryGig
+        }
+      }
+    }
+  }
+]
+
 // create the container group
-resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
+resource containerGroupMI 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = if (containerConfig.image.registry.credentials.isManagedIdentity) {
   name: containerConfig.name
   location: containerConfig.location
   tags: containerConfig.resourceTags
-  identity: containerGroupIdentity
+  identity: {
+    type: containerGroupIdentityType
+    userAssignedIdentities: { '${acrPullIdentity.id}': {} }
+  }
   properties: {
-    containers: [
-      {
-        name: containerConfig.name
-        properties: {
-          image: containerImagePath
-          environmentVariables: containerConfig.environmentVars
-          resources: {
-            requests: {
-              cpu: containerConfig.cpuCores
-              memoryInGB: containerConfig.memoryGig
-            }
-          }
-        }
-      }
-    ]
+    containers: theContainers
+    osType: 'Linux'
+    restartPolicy: 'OnFailure'
+    imageRegistryCredentials: imageRegistryCredentials
+  }
+}
+
+resource containerGroupNonMI 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = if (!containerConfig.image.registry.credentials.isManagedIdentity) {
+  name: containerConfig.name
+  location: containerConfig.location
+  tags: containerConfig.resourceTags
+  identity: {
+    type: containerGroupIdentityType
+  }
+  properties: {
+    containers: theContainers
     osType: 'Linux'
     restartPolicy: 'OnFailure'
     imageRegistryCredentials: imageRegistryCredentials
@@ -100,4 +115,4 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
 }
 
 // output the principal ID for the container group so that it can be used for role assignments
-output containerPrincipalId string = containerGroup.identity.principalId
+output containerPrincipalId string = empty(containerGroupMI) ? containerGroupNonMI.identity.principalId : containerGroupNonMI.identity.principalId
