@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "15839820114698202037"
+      "templateHash": "3771439842589357078"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "11624117002843762869"
+              "templateHash": "345557404178110963"
             }
           },
           "definitions": {
@@ -1182,8 +1182,7 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
           },
           "resources": {
             "acrPullIdentity": {
@@ -1201,7 +1200,7 @@
               "tags": "[parameters('containerConfig').resourceTags]",
               "identity": {
                 "type": "[variables('containerGroupIdentityType')]",
-                "userAssignedIdentities": "[variables('userAssignedIdentities')]"
+                "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]"
               },
               "properties": {
                 "containers": [
@@ -1426,7 +1425,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "11624117002843762869"
+              "templateHash": "345557404178110963"
             }
           },
           "definitions": {
@@ -1683,8 +1682,7 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
           },
           "resources": {
             "acrPullIdentity": {
@@ -1702,7 +1700,7 @@
               "tags": "[parameters('containerConfig').resourceTags]",
               "identity": {
                 "type": "[variables('containerGroupIdentityType')]",
-                "userAssignedIdentities": "[variables('userAssignedIdentities')]"
+                "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]"
               },
               "properties": {
                 "containers": [

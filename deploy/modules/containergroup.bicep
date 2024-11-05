@@ -53,12 +53,11 @@ resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
 
 // setup the identity type and user assigned identities for the container group
 var containerGroupIdentityType = containerConfig.image.registry.credentials.isManagedIdentity ? 'SystemAssigned, UserAssigned' : 'SystemAssigned'
-var userAssignedIdentities = containerConfig.image.registry.credentials.isManagedIdentity ? { '${acrPullIdentity.id}': {} } : null
 
 // setup the image registry credentials
 var imageRegistryCredentials = containerConfig.image.registry.credentials.isManagedIdentity ? [{
     server: containerConfig.image.registry.host
-    identity: acrPullIdentity.id
+    identity: containerConfig.image.registry.credentials.isManagedIdentity ? acrPullIdentity.id : null
   }] : [{
     server: containerConfig.image.registry.host
     username: containerConfig.image.registry.credentials.username
@@ -72,7 +71,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
   tags: containerConfig.resourceTags
   identity: {
     type: containerGroupIdentityType
-    userAssignedIdentities: userAssignedIdentities
+    userAssignedIdentities: containerConfig.image.registry.credentials.isManagedIdentity ? { '${acrPullIdentity.id}': {} } : null
   }
   properties: {
     containers: [
