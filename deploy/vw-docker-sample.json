@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "3771439842589357078"
+      "templateHash": "6712651144380915624"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "345557404178110963"
+              "templateHash": "4788817001334075835"
             }
           },
           "definitions": {
@@ -1182,16 +1182,9 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
           },
           "resources": {
-            "acrPullIdentity": {
-              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
-              "existing": true,
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "[parameters('containerConfig').image.registry.credentials.username]"
-            },
             "containerGroup": {
               "type": "Microsoft.ContainerInstance/containerGroups",
               "apiVersion": "2021-09-01",
@@ -1199,8 +1192,7 @@
               "location": "[parameters('containerConfig').location]",
               "tags": "[parameters('containerConfig').resourceTags]",
               "identity": {
-                "type": "[variables('containerGroupIdentityType')]",
-                "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]"
+                "type": "[variables('containerGroupIdentityType')]"
               },
               "properties": {
                 "containers": [
@@ -1221,10 +1213,7 @@
                 "osType": "Linux",
                 "restartPolicy": "OnFailure",
                 "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
-              },
-              "dependsOn": [
-                "acrPullIdentity"
-              ]
+              }
             }
           },
           "outputs": {
@@ -1425,7 +1414,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "345557404178110963"
+              "templateHash": "4788817001334075835"
             }
           },
           "definitions": {
@@ -1682,16 +1671,9 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)))]"
           },
           "resources": {
-            "acrPullIdentity": {
-              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
-              "existing": true,
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "[parameters('containerConfig').image.registry.credentials.username]"
-            },
             "containerGroup": {
               "type": "Microsoft.ContainerInstance/containerGroups",
               "apiVersion": "2021-09-01",
@@ -1699,8 +1681,7 @@
               "location": "[parameters('containerConfig').location]",
               "tags": "[parameters('containerConfig').resourceTags]",
               "identity": {
-                "type": "[variables('containerGroupIdentityType')]",
-                "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]"
+                "type": "[variables('containerGroupIdentityType')]"
               },
               "properties": {
                 "containers": [
@@ -1721,10 +1702,7 @@
                 "osType": "Linux",
                 "restartPolicy": "OnFailure",
                 "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
-              },
-              "dependsOn": [
-                "acrPullIdentity"
-              ]
+              }
             }
           },
           "outputs": {
