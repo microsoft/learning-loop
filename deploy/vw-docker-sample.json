@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "1717159089041849894"
+      "templateHash": "17010338239339186089"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "8605671518329568056"
+              "templateHash": "6226901703221549705"
             }
           },
           "definitions": {
@@ -1182,7 +1182,7 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), if(not(equals(parameters('containerConfig').image.registry.credentials.username, null())), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
           },
           "resources": {
             "containerGroup": {
@@ -1414,7 +1414,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "8605671518329568056"
+              "templateHash": "6226901703221549705"
             }
           },
           "definitions": {
@@ -1671,7 +1671,7 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), if(not(equals(parameters('containerConfig').image.registry.credentials.username, null())), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
           },
           "resources": {
             "containerGroup": {
