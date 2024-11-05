@@ -47,19 +47,24 @@ param containerConfig containerConfigT
 var containerImagePath = f.makeContainerImagePath(containerConfig.image.registry.host, containerConfig.image.name, containerConfig.image.tag)
 
 // get the identity for the container group if using managed identity for the registry credentials
-// TODO: uncomment this when the identity is available
-// resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = if (containerConfig.image.registry.credentials.isManagedIdentity) {
-//   name: containerConfig.image.registry.credentials.username
-// }
+resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = if (containerConfig.image.registry.credentials.isManagedIdentity) {
+  name: containerConfig.image.registry.credentials.username
+}
 
 // setup the identity type and user assigned identities for the container group
 var containerGroupIdentityType = containerConfig.image.registry.credentials.isManagedIdentity ? 'SystemAssigned, UserAssigned' : 'SystemAssigned'
 
+var containerGroupIdentity = containerConfig.image.registry.credentials.isManagedIdentity ? {
+    type: containerGroupIdentityType
+    userAssignedIdentities: { '${acrPullIdentity.id}': {} }
+  } : {
+    type: containerGroupIdentityType
+  }
+
 // setup the image registry credentials
 var imageRegistryCredentials = containerConfig.image.registry.credentials.isManagedIdentity ? [{
     server: containerConfig.image.registry.host
-    // TODO: fix this
-    // identity: containerConfig.image.registry.credentials.isManagedIdentity && !empty(acrPullIdentity) ? acrPullIdentity.id : null
+    identity: containerConfig.image.registry.credentials.isManagedIdentity && !empty(acrPullIdentity) ? acrPullIdentity.id : null
   }] : (!empty(containerConfig.image.registry.credentials.username)) ? [{
     server: containerConfig.image.registry.host
     username: containerConfig.image.registry.credentials.username
@@ -71,11 +76,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
   name: containerConfig.name
   location: containerConfig.location
   tags: containerConfig.resourceTags
-  identity: {
-    type: containerGroupIdentityType
-    // TODO: fix this
-    //userAssignedIdentities: containerConfig.image.registry.credentials.isManagedIdentity && !empty(acrPullIdentity) ? { '${acrPullIdentity.id}': {} } : null
-  }
+  identity: containerGroupIdentity
   properties: {
     containers: [
       {

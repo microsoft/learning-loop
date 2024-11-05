@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "17010338239339186089"
+      "templateHash": "6878942369271043977"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "6226901703221549705"
+              "templateHash": "7204123151086782512"
             }
           },
           "definitions": {
@@ -1182,18 +1182,23 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+            "containerGroupIdentity": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject('type', variables('containerGroupIdentityType'), 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject())), createObject('type', variables('containerGroupIdentityType')))]"
           },
           "resources": {
+            "acrPullIdentity": {
+              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
+              "existing": true,
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('containerConfig').image.registry.credentials.username]"
+            },
             "containerGroup": {
               "type": "Microsoft.ContainerInstance/containerGroups",
               "apiVersion": "2021-09-01",
               "name": "[parameters('containerConfig').name]",
               "location": "[parameters('containerConfig').location]",
               "tags": "[parameters('containerConfig').resourceTags]",
-              "identity": {
-                "type": "[variables('containerGroupIdentityType')]"
-              },
+              "identity": "[variables('containerGroupIdentity')]",
               "properties": {
                 "containers": [
                   {
@@ -1212,8 +1217,11 @@
                 ],
                 "osType": "Linux",
                 "restartPolicy": "OnFailure",
-                "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
-              }
+                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(and(parameters('containerConfig').image.registry.credentials.isManagedIdentity, not(empty(reference('acrPullIdentity', '2023-01-31', 'full')))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+              },
+              "dependsOn": [
+                "acrPullIdentity"
+              ]
             }
           },
           "outputs": {
@@ -1414,7 +1422,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "6226901703221549705"
+              "templateHash": "7204123151086782512"
             }
           },
           "definitions": {
@@ -1671,18 +1679,23 @@
           "variables": {
             "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
             "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-            "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host)), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+            "containerGroupIdentity": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject('type', variables('containerGroupIdentityType'), 'userAssignedIdentities', createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject())), createObject('type', variables('containerGroupIdentityType')))]"
           },
           "resources": {
+            "acrPullIdentity": {
+              "condition": "[parameters('containerConfig').image.registry.credentials.isManagedIdentity]",
+              "existing": true,
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('containerConfig').image.registry.credentials.username]"
+            },
             "containerGroup": {
               "type": "Microsoft.ContainerInstance/containerGroups",
               "apiVersion": "2021-09-01",
               "name": "[parameters('containerConfig').name]",
               "location": "[parameters('containerConfig').location]",
               "tags": "[parameters('containerConfig').resourceTags]",
-              "identity": {
-                "type": "[variables('containerGroupIdentityType')]"
-              },
+              "identity": "[variables('containerGroupIdentity')]",
               "properties": {
                 "containers": [
                   {
@@ -1701,8 +1714,11 @@
                 ],
                 "osType": "Linux",
                 "restartPolicy": "OnFailure",
-                "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
-              }
+                "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', if(and(parameters('containerConfig').image.registry.credentials.isManagedIdentity, not(empty(reference('acrPullIdentity', '2023-01-31', 'full')))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username), null()))), if(not(empty(parameters('containerConfig').image.registry.credentials.username)), createArray(createObject('server', parameters('containerConfig').image.registry.host, 'username', parameters('containerConfig').image.registry.credentials.username, 'password', parameters('containerConfig').image.registry.credentials.password)), createArray()))]"
+              },
+              "dependsOn": [
+                "acrPullIdentity"
+              ]
             }
           },
           "outputs": {
