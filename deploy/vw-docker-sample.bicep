@@ -75,8 +75,8 @@ var containerImage = {
   registry: {
     host: registryHost
     credentials: {
-      isManagedIdentity: true
-      username: managedIdentityName
+      isManagedIdentity: false
+      username: ''
       password: null
     }
   }

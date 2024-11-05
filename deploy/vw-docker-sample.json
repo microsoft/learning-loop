@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "10675370413115150293"
+      "templateHash": "15839820114698202037"
     }
   },
   "functions": [
@@ -341,8 +341,8 @@
       "registry": {
         "host": "[parameters('registryHost')]",
         "credentials": {
-          "isManagedIdentity": true,
-          "username": "[parameters('managedIdentityName')]",
+          "isManagedIdentity": false,
+          "username": "",
           "password": null
         }
       }
