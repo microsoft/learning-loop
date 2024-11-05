@@ -60,11 +60,11 @@ var imageRegistryCredentials = containerConfig.image.registry.credentials.isMana
     server: containerConfig.image.registry.host
     // TODO: fix this
     // identity: containerConfig.image.registry.credentials.isManagedIdentity && !empty(acrPullIdentity) ? acrPullIdentity.id : null
-  }] : [{
+  }] : (containerConfig.image.registry.credentials.username != null) ? [{
     server: containerConfig.image.registry.host
     username: containerConfig.image.registry.credentials.username
     password: containerConfig.image.registry.credentials.password
-  }]
+  }] : []
 
 // create the container group
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
