@@ -47,9 +47,7 @@ param registryHost string = 'docker.io'
 @description('Principal ID for the role assignments')
 param userRoleAssignmentPrincipalId string = ''
 @description('Enable Application Insights')
-param appInsightsEnabled bool = false
-@description('Application Insights Connection String')
-param appInsightsConnectionString string = ''
+param appInsightsEnabled bool = true
 @description('Loop Experimental Unit Duration')
 param loopEnvVarExperimentalUnitDuration string = '0:0:10'
 @description('Loop Trainer Enabled')
@@ -70,50 +68,6 @@ param deployRlSim bool = true
 param rlSimArgs string = ''
 
 var location = deployment().location
-
-// Generate the default environment variables and combine with the main configuration environment variables
-var loopContainerEnvironmentVars = [
-  {
-    name: 'AppId'
-    value: loopName
-  }
-  {
-    name: 'StorageAccountUrl'
-    value: f.makeStorageAccountUrl(storageAccountName)
-  }
-  {
-    name: 'FullyQualifiedEventHubNamespace'
-    value: f.makeEventhubNamespace(eventhubsName)
-  }
-  {
-    name: 'AzureMonitorMetricExporterEnabled' 
-    value: string(appInsightsEnabled)
-  }
-  {
-    name: 'APPLICATIONINSIGHTS_CONNECTION_STRING' 
-    value: appInsightsConnectionString
-  }
-  {
-    name: 'ExperimentalUnitDuration'
-    value: loopEnvVarExperimentalUnitDuration
-  }
-  {
-    name: 'TrainerEnabled'
-    value: loopEnvVarTrainerEnabled
-  }
-  {
-    name: 'JoinerEnabled'
-    value: loopEnvVarJoinerEnabled
-  }
-  {
-    name: 'MachineLearningArguments'
-    value: loopEnvVarMachineLearningArguments
-  }
-  {
-    name: 'LastConfigurationEditDate'
-    value: loopEnvVarLastConfigurationEditDate
-  }
-]
 
 var containerImage = {
   name: containerImageName
@@ -145,7 +99,7 @@ module managedIdentity './modules/managedidentity.bicep' = {
 }
 
 // setup metrics if needed
-module appInsights './modules/appinsights.bicep' = {
+module appInsights './modules/appinsights.bicep' = if (appInsightsEnabled) {
   name: 'appInsights'
   scope: learningLoopRg
   params: {
@@ -186,6 +140,53 @@ module eventhubs 'modules/eventhubs.bicep' = {
     }
   }
 }
+
+var appInsightsEnabledVal = !empty(appInsights)
+var appInsightsConnectionStringVal = empty(appInsights) ? '' : appInsights.outputs.applicationInsightsConnectionString
+
+// Generate the default environment variables and combine with the main configuration environment variables
+var loopContainerEnvironmentVars = [
+  {
+    name: 'AppId'
+    value: loopName
+  }
+  {
+    name: 'StorageAccountUrl'
+    value: f.makeStorageAccountUrl(storageAccountName)
+  }
+  {
+    name: 'FullyQualifiedEventHubNamespace'
+    value: f.makeEventhubNamespace(eventhubsName)
+  }
+  {
+    name: 'AzureMonitorMetricExporterEnabled' 
+    value: string(appInsightsEnabledVal)
+  }
+  {
+    name: 'APPLICATIONINSIGHTS_CONNECTION_STRING' 
+    value: appInsightsConnectionStringVal
+  }
+  {
+    name: 'ExperimentalUnitDuration'
+    value: loopEnvVarExperimentalUnitDuration
+  }
+  {
+    name: 'TrainerEnabled'
+    value: loopEnvVarTrainerEnabled
+  }
+  {
+    name: 'JoinerEnabled'
+    value: loopEnvVarJoinerEnabled
+  }
+  {
+    name: 'MachineLearningArguments'
+    value: loopEnvVarMachineLearningArguments
+  }
+  {
+    name: 'LastConfigurationEditDate'
+    value: loopEnvVarLastConfigurationEditDate
+  }
+]
 
 // Deploy the container group with a loop container instance
 module loopContainerGroup 'modules/containergroup.bicep' = {

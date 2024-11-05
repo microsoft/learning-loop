@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "3486077492512561548"
+      "templateHash": "10675370413115150293"
     }
   },
   "functions": [
@@ -269,16 +269,9 @@
     },
     "appInsightsEnabled": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "metadata": {
         "description": "Enable Application Insights"
-      }
-    },
-    "appInsightsConnectionString": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Application Insights Connection String"
       }
     },
     "loopEnvVarExperimentalUnitDuration": {
@@ -342,48 +335,6 @@
   },
   "variables": {
     "location": "[deployment().location]",
-    "loopContainerEnvironmentVars": [
-      {
-        "name": "AppId",
-        "value": "[parameters('loopName')]"
-      },
-      {
-        "name": "StorageAccountUrl",
-        "value": "[_1.makeStorageAccountUrl(parameters('storageAccountName'))]"
-      },
-      {
-        "name": "FullyQualifiedEventHubNamespace",
-        "value": "[_1.makeEventhubNamespace(parameters('eventhubsName'))]"
-      },
-      {
-        "name": "AzureMonitorMetricExporterEnabled",
-        "value": "[string(parameters('appInsightsEnabled'))]"
-      },
-      {
-        "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-        "value": "[parameters('appInsightsConnectionString')]"
-      },
-      {
-        "name": "ExperimentalUnitDuration",
-        "value": "[parameters('loopEnvVarExperimentalUnitDuration')]"
-      },
-      {
-        "name": "TrainerEnabled",
-        "value": "[parameters('loopEnvVarTrainerEnabled')]"
-      },
-      {
-        "name": "JoinerEnabled",
-        "value": "[parameters('loopEnvVarJoinerEnabled')]"
-      },
-      {
-        "name": "MachineLearningArguments",
-        "value": "[parameters('loopEnvVarMachineLearningArguments')]"
-      },
-      {
-        "name": "LastConfigurationEditDate",
-        "value": "[parameters('loopEnvVarLastConfigurationEditDate')]"
-      }
-    ],
     "containerImage": {
       "name": "[parameters('containerImageName')]",
       "tag": "[parameters('containerImageTag')]",
@@ -479,6 +430,7 @@
       ]
     },
     "appInsights": {
+      "condition": "[parameters('appInsightsEnabled')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "appInsights",
@@ -917,7 +869,48 @@
               "name": "[parameters('loopContainerGroupName')]",
               "resourceTags": "[parameters('resourceTags')]",
               "location": "[variables('location')]",
-              "environmentVars": "[variables('loopContainerEnvironmentVars')]",
+              "environmentVars": [
+                {
+                  "name": "AppId",
+                  "value": "[parameters('loopName')]"
+                },
+                {
+                  "name": "StorageAccountUrl",
+                  "value": "[_1.makeStorageAccountUrl(parameters('storageAccountName'))]"
+                },
+                {
+                  "name": "FullyQualifiedEventHubNamespace",
+                  "value": "[_1.makeEventhubNamespace(parameters('eventhubsName'))]"
+                },
+                {
+                  "name": "AzureMonitorMetricExporterEnabled",
+                  "value": "[string(not(empty(reference('appInsights'))))]"
+                },
+                {
+                  "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                  "value": "[if(empty(reference('appInsights')), '', reference('appInsights').outputs.applicationInsightsConnectionString.value)]"
+                },
+                {
+                  "name": "ExperimentalUnitDuration",
+                  "value": "[parameters('loopEnvVarExperimentalUnitDuration')]"
+                },
+                {
+                  "name": "TrainerEnabled",
+                  "value": "[parameters('loopEnvVarTrainerEnabled')]"
+                },
+                {
+                  "name": "JoinerEnabled",
+                  "value": "[parameters('loopEnvVarJoinerEnabled')]"
+                },
+                {
+                  "name": "MachineLearningArguments",
+                  "value": "[parameters('loopEnvVarMachineLearningArguments')]"
+                },
+                {
+                  "name": "LastConfigurationEditDate",
+                  "value": "[parameters('loopEnvVarLastConfigurationEditDate')]"
+                }
+              ],
               "cpuCores": "[parameters('containerCpuCores')]",
               "memoryGig": "[parameters('containerMemoryGig')]",
               "image": "[variables('containerImage')]"
@@ -1244,6 +1237,7 @@
         }
       },
       "dependsOn": [
+        "appInsights",
         "learningLoopRg"
       ]
     },

@@ -6,6 +6,7 @@ The deploy folder contains Bicep scripts that facilitate deploying a sample Loop
 
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
+- [Scripted Deployment](#scripted-deployment)
 - [Manual Deployment](#manual-deployment)
 - [Sample Deployment Script Details](#sample-deployment-script-details)
 - [Customize a deployment](#customize-a-deployment)
@@ -63,21 +64,61 @@ Before you begin, ensure you have the following:
 
    For Windows users, PowerShell is essential for command-line management of Docker containers.
 
+3. A successful deployment requires permissions to create and manage resources such as Resource Groups, Storage Accounts, Azure Container Registry (ACR), Managed Identities, and KeyVaults in your Azure Subscription.
+
+    - Create Resource Groups
+    - Ability to assign roles within the Resource Group
+    - Create an Azure Container Registry (ACR)
+    - Create Managed Identities
+    - Create Storage Accounts
+    - Create EventHubs
+    - Create KeyVaults
+    - Create Azure Container Groups/Instances
+    - Create Application Insights
+
 ## Quick Start
 
-Follow these steps to set up a new Resource Group and deploy a sample loop using the deploy-sample script. A successful deployment requires permissions to create and manage resources such as Resource Groups, Storage Accounts, Azure Container Registry (ACR), Managed Identities, and KeyVaults in your Azure Subscription.
+The following steps utilizes an ARM template deployment from the VowpalWabbit Docker Hub Image repository.
 
-- Create Resource Groups
-- Ability to assign roles within the Resource Group
-- Create an Azure Container Registry (ACR)
-- Create Managed Identities
-- Create Storage Accounts
-- Create EventHubs
-- Create KeyVaults
-- Create Azure Container Groups/Instances
-- Create Application Insights
+## Quick Start Steps
 
-### Quick Start Steps
+1) Retrieve Your User Object Id (Optional: If You Want to View Storage Containers)
+
+    - Open a command line terminal
+
+    - Log in to Azure if your not already logged in.
+
+        ```bash
+        az login --use-device-code
+        ```
+
+    - Retrieve the user Object Id
+
+        ```bash
+        az ad signed-in-user show --query 'id' --output tsv
+        ```
+
+2) Deploy the Sample Loop
+
+    - Use the `Deploy to Azure` button below to fully deploy the sample loop in a new resource group.
+
+        [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://aka.ms/AAsti3v)
+
+    - Select the location for deployment.
+    - Copy and paste your Client Object Id from step 2 into `User Role Assignment Principal Id`
+    - You can accept the remaining defaults and proceed to `Review + Create` and then `Create`.
+
+### Next Steps
+
+The quick start deployment steps deploys a container instance running `rl_sim_cpp` by default. After deployment, you may need to restart the container to resolve any timing issues related to the deployed resources.
+
+For instructions on running the simulator application directly, see [send events to the Learning Loop (run rl_sim_cpp)](RL_SIM.md).
+
+## Scripted Deployment
+
+Follow these steps to set up a new Resource Group and deploy a sample loop using the deploy-sample script.
+
+### Scripted Deployment Steps
 
 1) <a id="quick-start-step1"></a>Download the Learning Loop Docker image artifact.
 
