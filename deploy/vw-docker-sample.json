@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "2785492025643142322"
+      "templateHash": "169782983262442864"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "13912033951495470759"
+              "templateHash": "5645798223148820040"
             }
           },
           "definitions": {
@@ -1203,7 +1203,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "3524486355486416232"
+                      "templateHash": "1574773804154642410"
                     }
                   },
                   "definitions": {
@@ -1458,7 +1458,10 @@
                     }
                   },
                   "variables": {
-                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]"
+                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
+                    "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
+                    "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
+                    "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), null())]"
                   },
                   "resources": {
                     "acrPullIdentity": {
@@ -1474,10 +1477,8 @@
                       "location": "[parameters('containerConfig').location]",
                       "tags": "[parameters('containerConfig').resourceTags]",
                       "identity": {
-                        "type": "SystemAssigned, UserAssigned",
-                        "userAssignedIdentities": {
-                          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))]": {}
-                        }
+                        "type": "[variables('containerGroupIdentityType')]",
+                        "userAssignedIdentities": "[variables('userAssignedIdentities')]"
                       },
                       "properties": {
                         "containers": [
@@ -1497,12 +1498,7 @@
                         ],
                         "osType": "Linux",
                         "restartPolicy": "OnFailure",
-                        "imageRegistryCredentials": [
-                          {
-                            "server": "[parameters('containerConfig').image.registry.host]",
-                            "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)]"
-                          }
-                        ]
+                        "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
                       },
                       "dependsOn": [
                         "acrPullIdentity"
@@ -2038,7 +2034,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "13912033951495470759"
+              "templateHash": "5645798223148820040"
             }
           },
           "definitions": {
@@ -2316,7 +2312,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "3524486355486416232"
+                      "templateHash": "1574773804154642410"
                     }
                   },
                   "definitions": {
@@ -2571,7 +2567,10 @@
                     }
                   },
                   "variables": {
-                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]"
+                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
+                    "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
+                    "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
+                    "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), null())]"
                   },
                   "resources": {
                     "acrPullIdentity": {
@@ -2587,10 +2586,8 @@
                       "location": "[parameters('containerConfig').location]",
                       "tags": "[parameters('containerConfig').resourceTags]",
                       "identity": {
-                        "type": "SystemAssigned, UserAssigned",
-                        "userAssignedIdentities": {
-                          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))]": {}
-                        }
+                        "type": "[variables('containerGroupIdentityType')]",
+                        "userAssignedIdentities": "[variables('userAssignedIdentities')]"
                       },
                       "properties": {
                         "containers": [
@@ -2610,12 +2607,7 @@
                         ],
                         "osType": "Linux",
                         "restartPolicy": "OnFailure",
-                        "imageRegistryCredentials": [
-                          {
-                            "server": "[parameters('containerConfig').image.registry.host]",
-                            "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)]"
-                          }
-                        ]
+                        "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
                       },
                       "dependsOn": [
                         "acrPullIdentity"
