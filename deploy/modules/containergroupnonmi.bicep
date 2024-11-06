@@ -1,3 +1,5 @@
+// Note: this bicep script is for container group requiring username/password 
+// or anonymous access to the container registry.
 // Deploys a container group for Leaning Loop; the Leaning Loop configuration
 // can be supplied via the containerConfig parameters.
 import * as f from './functions.bicep'
@@ -43,19 +45,44 @@ type containerConfigT = {
 
 param containerConfig containerConfigT
 
-module containerGroupMI 'containergroupmi.bicep' = if (containerConfig.image.registry.credentials.isManagedIdentity) {
-  name: '${containerConfig.name}-mi'
-  params: {
-    containerConfig: containerConfig
-  }
-}
+// construct the container image path
+var containerImagePath = f.makeContainerImagePath(containerConfig.image.registry.host, containerConfig.image.name, containerConfig.image.tag)
 
-module containerGroupNonMI 'containergroupnonmi.bicep' = if (!containerConfig.image.registry.credentials.isManagedIdentity) {
-  name: '${containerConfig.name}-nonmi'
-  params: {
-    containerConfig: containerConfig
+// create the container group
+resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
+  name: containerConfig.name
+  location: containerConfig.location
+  tags: containerConfig.resourceTags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    containers: [
+      {
+        name: containerConfig.name
+        properties: {
+          image: containerImagePath
+          environmentVariables: containerConfig.environmentVars
+          resources: {
+            requests: {
+              cpu: containerConfig.cpuCores
+              memoryInGB: containerConfig.memoryGig
+            }
+          }
+        }
+      }
+    ]
+    osType: 'Linux'
+    restartPolicy: 'OnFailure'
+    imageRegistryCredentials: !empty(containerConfig.image.registry.credentials.username) ? [
+      {
+        server: containerConfig.image.registry.host
+        username: containerConfig.image.registry.credentials.username
+        password: containerConfig.image.registry.credentials.password
+      }
+    ] : null
   }
 }
 
 // output the principal ID for the container group so that it can be used for role assignments
-output containerPrincipalId string = containerConfig.image.registry.credentials.isManagedIdentity ? containerGroupMI.outputs.containerPrincipalId : containerGroupNonMI.outputs.containerPrincipalId
+output containerPrincipalId string = containerGroup.identity.principalId
