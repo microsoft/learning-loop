@@ -102,7 +102,7 @@ The following steps utilizes an ARM template deployment from the VowpalWabbit Do
 
     - Use the `Deploy to Azure` button below to fully deploy the sample loop in a new resource group.
 
-        [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://aka.ms/AAsti3v)
+        [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://aka.ms/AAtf11d)
 
     - Select the location for deployment.
     - Copy and paste your Client Object Id from step 2 into `User Role Assignment Principal Id`
