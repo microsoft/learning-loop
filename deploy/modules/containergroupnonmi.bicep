@@ -30,12 +30,10 @@ type containerConfigT = {
       host: string
       @description('The credentials for the container registry')
       credentials: {
-        @description('Indicates if the container registry credentials are managed identity or username/password')
-        isManagedIdentity: bool
-        @description('The username for the container registry if not using managed identity; otherwise, the managed identity name')
+        @description('The username for the container registry (leave empty string for anonymous access)')
         @secure()
         username: string
-        @description('The password for the container registry')
+        @description('The password for the container registry (set to null or empty for anonymous access)')
         @secure()
         password: string?
       }

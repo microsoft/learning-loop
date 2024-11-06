@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "169782983262442864"
+      "templateHash": "5209060378173381585"
     }
   },
   "functions": [
@@ -925,7 +925,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "5645798223148820040"
+              "templateHash": "9122655099617357296"
             }
           },
           "definitions": {
@@ -1203,7 +1203,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "1574773804154642410"
+                      "templateHash": "13402763615357969401"
                     }
                   },
                   "definitions": {
@@ -1277,16 +1277,10 @@
                                 "credentials": {
                                   "type": "object",
                                   "properties": {
-                                    "isManagedIdentity": {
-                                      "type": "bool",
-                                      "metadata": {
-                                        "description": "Indicates if the container registry credentials are managed identity or username/password"
-                                      }
-                                    },
                                     "username": {
                                       "type": "securestring",
                                       "metadata": {
-                                        "description": "The username for the container registry if not using managed identity; otherwise, the managed identity name"
+                                        "description": "The managed identity name"
                                       }
                                     },
                                     "password": {
@@ -1458,10 +1452,7 @@
                     }
                   },
                   "variables": {
-                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
-                    "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-                    "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
-                    "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), null())]"
+                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]"
                   },
                   "resources": {
                     "acrPullIdentity": {
@@ -1477,8 +1468,10 @@
                       "location": "[parameters('containerConfig').location]",
                       "tags": "[parameters('containerConfig').resourceTags]",
                       "identity": {
-                        "type": "[variables('containerGroupIdentityType')]",
-                        "userAssignedIdentities": "[variables('userAssignedIdentities')]"
+                        "type": "SystemAssigned, UserAssigned",
+                        "userAssignedIdentities": {
+                          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))]": {}
+                        }
                       },
                       "properties": {
                         "containers": [
@@ -1498,7 +1491,12 @@
                         ],
                         "osType": "Linux",
                         "restartPolicy": "OnFailure",
-                        "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
+                        "imageRegistryCredentials": [
+                          {
+                            "server": "[parameters('containerConfig').image.registry.host]",
+                            "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)]"
+                          }
+                        ]
                       },
                       "dependsOn": [
                         "acrPullIdentity"
@@ -1537,7 +1535,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "12942415919729054705"
+                      "templateHash": "5668113228552658692"
                     }
                   },
                   "definitions": {
@@ -1611,23 +1609,17 @@
                                 "credentials": {
                                   "type": "object",
                                   "properties": {
-                                    "isManagedIdentity": {
-                                      "type": "bool",
-                                      "metadata": {
-                                        "description": "Indicates if the container registry credentials are managed identity or username/password"
-                                      }
-                                    },
                                     "username": {
                                       "type": "securestring",
                                       "metadata": {
-                                        "description": "The username for the container registry if not using managed identity; otherwise, the managed identity name"
+                                        "description": "The username for the container registry (leave empty string for anonymous access)"
                                       }
                                     },
                                     "password": {
                                       "type": "securestring",
                                       "nullable": true,
                                       "metadata": {
-                                        "description": "The password for the container registry"
+                                        "description": "The password for the container registry (set to null or empty for anonymous access)"
                                       }
                                     }
                                   },
@@ -2034,7 +2026,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "5645798223148820040"
+              "templateHash": "9122655099617357296"
             }
           },
           "definitions": {
@@ -2312,7 +2304,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "1574773804154642410"
+                      "templateHash": "13402763615357969401"
                     }
                   },
                   "definitions": {
@@ -2386,16 +2378,10 @@
                                 "credentials": {
                                   "type": "object",
                                   "properties": {
-                                    "isManagedIdentity": {
-                                      "type": "bool",
-                                      "metadata": {
-                                        "description": "Indicates if the container registry credentials are managed identity or username/password"
-                                      }
-                                    },
                                     "username": {
                                       "type": "securestring",
                                       "metadata": {
-                                        "description": "The username for the container registry if not using managed identity; otherwise, the managed identity name"
+                                        "description": "The managed identity name"
                                       }
                                     },
                                     "password": {
@@ -2567,10 +2553,7 @@
                     }
                   },
                   "variables": {
-                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]",
-                    "containerGroupIdentityType": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, 'SystemAssigned, UserAssigned', 'SystemAssigned')]",
-                    "userAssignedIdentities": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createObject(format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)), createObject()), null())]",
-                    "imageRegistryCredentials": "[if(parameters('containerConfig').image.registry.credentials.isManagedIdentity, createArray(createObject('server', parameters('containerConfig').image.registry.host, 'identity', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))), null())]"
+                    "containerImagePath": "[_1.makeContainerImagePath(parameters('containerConfig').image.registry.host, parameters('containerConfig').image.name, parameters('containerConfig').image.tag)]"
                   },
                   "resources": {
                     "acrPullIdentity": {
@@ -2586,8 +2569,10 @@
                       "location": "[parameters('containerConfig').location]",
                       "tags": "[parameters('containerConfig').resourceTags]",
                       "identity": {
-                        "type": "[variables('containerGroupIdentityType')]",
-                        "userAssignedIdentities": "[variables('userAssignedIdentities')]"
+                        "type": "SystemAssigned, UserAssigned",
+                        "userAssignedIdentities": {
+                          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username))]": {}
+                        }
                       },
                       "properties": {
                         "containers": [
@@ -2607,7 +2592,12 @@
                         ],
                         "osType": "Linux",
                         "restartPolicy": "OnFailure",
-                        "imageRegistryCredentials": "[variables('imageRegistryCredentials')]"
+                        "imageRegistryCredentials": [
+                          {
+                            "server": "[parameters('containerConfig').image.registry.host]",
+                            "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('containerConfig').image.registry.credentials.username)]"
+                          }
+                        ]
                       },
                       "dependsOn": [
                         "acrPullIdentity"
@@ -2646,7 +2636,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.30.23.60470",
-                      "templateHash": "12942415919729054705"
+                      "templateHash": "5668113228552658692"
                     }
                   },
                   "definitions": {
@@ -2720,23 +2710,17 @@
                                 "credentials": {
                                   "type": "object",
                                   "properties": {
-                                    "isManagedIdentity": {
-                                      "type": "bool",
-                                      "metadata": {
-                                        "description": "Indicates if the container registry credentials are managed identity or username/password"
-                                      }
-                                    },
                                     "username": {
                                       "type": "securestring",
                                       "metadata": {
-                                        "description": "The username for the container registry if not using managed identity; otherwise, the managed identity name"
+                                        "description": "The username for the container registry (leave empty string for anonymous access)"
                                       }
                                     },
                                     "password": {
                                       "type": "securestring",
                                       "nullable": true,
                                       "metadata": {
-                                        "description": "The password for the container registry"
+                                        "description": "The password for the container registry (set to null or empty for anonymous access)"
                                       }
                                     }
                                   },

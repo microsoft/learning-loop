@@ -29,11 +29,11 @@ type containerConfigT = {
       host: string
       @description('The credentials for the container registry')
       credentials: {
-        @description('Indicates if the container registry credentials are managed identity or username/password')
-        isManagedIdentity: bool
-        @description('The username for the container registry if not using managed identity; otherwise, the managed identity name')
+        @description('The managed identity name')
         @secure()
         username: string
+        // NOTE: password is not used in this template; it is here to provide a consistent experience with the non-MI version
+        //       reducing the need for conditional logic in the calling template
         @description('The password for the container registry')
         @secure()
         password: string?
@@ -52,28 +52,14 @@ resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   name: containerConfig.image.registry.credentials.username
 }
 
-// setup the identity type and user assigned identities for the container group
-var containerGroupIdentityType = containerConfig.image.registry.credentials.isManagedIdentity ? 'SystemAssigned, UserAssigned' : 'SystemAssigned'
-var userAssignedIdentities = containerConfig.image.registry.credentials.isManagedIdentity ? {
-  '${acrPullIdentity.id}': {}
-} : null
-
-// setup the image registry credentials
-var imageRegistryCredentials = containerConfig.image.registry.credentials.isManagedIdentity ? [
-  {
-    server: containerConfig.image.registry.host
-    identity: acrPullIdentity.id
-  }
-] : null
-
 // create the container group
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
   name: containerConfig.name
   location: containerConfig.location
   tags: containerConfig.resourceTags
   identity: {
-    type: containerGroupIdentityType
-    userAssignedIdentities: userAssignedIdentities
+    type: 'SystemAssigned, UserAssigned'
+    userAssignedIdentities: { '${acrPullIdentity.id}': {} }
   }
   properties: {
     containers: [
@@ -93,7 +79,12 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01'
     ]
     osType: 'Linux'
     restartPolicy: 'OnFailure'
-    imageRegistryCredentials: imageRegistryCredentials
+    imageRegistryCredentials: [
+      {
+        server: containerConfig.image.registry.host
+        identity: acrPullIdentity.id
+      }
+    ]  
   }
 }
 
