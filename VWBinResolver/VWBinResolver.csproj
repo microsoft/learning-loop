@@ -6,6 +6,9 @@
 		<AssemblyName>Microsoft.VW.VWBinResolver</AssemblyName>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>
+
+	<Import Project="$(MSBuildProjectDirectory)/../.build/codesigning.targets" />
+	
 	<ItemGroup>
         <Content Include="$(OutputPath)/vw-bin/*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

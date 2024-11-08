@@ -15,8 +15,9 @@ The deploy folder contains Bicep scripts that facilitate deploying a sample Loop
 
 Before you begin, ensure you have the following:
 
-1. **A Learning Loop Docker Image**  
-   Make sure you have access to the Docker image. See the [Docker Image Artifact](#docker-image-artifact) for more details.
+1. **A Learning Loop Docker Image**
+
+    The [Quick Start](#quick-start) example does `not` require access to a Docker image. However, access is required for the [Scripted Deployment](#scripted-deployment) and [Manual Deployment](#manual-deployment) examples. See the Docker Image Artifact for more details.
 
 2. **Required Tools**  
    The tools listed below are necessary for setup. You can install each one via your package manager:
