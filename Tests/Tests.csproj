@@ -10,6 +10,8 @@
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
+  
+  <Import Project="$(MSBuildProjectDirectory)/../.build/codesigning.targets" />
 
   <ItemGroup>
     <Compile Remove="Replay\**" />

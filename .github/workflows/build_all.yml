@@ -28,6 +28,7 @@ env:
   BUILD_ARTIFACTS: ${{github.workspace}}/artifacts
   DOTNET_VERSION: 8.0.x
   TARGET_FRAMEWORK: net8.0
+  DELAY_SIGN_PROPS_PATH: ${{github.workspace}}/.build/microsoft/DelaySign.props
 
 concurrency:
   # Group jobs by workflow and branch/commit
@@ -168,19 +169,19 @@ jobs:
           cp ${{ env.RLSIM_ARTIFACTS_PATH }}/**/* ${{ env.RLSIM_BINARY_PATH }}
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
       - name: Pack Nuget
         run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=1.0.0 -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
 
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
       - name: Publish OnlineTrainer
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
 
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
       - name: Publish Tests
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
 
@@ -371,13 +372,13 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Build Common
-        run: dotnet build -c debug Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+        run: dotnet build -c debug Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Build OnlineTrainer
-        run: dotnet build -c debug OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+        run: dotnet build -c debug OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Build Tests
-        run: dotnet build -c debug Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }}
+        run: dotnet build -c debug Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

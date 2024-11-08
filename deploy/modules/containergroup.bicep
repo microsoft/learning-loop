@@ -43,58 +43,19 @@ type containerConfigT = {
 
 param containerConfig containerConfigT
 
-// construct the container image path
-var containerImagePath = f.makeContainerImagePath(containerConfig.image.registry.host, containerConfig.image.name, containerConfig.image.tag)
-
-// get the identity for the container group if using managed identity for the registry credentials
-resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = if (containerConfig.image.registry.credentials.isManagedIdentity) {
-  name: containerConfig.image.registry.credentials.username
+module containerGroupMI 'containergroupmi.bicep' = if (containerConfig.image.registry.credentials.isManagedIdentity) {
+  name: '${containerConfig.name}-mi'
+  params: {
+    containerConfig: containerConfig
+  }
 }
 
-// setup the identity type and user assigned identities for the container group
-var containerGroupIdentityType = containerConfig.image.registry.credentials.isManagedIdentity ? 'SystemAssigned, UserAssigned' : 'SystemAssigned'
-var userAssignedIdentities = containerConfig.image.registry.credentials.isManagedIdentity ? { '${acrPullIdentity.id}': {} } : null
-
-// setup the image registry credentials
-var imageRegistryCredentials = containerConfig.image.registry.credentials.isManagedIdentity ? [{
-    server: containerConfig.image.registry.host
-    identity: acrPullIdentity.id
-  }] : [{
-    server: containerConfig.image.registry.host
-    username: containerConfig.image.registry.credentials.username
-    password: containerConfig.image.registry.credentials.password
-  }]
-
-// create the container group
-resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2021-09-01' = {
-  name: containerConfig.name
-  location: containerConfig.location
-  tags: containerConfig.resourceTags
-  identity: {
-    type: containerGroupIdentityType
-    userAssignedIdentities: userAssignedIdentities
-  }
-  properties: {
-    containers: [
-      {
-        name: containerConfig.name
-        properties: {
-          image: containerImagePath
-          environmentVariables: containerConfig.environmentVars
-          resources: {
-            requests: {
-              cpu: containerConfig.cpuCores
-              memoryInGB: containerConfig.memoryGig
-            }
-          }
-        }
-      }
-    ]
-    osType: 'Linux'
-    restartPolicy: 'OnFailure'
-    imageRegistryCredentials: imageRegistryCredentials
+module containerGroupNonMI 'containergroupnonmi.bicep' = if (!containerConfig.image.registry.credentials.isManagedIdentity) {
+  name: '${containerConfig.name}-nonmi'
+  params: {
+    containerConfig: containerConfig
   }
 }
 
 // output the principal ID for the container group so that it can be used for role assignments
-output containerPrincipalId string = containerGroup.identity.principalId
+output containerPrincipalId string = containerConfig.image.registry.credentials.isManagedIdentity ? containerGroupMI.outputs.containerPrincipalId : containerGroupNonMI.outputs.containerPrincipalId

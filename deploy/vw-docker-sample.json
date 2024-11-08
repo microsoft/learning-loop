@@ -1,12 +1,12 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "1785839102926595417"
+      "templateHash": "5209060378173381585"
     }
   },
   "functions": [
@@ -148,11 +148,18 @@
     }
   ],
   "parameters": {
-    "location": {
+    "resourceGroupName": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "rg-sample-loop",
       "metadata": {
-        "description": "Location for all resources"
+        "description": "The new resource group for the learning loop deployment."
+      }
+    },
+    "appInsightsName": {
+      "type": "string",
+      "defaultValue": "[format('ai-metrics-{0}', uniqueString(tenant().tenantId, deployment().location))]",
+      "metadata": {
+        "description": "Application Insights name."
       }
     },
     "loopName": {
@@ -187,7 +194,7 @@
       "type": "string",
       "defaultValue": "[format('mi-sample-loop-{0}', uniqueString(tenant().tenantId))]",
       "metadata": {
-        "description": "Managed Identity name"
+        "description": "The managed identity name for learning loop role assignments."
       }
     },
     "storageAccountName": {
@@ -234,7 +241,7 @@
     },
     "containerImageName": {
       "type": "string",
-      "defaultValue": "learning-loop",
+      "defaultValue": "vowpalwabbit/learning-loop",
       "metadata": {
         "description": "Container Image name"
       }
@@ -248,7 +255,7 @@
     },
     "registryHost": {
       "type": "string",
-      "defaultValue": "[format('acrsampleloop{0}.azurecr.io', uniqueString(tenant().tenantId))]",
+      "defaultValue": "docker.io",
       "metadata": {
         "description": "Registry Host"
       }
@@ -262,16 +269,9 @@
     },
     "appInsightsEnabled": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "metadata": {
         "description": "Enable Application Insights"
-      }
-    },
-    "appInsightsConnectionString": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Application Insights Connection String"
       }
     },
     "loopEnvVarExperimentalUnitDuration": {
@@ -334,66 +334,199 @@
     }
   },
   "variables": {
-    "loopContainerEnvironmentVars": [
-      {
-        "name": "AppId",
-        "value": "[parameters('loopName')]"
-      },
-      {
-        "name": "StorageAccountUrl",
-        "value": "[_1.makeStorageAccountUrl(parameters('storageAccountName'))]"
-      },
-      {
-        "name": "FullyQualifiedEventHubNamespace",
-        "value": "[_1.makeEventhubNamespace(parameters('eventhubsName'))]"
-      },
-      {
-        "name": "AzureMonitorMetricExporterEnabled",
-        "value": "[string(parameters('appInsightsEnabled'))]"
-      },
-      {
-        "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-        "value": "[parameters('appInsightsConnectionString')]"
-      },
-      {
-        "name": "ExperimentalUnitDuration",
-        "value": "[parameters('loopEnvVarExperimentalUnitDuration')]"
-      },
-      {
-        "name": "TrainerEnabled",
-        "value": "[parameters('loopEnvVarTrainerEnabled')]"
-      },
-      {
-        "name": "JoinerEnabled",
-        "value": "[parameters('loopEnvVarJoinerEnabled')]"
-      },
-      {
-        "name": "MachineLearningArguments",
-        "value": "[parameters('loopEnvVarMachineLearningArguments')]"
-      },
-      {
-        "name": "LastConfigurationEditDate",
-        "value": "[parameters('loopEnvVarLastConfigurationEditDate')]"
-      }
-    ],
+    "location": "[deployment().location]",
     "containerImage": {
       "name": "[parameters('containerImageName')]",
       "tag": "[parameters('containerImageTag')]",
       "registry": {
         "host": "[parameters('registryHost')]",
         "credentials": {
-          "isManagedIdentity": true,
-          "username": "[parameters('managedIdentityName')]",
+          "isManagedIdentity": false,
+          "username": "",
           "password": null
         }
       }
     }
   },
   "resources": {
+    "learningLoopRg": {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[deployment().location]"
+    },
+    "managedIdentity": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "managedIdentity",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[parameters('managedIdentityName')]"
+          },
+          "createManagedIdentity": {
+            "value": true
+          },
+          "location": {
+            "value": "[deployment().location]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "1005270708651379085"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location where the resources will be deployed"
+              }
+            },
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the managed identity"
+              }
+            },
+            "createManagedIdentity": {
+              "type": "bool",
+              "defaultValue": true
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('createManagedIdentity')]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "principalId": {
+              "type": "string",
+              "value": "[if(parameters('createManagedIdentity'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2018-11-30').principalId, reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2018-11-30').principalId)]"
+            },
+            "managedIdentityName": {
+              "type": "string",
+              "value": "[if(parameters('createManagedIdentity'), parameters('name'), parameters('name'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "learningLoopRg"
+      ]
+    },
+    "appInsights": {
+      "condition": "[parameters('appInsightsEnabled')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "appInsights",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "create": {
+            "value": true
+          },
+          "generateName": {
+            "value": false
+          },
+          "insightsName": {
+            "value": "[parameters('appInsightsName')]"
+          },
+          "location": {
+            "value": "[deployment().location]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "11229016089804553556"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location where the Key Vault will be deployed."
+              }
+            },
+            "insightsName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Application Insights instance."
+              }
+            },
+            "generateName": {
+              "type": "bool",
+              "metadata": {
+                "description": "If true, a unique name will be generated for the Application Insights instance."
+              }
+            },
+            "create": {
+              "type": "bool",
+              "metadata": {
+                "description": "If true, the Application Insights instance will be created; otherwise, the existing resource will be used."
+              }
+            }
+          },
+          "variables": {
+            "finalAppInsightsName": "[if(parameters('generateName'), format('ai-{0}-{1}', take(parameters('insightsName'), 128), uniqueString(subscription().tenantId, parameters('location'))), parameters('insightsName'))]"
+          },
+          "resources": [
+            {
+              "condition": "[parameters('create')]",
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('finalAppInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web"
+              }
+            }
+          ],
+          "outputs": {
+            "applicationInsightsConnectionString": {
+              "type": "string",
+              "value": "[if(parameters('create'), reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').ConnectionString, reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').ConnectionString)]"
+            },
+            "applicationInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[if(parameters('create'), reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').InstrumentationKey, reference(resourceId('Microsoft.Insights/components', variables('finalAppInsightsName')), '2020-02-02').InstrumentationKey)]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "learningLoopRg"
+      ]
+    },
     "storage": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "storage",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -404,7 +537,7 @@
             "value": {
               "name": "[parameters('storageAccountName')]",
               "resourceTags": "[parameters('resourceTags')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "sku": "[parameters('storageAccountSku')]",
               "kind": "StorageV2",
               "blobContainerName": "[parameters('loopName')]"
@@ -547,12 +680,16 @@
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "learningLoopRg"
+      ]
     },
     "eventhubs": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "eventhubs",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -563,7 +700,7 @@
             "value": {
               "name": "[parameters('eventhubsName')]",
               "resourceTags": "[parameters('resourceTags')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "sku": "Basic",
               "capacity": "[parameters('eventhubsCapacity')]",
               "messageRetentionDays": "[parameters('eventhubsRetentionDays')]",
@@ -711,12 +848,16 @@
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "learningLoopRg"
+      ]
     },
     "loopContainerGroup": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "loopContainer",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -727,8 +868,49 @@
             "value": {
               "name": "[parameters('loopContainerGroupName')]",
               "resourceTags": "[parameters('resourceTags')]",
-              "location": "[parameters('location')]",
-              "environmentVars": "[variables('loopContainerEnvironmentVars')]",
+              "location": "[variables('location')]",
+              "environmentVars": [
+                {
+                  "name": "AppId",
+                  "value": "[parameters('loopName')]"
+                },
+                {
+                  "name": "StorageAccountUrl",
+                  "value": "[_1.makeStorageAccountUrl(parameters('storageAccountName'))]"
+                },
+                {
+                  "name": "FullyQualifiedEventHubNamespace",
+                  "value": "[_1.makeEventhubNamespace(parameters('eventhubsName'))]"
+                },
+                {
+                  "name": "AzureMonitorMetricExporterEnabled",
+                  "value": "[string(not(empty(reference('appInsights'))))]"
+                },
+                {
+                  "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                  "value": "[if(empty(reference('appInsights')), '', reference('appInsights').outputs.applicationInsightsConnectionString.value)]"
+                },
+                {
+                  "name": "ExperimentalUnitDuration",
+                  "value": "[parameters('loopEnvVarExperimentalUnitDuration')]"
+                },
+                {
+                  "name": "TrainerEnabled",
+                  "value": "[parameters('loopEnvVarTrainerEnabled')]"
+                },
+                {
+                  "name": "JoinerEnabled",
+                  "value": "[parameters('loopEnvVarJoinerEnabled')]"
+                },
+                {
+                  "name": "MachineLearningArguments",
+                  "value": "[parameters('loopEnvVarMachineLearningArguments')]"
+                },
+                {
+                  "name": "LastConfigurationEditDate",
+                  "value": "[parameters('loopEnvVarLastConfigurationEditDate')]"
+                }
+              ],
               "cpuCores": "[parameters('containerCpuCores')]",
               "memoryGig": "[parameters('containerMemoryGig')]",
               "image": "[variables('containerImage')]"
@@ -1653,12 +1835,17 @@
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "appInsights",
+        "learningLoopRg"
+      ]
     },
     "loopRollassignments": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "loopRollAssignments",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1732,6 +1919,7 @@
       },
       "dependsOn": [
         "eventhubs",
+        "learningLoopRg",
         "loopContainerGroup",
         "storage"
       ]
@@ -1740,6 +1928,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "rlSimConfig",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1801,6 +1990,7 @@
       },
       "dependsOn": [
         "eventhubs",
+        "learningLoopRg",
         "storage"
       ]
     },
@@ -1809,6 +1999,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "rlsimContainer",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1819,7 +2010,7 @@
             "value": {
               "name": "[format('rlsim-{0}', parameters('loopContainerGroupName'))]",
               "resourceTags": "[parameters('resourceTags')]",
-              "location": "[parameters('location')]",
+              "location": "[variables('location')]",
               "environmentVars": "[if(parameters('deployRlSim'), createArray(createObject('name', 'RL_START_WITH', 'value', 'rl_sim.sh'), createObject('name', 'RL_SIM_CONFIG', 'value', reference('rlSimConfig').outputs.rlSimConfigAz.value), createObject('name', 'RL_SIM_ARGS', 'value', parameters('rlSimArgs')), createObject('name', 'LEARNING_LOOP_NAME', 'value', parameters('loopName')), createObject('name', 'STORAGE_ACCOUNT_NAME', 'value', parameters('storageAccountName'))), createArray())]",
               "cpuCores": "[parameters('containerCpuCores')]",
               "memoryGig": "[parameters('containerMemoryGig')]",
@@ -2747,6 +2938,7 @@
         }
       },
       "dependsOn": [
+        "learningLoopRg",
         "rlSimConfig"
       ]
     },
@@ -2755,6 +2947,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "rlSimRollassignments",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -2828,6 +3021,7 @@
       },
       "dependsOn": [
         "eventhubs",
+        "learningLoopRg",
         "rlsimContainerGroup",
         "storage"
       ]
@@ -2837,6 +3031,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "userRollassignments",
+      "resourceGroup": "[parameters('resourceGroupName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -2910,11 +3105,24 @@
       },
       "dependsOn": [
         "eventhubs",
+        "learningLoopRg",
         "storage"
       ]
     }
   },
   "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "managedIdentityName": {
+      "type": "string",
+      "value": "[reference('managedIdentity').outputs.managedIdentityName.value]"
+    },
+    "appInsightsConnectionString": {
+      "type": "string",
+      "value": "[reference('appInsights').outputs.applicationInsightsConnectionString.value]"
+    },
     "rlSimConfigAz": {
       "type": "string",
       "value": "[reference('rlSimConfig').outputs.rlSimConfigAz.value]"
