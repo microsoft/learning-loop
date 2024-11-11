@@ -51,7 +51,7 @@ jobs:
       - name: Set Version Number
         id: set_version
         run: |
-          BUILD_NUMBER=$(date +%Y%m%d)
+          BUILD_NUMBER=$(date +%y%m)
           BRANCH_NAME=${GITHUB_REF##*/}
           REVISION=${GITHUB_RUN_NUMBER}
           VERSION="$MAJOR_VERSION.$MINOR_VERSION.$BUILD_NUMBER.$REVISION"
