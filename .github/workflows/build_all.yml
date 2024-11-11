@@ -29,6 +29,8 @@ env:
   DOTNET_VERSION: 8.0.x
   TARGET_FRAMEWORK: net8.0
   DELAY_SIGN_PROPS_PATH: ${{github.workspace}}/.build/microsoft/DelaySign.props
+  MAJOR_VERSION: 1
+  MINOR_VERSION: 0
 
 concurrency:
   # Group jobs by workflow and branch/commit
@@ -36,10 +38,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  generate_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set_version.outputs.VERSION }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Version Number
+        id: set_version
+        run: |
+          BUILD_NUMBER=$(date +%Y%m%d)
+          REVISION=${GITHUB_RUN_NUMBER}
+          VERSION="$MAJOR_VERSION.$MINOR_VERSION.$BUILD_NUMBER.$REVISION"
+
+          if [ "$BRANCH_NAME" == "main" ]; then
+            INFORMATIONAL_VERSION="${VERSION}"
+          else
+            INFORMATIONAL_VERSION="${VERSION}-${BRANCH_NAME}"
+          fi
+          
+          echo "VERSION=$VERSION"
+          echo "INFORMATIONAL_VERSION=$INFORMATIONAL_VERSION"
+          echo "::set-output name=VERSION::$VERSION" # Set version as output for the current step
+          echo "::set-output name=INFORMATIONAL_VERSION::$INFORMATIONAL_VERSION"
+
   # build vw binary parser for all platforms and configurations
   # the binaries are used by the assemblies and tests across platforms
   # from a single assembly package
   build-rl-binaries:
+    needs: generate_version
     name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -143,6 +173,8 @@ jobs:
       # base directory for the assemebly artifacts
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
       NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
+      VERSION: ${{ needs.generate_version.outputs.version }}
+      INFO_VERSION: ${{ needs.generate_version.outputs.informational_version }}
 
     steps:
       # there's no need to check submodules since they are not needed in this job
@@ -169,14 +201,14 @@ jobs:
           cp ${{ env.RLSIM_ARTIFACTS_PATH }}/**/* ${{ env.RLSIM_BINARY_PATH }}
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
+        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
       - name: Publish Common
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
       - name: Pack Nuget
-        run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=1.0.0 -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
+        run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=${{ env.VERSION }} -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
 
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
+        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
       - name: Publish OnlineTrainer
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
 
