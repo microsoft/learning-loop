@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set_version.outputs.VERSION }}
+      info_version: ${{ steps.set_version.outputs.INFORMATIONAL_VERSION }}
 
     steps:
       - name: Checkout repository
@@ -63,7 +64,7 @@ jobs:
           
           echo "VERSION=$VERSION"
           echo "INFORMATIONAL_VERSION=$INFORMATIONAL_VERSION"
-          echo "::set-output name=VERSION::$VERSION" # Set version as output for the current step
+          echo "::set-output name=VERSION::$VERSION"
           echo "::set-output name=INFORMATIONAL_VERSION::$INFORMATIONAL_VERSION"
 
   # build vw binary parser for all platforms and configurations
@@ -151,7 +152,9 @@ jobs:
   # build debug and release assemblies on linux used by all supported platforms.
   # this job generates a single debug and release package.
   build-assemblies:
-    needs: build-rl-binaries
+    needs: |
+      generate_version
+      build-rl-binaries
     name: build-assemblies-${{ matrix.build.build_type }}
     runs-on: ubuntu-latest
     strategy:
@@ -175,7 +178,7 @@ jobs:
       BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
       NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
       VERSION: ${{ needs.generate_version.outputs.version }}
-      INFO_VERSION: ${{ needs.generate_version.outputs.informational_version }}
+      INFO_VERSION: ${{ needs.generate_version.outputs.info_version }}
 
     steps:
       # there's no need to check submodules since they are not needed in this job
