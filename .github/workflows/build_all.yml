@@ -152,9 +152,9 @@ jobs:
   # build debug and release assemblies on linux used by all supported platforms.
   # this job generates a single debug and release package.
   build-assemblies:
-    needs: |
-      generate_version
-      build-rl-binaries
+    needs:
+      - generate_version
+      - build-rl-binaries
     name: build-assemblies-${{ matrix.build.build_type }}
     runs-on: ubuntu-latest
     strategy:
