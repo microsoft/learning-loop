@@ -6,8 +6,15 @@ This repository contains the primary code for the Learning Loop service.
 See the following to get started building, deploying, and executing Learning Loops.
 
 - [Deploy a Learning Loop to an environment](DEPLOY.md)
+
+  - Try it now
+
+      [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://aka.ms/AAtf11d)
+
 - [Exercise a Learning Loop](RL_SIM.md)
+
 - [Build the Learning Loop binaries](BUILD.md)
+
 - [Build a Learning Loop Docker Image](DOCKER.md)
 
 ## Contributing

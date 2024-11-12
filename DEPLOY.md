@@ -79,11 +79,13 @@ Before you begin, ensure you have the following:
 
 ## Quick Start
 
-The following steps utilizes an ARM template deployment from the VowpalWabbit Docker Hub Image repository.
+The following steps utilizes an ARM template deployment from the Learning Loop image repository.
 
 ## Quick Start Steps
 
-1) Retrieve Your User Object Id (Optional: If You Want to View Storage Containers)
+1) \[Optional\] Retrieve Your User Object Id
+
+    This step will the apply roles necessary to allow you to view storage resources.
 
     - Open a command line terminal
 
