@@ -41,7 +41,7 @@ param eventhubsRetentionDays int = 1
 @description('Container Image name')
 param containerImageName string = 'learning-loop'
 @description('Container Image tag')
-param containerImageTag string = 'latest'
+param containerImageTag string = '1.1.02871.8'
 @description('Registry Host')
 param registryHost string = 'learningloop.azurecr.io'
 @description('Principal ID for the role assignments')
