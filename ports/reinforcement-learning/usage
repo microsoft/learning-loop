@@ -1,0 +1,33 @@
+# Usage instructions for reinforcement-learning
+
+# Linking to the Library:
+# Use `find_package` to locate the libraries provided by reinforcement-learning.
+# Example usage in CMake:
+
+find_package(reinforcement-learning CONFIG REQUIRED)
+
+target_link_libraries(my-target PRIVATE reinforcement-learning::rlclientlib)
+
+# Using Executables:
+# The package also provides executables that can be found in the following directory:
+# `${VCPKG_ROOT}/installed/<triplet>/tools/reinforcement-learning/`
+#
+# Replace `<triplet>` with your target architecture (e.g., `x64-windows`, `x64-linux`).
+
+# Example to locate the vw:
+find_program(VW_EXECUTABLE vw
+    PATHS ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/tools/reinforcement-learning
+)
+
+if(NOT VW_EXECUTABLE)
+    message(FATAL_ERROR "my-package tool executable not found.")
+endif()
+
+# Example to locate the rl_sim_cpp:
+find_program(RL_SIM_EXECUTABLE rl_sim_cpp
+    PATHS ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/tools/reinforcement-learning
+)
+
+if(NOT RL_SIM_EXECUTABLE)
+    message(FATAL_ERROR "my-package tool executable not found.")
+endif()

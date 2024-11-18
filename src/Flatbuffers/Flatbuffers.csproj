@@ -1,0 +1,73 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>AnyCPU</Platforms>
+    <Configurations>Debug;Release</Configurations>
+    <AssemblyName>reinforcement_learning.messages.flatbuff.v2</AssemblyName>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<InformationalVersion>1.0.0-dev</InformationalVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildProjectDirectory)/../.build/codesigning.targets" />
+  <ItemGroup>
+    <PackageReference Include="Google.FlatBuffers" Version="22.12.6" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.11.20">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <!-- TODO: Support ARM and x64 Macs -->
+    <FlatbufferURL Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+      https://github.com/google/flatbuffers/releases/download/v22.12.6/Mac.flatc.binary.zip</FlatbufferURL>
+    <FlatbufferZipName Condition="$([MSBuild]::IsOSPlatform('OSX'))">Mac.flatc.binary.zip</FlatbufferZipName>
+    <FlatbufferBin Condition="$([MSBuild]::IsOSPlatform('OSX'))">flatc</FlatbufferBin>
+    <FlatbufferURL Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+      https://github.com/google/flatbuffers/releases/download/v22.12.6/Windows.flatc.binary.zip</FlatbufferURL>
+    <FlatbufferZipName Condition="$([MSBuild]::IsOSPlatform('Windows'))">Windows.flatc.binary.zip</FlatbufferZipName>
+    <FlatbufferBin Condition="$([MSBuild]::IsOSPlatform('Windows'))">flatc.exe</FlatbufferBin>
+    <FlatbufferURL Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+      https://github.com/google/flatbuffers/releases/download/v22.12.6/Linux.flatc.binary.g++-10.zip</FlatbufferURL>
+    <FlatbufferZipName Condition="$([MSBuild]::IsOSPlatform('Linux'))">Linux.flatc.binary.g++-10.zip</FlatbufferZipName>
+    <FlatbufferBin Condition="$([MSBuild]::IsOSPlatform('Linux'))">flatc</FlatbufferBin>
+  </PropertyGroup>
+  <Target Name="DownloadFlatC" BeforeTargets="GenerateFlatbufferClasses">
+    <DownloadFile SourceUrl="$(FlatbufferURL)" DestinationFolder="$(BaseOutputPath)">
+    </DownloadFile>
+    <Unzip SourceFiles="$(BaseOutputPath)$(FlatbufferZipName)" DestinationFolder="$(BaseOutputPath)\downloaded_flatc\" OverwriteReadOnlyFiles="true" />
+    <Exec Condition="$([MSBuild]::IsOSPlatform('OSX')) Or $([MSBuild]::IsOSPlatform('Linux'))" Command="chmod +x $(BaseOutputPath)/downloaded_flatc/$(FlatbufferBin)" />
+    <Exec Condition="$([MSBuild]::IsOSPlatform('Linux'))" Command="chmod +x $(BaseOutputPath)/downloaded_flatc/$(FlatbufferBin)" />
+    <CreateProperty Value="$([System.IO.Path]::GetFullPath('$(BaseOutputPath)\downloaded_flatc\$(FlatbufferBin)'))">
+      <Output TaskParameter="Value" PropertyName="FlatcBinary" />
+    </CreateProperty>
+  </Target>
+  <!-- Setup intermediate flatbuffer generation directories -->
+  <Target Name="SetFlatbufferProperties">
+    <PropertyGroup>
+      <FlatbufferOutputDirectory>$([System.IO.Path]::Combine($(IntermediateOutputPath), "flatbuffer\"))</FlatbufferOutputDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <FlatbufferSchemas Include="**\*.fbs" />
+    </ItemGroup>
+  </Target>
+  <!-- Generate classes from flatbuffer schemas -->
+  <Target Name="GenerateFlatbufferClasses" DependsOnTargets="SetFlatbufferProperties" BeforeTargets="BeforeCompile" Inputs="@(FlatbufferSchemas)" Outputs="$(FlatbufferOutputDirectory)flatbuffer.done">
+	<!-- Add quotes around the flatc -o parameter to accommodate spaces in the path... -->
+	<!-- on windows flatc intreprets the trailing slash in $(FlatbufferOutputDirectory) as an escape -->
+	<!-- character to the ending quote; add another escape handled it correctly. -->
+    <Exec Command="$(FlatcBinary) -o &quot;$(FlatbufferOutputDirectory)\&quot; --csharp @(FlatbufferSchemas,' ')" />
+	<!-- Create result file to allow rebuilds during schema changes -->
+    <WriteLinesToFile File="$([System.IO.Path]::Combine($(FlatbufferOutputDirectory), 'flatbuffer.done'))" Lines="#Ran flatc on the following files:;@(FlatbufferSchemas)" Overwrite="true" />
+    <ItemGroup>
+      <Compile Include="$(FlatbufferOutputDirectory)**\*.cs" />
+    </ItemGroup>
+  </Target>
+  <!-- Cleanup flatbuffer intermediary files -->
+  <Target Name="FlatbufferClean" DependsOnTargets="SetFlatbufferProperties" BeforeTargets="Clean;Rebuild">
+    <RemoveDir Directories="$(FlatbufferOutputDirectory)" />
+  </Target>
+  <Target Name="PrintPackagesAndParents" DependsOnTargets="RunResolvePackageDependencies">
+    <Message Importance="high" Text="* %(PackageDependencies.Identity) referenced by:%0a^---@(PackageDependencies->'%(ParentPackage) - target %(ParentTarget)', '%0a^---')" />
+  </Target>
+</Project>

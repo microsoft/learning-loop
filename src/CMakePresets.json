@@ -1,0 +1,43 @@
+{
+   "version": 3,
+   "cmakeMinimumRequired": {
+     "major": 3,
+     "minor": 10,
+     "patch": 0
+   },
+   "configurePresets": [
+     {
+       "name": "default",
+       "binaryDir": "${sourceDir}/build",
+       "cacheVariables": {
+         "RL_PORT_PATH": {
+            "type": "STRING",
+            "value": "../ports/reinforcement-learning"
+         }
+       }
+     },
+     {
+       "name": "ninja",
+       "inherits": "default",
+       "generator": "Ninja Multi-Config"
+     },
+     {
+      "name": "vs2017",
+      "inherits": "default",
+      "generator": "Visual Studio 17 2022"
+    }
+  ],
+   "buildPresets": [
+     {
+       "name": "release",
+       "configurePreset": "default",
+       "configuration": "Release"
+     },
+     {
+      "name": "debug",
+      "configurePreset": "default",
+      "configuration": "Debug"
+    }
+   ]
+ }
+ 
