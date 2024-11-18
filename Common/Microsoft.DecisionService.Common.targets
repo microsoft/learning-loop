@@ -1,9 +1,0 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-      <VwBinaries Include="$(MSBuildThisFileDirectory)../content/vw-bin/**/*.*"/>
-  </ItemGroup>
-  <Target Name="CopyContentFiles" AfterTargets="Build">
-    <Message Text="Copying the following files to '$(OutputPath)vw-bin': %0a@(VwBinaries, '%0a')" Importance="High" />
-    <Copy SourceFiles="@(VwBinaries)" DestinationFolder="$(OutputPath)vw-bin" />
-  </Target>
-</Project>

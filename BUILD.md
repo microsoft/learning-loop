@@ -15,15 +15,18 @@ Building Learning Loop is the same for all supported .NET platforms.
 
 Clone the repository
 
-```powershell
+```sh
 git clone https://github.com/microsoft/learning-loop.git
-cd learning-loop
-git submodule update --init --recursive
+cd learning-loop/src
 ```
+
+TODO: CMake instructions
+
+TODO: instructions on the command line (windows/linux)
 
 Build the assemblies. The build will invoke the Vowpal Wabbit binary parser build needed by the OnlineTrainer.
 
-```powershell
+```sh
 mkdir artifacts
 dotnet build ./learning-loop.sln -c Release
 ```
