@@ -53,17 +53,17 @@ project(learning-loop)
 add_custom_target(rl-binaries)
 
 add_custom_target(learning-loop ALL
-   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/learning-loop.sln -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/delaysign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
+   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/learning-loop.sln -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
    DEPENDS rl-binaries
 )
 
 add_custom_target(onlinetrainer ALL
-   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/delaysign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
+   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
    DEPENDS rl-binaries
 )
 
 add_custom_target(common ALL
-   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/delaysign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
+   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
    DEPENDS rl-binaries
 )
 
@@ -78,7 +78,7 @@ if (WIN32)
 else()
    add_custom_target(nuget ALL
       COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
-      COMMAND dotnet pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> --no-build -p:PackageSourcePath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/delaysign.props -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget" -p:PackageVersion=${LL_VERSION}
+      COMMAND dotnet pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> --no-build -p:PackageSourcePath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget" -p:PackageVersion=${LL_VERSION}
       DEPENDS common
    )
 endif()
