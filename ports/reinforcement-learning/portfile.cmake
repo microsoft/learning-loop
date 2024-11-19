@@ -198,8 +198,13 @@ if ("external-parser" IN_LIST FEATURES)
    set(EXTERNAL_PARSER_ENABLED "ON" CACHE BOOL "Disable generating the external parser" FORCE)
 endif()
 
+set(USE_LATEST_STD "ON" CACHE BOOL "Use latest C++ standard")
+if (VCPKG_TARGET_IS_WINDOWS)
+   set(USE_LATEST_STD "OFF" CACHE BOOL "Use latest C++ standard" FORCE)
+endif()
+
 set(FINAL_BUILD_OPTIONS
-   -DUSE_LATEST_STD=ON
+   -DUSE_LATEST_STD=${USE_LATEST_STD}
    -Drlclientlib_BUILD_DOTNET=OFF 
    -DBUILD_FLATBUFFERS=OFF
    -DWARNING_AS_ERROR=OFF
