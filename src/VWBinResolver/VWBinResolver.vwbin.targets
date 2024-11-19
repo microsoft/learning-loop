@@ -1,6 +1,9 @@
 <Project>
+    <PropertyGroup>
+        <CIVWBinParserPath Condition="'$(CIVWBinParserPath)' == ''">$(VCPKG_ROOT)/installed/$(VCPKG_TARGET_TRIPLET)/tools/reinforcement-learning</CIVWBinParserPath>
+    </PropertyGroup>
     <ItemGroup>
-        <VWBinBinaries Include="$(CIVWBinParserPath)/*.*" />
+        <VWBinBinaries Include="$(CIVWBinParserPath)/vw*.*" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="@(VWBinBinaries)">

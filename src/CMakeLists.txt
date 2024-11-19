@@ -33,9 +33,9 @@ set(DIRECTORY PROPERTY DEFAULT_TARGET learning-loop)
 if(WIN32)
    set(VCPKG_TARGET_TRIPLET "x64-windows-static")
 elseif(UNIX AND NOT APPLE)
-   set(VCPKG_TARGET_TRIPLET "x64-linux-static")
+   set(VCPKG_TARGET_TRIPLET "x64-linux")
 elseif(APPLE)
-   set(VCPKG_TARGET_TRIPLET "x64-osx-static")
+   set(VCPKG_TARGET_TRIPLET "x64-osx")
 else()
    message(FATAL_ERROR "Unsupported platform") 
 endif()
@@ -67,8 +67,18 @@ add_custom_target(common ALL
    DEPENDS rl-binaries
 )
 
-add_custom_target(nuget ALL
-   COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
-   COMMAND dotnet pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> --no-build -p:PackageSourcePath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/delaysign.props -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget" -p:PackageVersion=${LL_VERSION}
-   DEPENDS common
-)
+if (WIN32)
+   # for windows, nuget pack needs the path to be backslashes in order for wildcard specs to work
+   string(REPLACE "/" "\\" PACKAGE_SOURCE_PATH_WIN ${CMAKE_CURRENT_SOURCE_DIR})
+   add_custom_target(nuget ALL
+      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
+      COMMAND nuget pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Microsoft.DecisionService.Common.nuspec  -Properties "PackageSourcePath=${PACKAGE_SOURCE_PATH_WIN}\\artifacts\\Common;version=${LL_VERSION};targetframework=net8.0" -OutputDirectory ${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget
+      DEPENDS common
+   )
+else()
+   add_custom_target(nuget ALL
+      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
+      COMMAND dotnet pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> --no-build -p:PackageSourcePath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/delaysign.props -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget" -p:PackageVersion=${LL_VERSION}
+      DEPENDS common
+   )
+endif()
