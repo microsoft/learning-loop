@@ -103,8 +103,14 @@ jobs:
           restore-keys: |
             vcpkg-${{ matrix.config.os_name }}-
 
-      - name: Install vcpkg
-        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+      - name: Install vcpkg (windows)
+        if: startsWith(matrix.config.os, 'windows') == true && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.bat
+          
+      - name: Install vcpkg (linux/mac)
+        if: startsWith(matrix.config.os, 'windows') == false && steps.vcpkg-cache.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.sh
