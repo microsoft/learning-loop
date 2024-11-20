@@ -12,13 +12,13 @@
 name: Build All
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #     - 'releases/**'
-  # pull_request:
-  #   branches:
-  #     - '*'
+  push:
+    branches:
+      - main
+      - 'releases/**'
+  pull_request:
+    branches:
+      - '*'
   # TODO: remove manual before merging to main
   workflow_dispatch:
 
