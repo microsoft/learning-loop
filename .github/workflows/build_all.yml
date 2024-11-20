@@ -262,7 +262,7 @@ jobs:
           echo "${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./src/test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
 
       - name: Save Test Artifacts
         uses: actions/upload-artifact@v4
