@@ -71,7 +71,7 @@ jobs:
   # from a single assembly package
   build-rl-binaries:
     needs: generate_version
-    name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+    name: binary-parser-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -109,9 +109,9 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.sh
 
-      - name: Installl RL port
+      - name: Install RL port
         run: |
-          ${{ env.VCPKG_ROOT }}/vcpkg install reinforcement-learning[azure-auth,external-parser] --overlay-ports=${{ github.workspace }}/ports/reinforcement-learning --triplet=${VCPKG_TARGET_TRIPLET}
+          ${{ env.VCPKG_ROOT }}/vcpkg install reinforcement-learning[azure-auth,external-parser] --overlay-ports=${{ github.workspace }}/ports/reinforcement-learning --triplet=${{ matrix.config.vcpkg_target_triplet }}
 
       # prepare binaries and package
       - name: Copy binaries (windows)
