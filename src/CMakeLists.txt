@@ -82,3 +82,13 @@ else()
       DEPENDS common
    )
 endif()
+
+add_custom_target(console-joiner ALL
+   COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/examples/ConsoleJoiner/ConsoleJoiner.csproj -c $<CONFIG> -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
+   COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/examples/ConsoleJoiner/ConsoleJoiner.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/examples/ConsoleJoiner"
+   DEPENDS nuget
+)
+
+add_custom_target(examples ALL
+   DEPENDS console-joiner
+)
