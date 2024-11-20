@@ -296,7 +296,7 @@ jobs:
       - run: mkdir -p ${{ env.DOCKER_ARTIFACTS_PATH }}
 
       - name: Build Docker Image
-        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=artifacts/OnlineTrainer --build-arg RLSIM_SRC_PATH=artifacts/rl-sim -f ./docker/ubuntu.dockerfile .
+        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=src/artifacts/OnlineTrainer --build-arg RLSIM_SRC_PATH=src/artifacts/rl-sim -f docker/ubuntu.dockerfile .
 
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
