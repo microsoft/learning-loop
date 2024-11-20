@@ -182,10 +182,10 @@ jobs:
 
       - name: Reoganize Artifacts
         run: |
-          mv ${{ env.BUILD_ARTIFACTS }}/vw-bin/*/* ${{ env.VW_BINARY_PATH }}/artifacts/vw-bin/
-          find ${{ env.BUILD_ARTIFACTS }}/vw-bin -mindepth 1 -type d -exec rm -rf {} +
-          mv ${{ env.BUILD_ARTIFACTS }}/rl-sim/*/* ${{ env.VW_BINARY_PATH }}/artifacts/rl-sim/
-          find ${{ env.BUILD_ARTIFACTS }}/rl-sim -mindepth 1 -type d -exec rm -rf {} +
+          mv ${{ env.VW_BINARY_PATH }}/*/* ${{ env.VW_BINARY_PATH }}
+          find ${{ env.VW_BINARY_PATH }} -mindepth 1 -type d -exec rm -rf {} +
+          mv ${{ env.RLSIM_BINARY_PATH }}/*/* ${{ env.RLSIM_BINARY_PATH }}
+          find ${{ env.RLSIM_BINARY_PATH }} -mindepth 1 -type d -exec rm -rf {} +
 
       - name: List Restored Artifacts
         run: ls -lR ${{ env.BUILD_ARTIFACTS }}
