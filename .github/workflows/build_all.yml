@@ -214,7 +214,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ matrix.build.build_type }}
-          path: ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+          path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Nuget Artifacts
         uses: actions/upload-artifact@v4
@@ -258,11 +258,11 @@ jobs:
       - name: Prepare VW binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          chmod +x ${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }}
-          echo "${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
+          chmod +x ${{ env.BUILD_ARTIFACTS }}/assembly/Tests/vw-bin/${{ matrix.config.vw_bin }}
+          echo "${{ env.BUILD_ARTIFACTS }}/assembly/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./src/test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/assembly/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./src/test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
 
       - name: Save Test Artifacts
         uses: actions/upload-artifact@v4
@@ -296,7 +296,7 @@ jobs:
       - run: mkdir -p ${{ env.DOCKER_ARTIFACTS_PATH }}
 
       - name: Build Docker Image
-        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=src/artifacts/OnlineTrainer --build-arg RLSIM_SRC_PATH=src/artifacts/rl-sim -f docker/ubuntu.dockerfile .
+        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=src/artifacts/assembly/OnlineTrainer --build-arg RLSIM_SRC_PATH=src/artifacts/rl-sim -f docker/ubuntu.dockerfile .
 
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
