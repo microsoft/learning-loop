@@ -180,6 +180,9 @@ jobs:
           merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
+      - name: List Restored Artifacts
+        run: ls -lR ${{ env.BUILD_ARTIFACTS }}
+
       - name: Build Common
         run: dotnet build -c ${{ matrix.build.build_type }} src/Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
       - name: Publish Common
@@ -197,7 +200,7 @@ jobs:
       - name: Publish Tests
         run: dotnet publish --no-build -c ${{ matrix.build.build_type }} src/Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
 
-      - name: List Assembly Artifacts
+      - name: List All Artifacts
         run: ls -lR ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Build Artifacts
