@@ -117,9 +117,10 @@ else()
    add_custom_target(build-deploy ALL
       COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/artifacts/docker
       COMMAND docker save learning-loop:latest -o ${CMAKE_CURRENT_SOURCE_DIR}/artifacts/docker/learning-loop-ubuntu-latest.tar
-      COMMAND pushd ${CMAKE_CURRENT_SOURCE_DIR}/../deploy
-      COMMAND ./scripts/deploy-sample.sh -dockerImageFile ../src/artifacts/docker/learning-loop-ubuntu-latest.tar
-      COMMAND popd
+      COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/../deploy
+      COMMAND chmod +x ./scripts/deploy-sample.sh
+      COMMAND ./scripts/deploy-sample.sh --dockerImageFile ../src/artifacts/docker/learning-loop-ubuntu-latest.tar
+      COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}
       DEPENDS docker
    )
 endif()
