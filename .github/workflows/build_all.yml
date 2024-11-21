@@ -19,9 +19,7 @@ on:
   pull_request:
     branches:
       - '*'
-  # TODO: remove manual before merging to main
-  workflow_dispatch:
-
+      
 env:
   # Base directory for build artifacts
   BUILD_ARTIFACTS: ${{github.workspace}}/src/artifacts

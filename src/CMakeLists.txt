@@ -92,3 +92,34 @@ add_custom_target(console-joiner ALL
 add_custom_target(examples ALL
    DEPENDS console-joiner
 )
+
+
+if (WIN32)
+   string(REPLACE "/" "\\" WIN_CURRENT_SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+   add_custom_target(docker ALL
+      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/OnlineTrainer"
+      COMMAND docker build -t learning-loop -f "${WIN_CURRENT_SOURCE_PATH}\\..\\docker\\windows-core.dockerfile" "${WIN_CURRENT_SOURCE_PATH}"
+      DEPENDS onlinetrainer
+   )
+   add_custom_target(build-deploy ALL
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${WIN_CURRENT_SOURCE_PATH}\\artifacts\\docker"
+      COMMAND docker save learning-loop:latest -o "${WIN_CURRENT_SOURCE_PATH}\\artifacts\\docker\\learning-loop-windows-latest.tar"
+      DEPENDS docker
+   )
+   message(WARNING "Docker build is supported; BUT, deploy is not supported on Windows at this time")
+   # TODO: modify deployment script to support Windows containers
+else()
+   add_custom_target(docker ALL
+      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/OnlineTrainer"
+      COMMAND docker build -t learning-loop -f ${CMAKE_CURRENT_SOURCE_DIR}/../docker/ubuntu.dockerfile ${CMAKE_CURRENT_SOURCE_DIR}
+      DEPENDS onlinetrainer
+   )
+   add_custom_target(build-deploy ALL
+      COMMAND mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/artifacts/docker
+      COMMAND docker save learning-loop:latest -o ${CMAKE_CURRENT_SOURCE_DIR}/artifacts/docker/learning-loop-ubuntu-latest.tar
+      COMMAND pushd ${CMAKE_CURRENT_SOURCE_DIR}/../deploy
+      COMMAND ./scripts/deploy-sample.sh -dockerImageFile ../src/artifacts/docker/learning-loop-ubuntu-latest.tar
+      COMMAND popd
+      DEPENDS docker
+   )
+endif()
