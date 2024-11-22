@@ -20,9 +20,12 @@
 # Available targets:
 #
 #    learning-loop: builds projects in the learning-loop solution
-#    onlinetrainer: builds the OnlineTrainerExe project and dependencies
-#    common: builds the Common project and dependencies
-#    nuget: builds the Common project and creates a nuget package
+#    onlinetrainer: build the OnlineTrainerExe project and publish to artifacts
+#    common: builds the Common project and publish to artifacts
+#    nuget: builds the Common project and creates a nuget package; the package will be written to artifacts/nuget
+#    docker: builds the learning-loop docker image
+#    build-deploy: builds the docker image and deploys to an Azure environment (requires az login --use-device-code prior to running)
+#    examples: builds the ConsoleJoiner example and publishes to artifacts/examples/ConsoleJoiner
 #
 # Override LL_VERSION and LL_INFO_VERSION to set the version of the learning-loop project
 # eg: cmake --build --preset=release -DLL_VERSION=2.0.1.2 -DLL_INFO_VERSION=2.0.1.2
