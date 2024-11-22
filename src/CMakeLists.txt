@@ -59,11 +59,13 @@ add_custom_target(learning-loop ALL
 
 add_custom_target(onlinetrainer ALL
    COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
+   COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/OnlineTrainer"
    DEPENDS rl-binaries
 )
 
 add_custom_target(common ALL
    COMMAND dotnet build ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj -c $<CONFIG> -p:CIVWBinParserPath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/vw-bin" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -p:AssemblyVersion=${LL_VERSION} -p:FileVersion=${LL_VERSION} -p:InformationalVersion=${LL_INFO_VERSION}
+   COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
    DEPENDS rl-binaries
 )
 
@@ -71,13 +73,11 @@ if (WIN32)
    # for windows, nuget pack needs the path to be backslashes in order for wildcard specs to work
    string(REPLACE "/" "\\" PACKAGE_SOURCE_PATH_WIN ${CMAKE_CURRENT_SOURCE_DIR})
    add_custom_target(nuget ALL
-      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
       COMMAND nuget pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Microsoft.DecisionService.Common.nuspec  -Properties "PackageSourcePath=${PACKAGE_SOURCE_PATH_WIN}\\artifacts\\Common;version=${LL_VERSION};targetframework=net8.0" -OutputDirectory ${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget
       DEPENDS common
    )
 else()
    add_custom_target(nuget ALL
-      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common"
       COMMAND dotnet pack ${CMAKE_CURRENT_SOURCE_DIR}/Common/Common.csproj --no-build -c $<CONFIG> --no-build -p:PackageSourcePath="${CMAKE_CURRENT_SOURCE_DIR}/artifacts/Common" -p:PackagingIntegration=${CMAKE_CURRENT_SOURCE_DIR}/.build/microsoft/DelaySign.props -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/nuget" -p:PackageVersion=${LL_VERSION}
       DEPENDS common
    )
@@ -93,11 +93,9 @@ add_custom_target(examples ALL
    DEPENDS console-joiner
 )
 
-
 if (WIN32)
    string(REPLACE "/" "\\" WIN_CURRENT_SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
    add_custom_target(docker ALL
-      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/OnlineTrainer"
       COMMAND docker build -t learning-loop -f "${WIN_CURRENT_SOURCE_PATH}\\..\\docker\\windows-core.dockerfile" "${WIN_CURRENT_SOURCE_PATH}"
       DEPENDS onlinetrainer
    )
@@ -110,7 +108,6 @@ if (WIN32)
    # TODO: modify deployment script to support Windows containers
 else()
    add_custom_target(docker ALL
-      COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/OnlineTrainerExe/OnlineTrainerExe.csproj --no-build -c $<CONFIG> -o "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/OnlineTrainer"
       COMMAND docker build -t learning-loop -f ${CMAKE_CURRENT_SOURCE_DIR}/../docker/ubuntu.dockerfile ${CMAKE_CURRENT_SOURCE_DIR}
       DEPENDS onlinetrainer
    )

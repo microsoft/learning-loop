@@ -189,7 +189,7 @@ file(REMOVE_RECURSE "${ARMIDILLO_SOURCE_PATH}")
 set(BUILDTREE_PATH "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel")
 
 set(AZURE_AUTH_ENABLED "OFF" CACHE BOOL "Disable Azure authentication")
-if ("azure_auth" IN_LIST FEATURES)
+if ("azure-auth" IN_LIST FEATURES)
    set(AZURE_AUTH_ENABLED "ON" CACHE BOOL "Enable Azure authentication" FORCE)
 endif()
 
