@@ -98,8 +98,6 @@ jobs:
             ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/vcpkg_installed
           key: vcpkg-${{ matrix.config.os_name }}-${{ hashFiles('ports/**/portfile.cmake') }}-${{ hashFiles('ports/**/vcpkg.json') }}
-          restore-keys: |
-            vcpkg-${{ matrix.config.os_name }}-
 
       - name: Install vcpkg (windows)
         if: startsWith(matrix.config.os, 'windows') == true && steps.vcpkg-cache.outputs.cache-hit != 'true'
