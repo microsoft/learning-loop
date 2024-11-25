@@ -13,7 +13,7 @@ echo_log "INFO: Created rl_sim_config.json with the following content: $RL_SIM_C
 echo "$RL_SIM_CONFIG" >rl_sim_config.json
 
 # Define the base path for the executable
-BASE_PATH="./rl_sim"
+BASE_PATH="./rl-sim"
 
 # Determine the operating system
 OS=$(uname -s)

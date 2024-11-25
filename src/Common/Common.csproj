@@ -50,15 +50,15 @@
     <Folder Include="FlatBuffers\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VWBinResolver\VWBinResolver.csproj" />
-    <ProjectReference Include="..\Flatbuffers\Flatbuffers.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <None Update="$(OutputPath)\vw-bin\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       <Link>vw-bin\%(Filename)%(Extension)</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VWBinResolver\VWBinResolver.csproj" />
+    <ProjectReference Include="..\Flatbuffers\Flatbuffers.csproj" />
   </ItemGroup>
   <Target Name="CleanVWBin" AfterTargets="Clean">
     <RemoveDir Directories="$(OutputPath)\vw-bin" />

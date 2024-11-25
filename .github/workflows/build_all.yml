@@ -9,7 +9,6 @@
 #   - running performance tests
 #   - running integration tests
 
-# TODO: VCPKG caching is not working as expected (there's always a cache miss), investigate and fix
 name: Build All
 
 on:
@@ -22,13 +21,11 @@ on:
       - '*'
       
 env:
-  # cache directory for vcpkg binaries
-  VCPKG_DEFAULT_BINARY_CACHE: ${{github.workspace}}/vcpkg_binary_cache
   # Base directory for build artifacts
-  BUILD_ARTIFACTS: ${{github.workspace}}/artifacts
+  BUILD_ARTIFACTS: ${{github.workspace}}/src/artifacts
   DOTNET_VERSION: 8.0.x
   TARGET_FRAMEWORK: net8.0
-  DELAY_SIGN_PROPS_PATH: ${{github.workspace}}/.build/microsoft/DelaySign.props
+  DELAY_SIGN_PROPS_PATH: ${{github.workspace}}/src/.build/microsoft/DelaySign.props
   MAJOR_VERSION: 1
   MINOR_VERSION: 0
 
@@ -72,7 +69,7 @@ jobs:
   # from a single assembly package
   build-rl-binaries:
     needs: generate_version
-    name: binary-parser-${{ matrix.build.build_type }}-${{ matrix.config.os_name }}
+    name: binary-parser-${{ matrix.config.os_name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -81,72 +78,64 @@ jobs:
           # Note: os is used to specify the runner OS, os_name is used to specify the
           #       os name in the matrix and for the build artifacts normilzing the 
           #       os name to be used in the build artifacts path
-          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", cmake_preset: "vcpkg-x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe", rlsim_bin_src: "rl_sim_cpp.out.exe", rlsim_bin_dest: "rl_sim-win-x64.exe" }
-          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", cmake_preset: "vcpkg-x64-linux-static", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64", rlsim_bin_src: "rl_sim_cpp.out", rlsim_bin_dest: "rl_sim-linux-x64" }
-          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", cmake_preset: "vcpkg-x64-osx-static", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64", rlsim_bin_src: "rl_sim_cpp.out", rlsim_bin_dest: "rl_sim-macos-x64"  }
-        build:
-          - { build_type: "debug" }
-          - { build_type: "release" }
+          - { os: "windows-latest", os_name: "windows-latest", vcpkg_target_triplet: "x64-windows-static", vw_bin_src: "vw.exe", vw_bin_dest: "vw-win-x64.exe", rlsim_bin_src: "rl_sim_cpp.out.exe", rlsim_bin_dest: "rl_sim-win-x64.exe" }
+          - { os: "ubuntu-latest", os_name: "ubuntu-latest", vcpkg_target_triplet: "x64-linux", vw_bin_src: "vw", vw_bin_dest: "vw-linux-x64", rlsim_bin_src: "rl_sim_cpp.out", rlsim_bin_dest: "rl_sim-linux-x64" }
+          - { os: "macos-13", os_name: "macos-latest", vcpkg_target_triplet: "x64-osx", vw_bin_src: "vw", vw_bin_dest: "vw-macos-x64", rlsim_bin_src: "rl_sim_cpp.out", rlsim_bin_dest: "rl_sim-macos-x64"  }
     env:
-      VCPKG_DEFAULT_TRIPLET: ${{ matrix.config.vcpkg_target_triplet }}
-      VW_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/external_parser
-      VW_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
-      RLSIM_BIN_SRC_PATH: ext_libs/build/reinforcement_learning/examples/rl_sim_cpp
-      RLSIM_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/rl_sim/${{ matrix.build.build_type }}/${{ matrix.config.os_name }}
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_RL_TOOLS_INSTALL: ${{ github.workspace }}/vcpkg/installed/${{ matrix.config.vcpkg_target_triplet }}/tools/reinforcement-learning
+      VW_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/src/artifacts/vw-bin/${{ matrix.config.os_name }}
+      RLSIM_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/src/artifacts/rl-sim/${{ matrix.config.os_name }}
 
     steps:
-      # checkout the code with submodules for vcpkg, and reinforcment_learning
       - uses: actions/checkout@v4
+
+      - name: cache vcpkg
+        id: vcpkg-cache
+        uses: actions/cache@v3
         with:
-          submodules: recursive
-      - run: git -C ${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg fetch --unshallow
-      - name: Setup MSVC Developer Command Prompt
-        if: ${{ startsWith(matrix.config.os, 'windows') }}
-        uses: ilammy/msvc-dev-cmd@v1
-      - uses: lukka/get-cmake@latest
-      - run: echo "VCPKG_COMMIT=$(git rev-parse :ext_libs/reinforcement_learning)" >> $GITHUB_ENV
-        shell: bash
-      - run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-      - uses: actions/cache@v3
-        env:
-          cache-name: vcpkg-cache
-        with:
-          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}/*
-          key: ${{ matrix.config.os_name }}-${{ matrix.build.build_type }}-build-${{ env.cache-name }}-${{ hashFiles('**/vcpkg.json') }}-${{ env.VCPKG_COMMIT }}
-      - uses: lukka/run-vcpkg@v10
-        with:
-          vcpkgDirectory: '${{ github.workspace }}/ext_libs/reinforcement_learning/ext_libs/vcpkg'
-          vcpkgJsonGlob: "${{ github.workspace }}/ext_libs/reinforcement_learning/vcpkg.json"
-          vcpkgCommitId: '${{ env.VCPKG_COMMIT }}'
-          doNotUpdateVcpkg: true
-      # build the binary parser only - the presets are convenient for consistent build settings for local and CI builds
-      - name: Configure
-        run: >
-          cd ext_libs;
-          cmake --preset=${{ matrix.config.cmake_preset }}
-      - name: Build
+          path: |
+            ${{ github.workspace }}/vcpkg
+            ${{ github.workspace }}/vcpkg_installed
+          key: vcpkg-${{ matrix.config.os_name }}-${{ hashFiles('ports/**/portfile.cmake') }}-${{ hashFiles('ports/**/vcpkg.json') }}
+
+      - name: Install vcpkg (windows)
+        if: startsWith(matrix.config.os, 'windows') == true && steps.vcpkg-cache.outputs.cache-hit != 'true'
         run: |
-          cd ext_libs
-          cmake --build build --preset=${{ matrix.config.cmake_preset }} --config ${{ matrix.build.build_type }}
+          git clone https://github.com/microsoft/vcpkg.git
+          ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.bat
+          
+      - name: Install vcpkg (linux/mac)
+        if: startsWith(matrix.config.os, 'windows') == false && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.sh
+
+      - name: Install RL port
+        run: |
+          ${{ env.VCPKG_ROOT }}/vcpkg install reinforcement-learning[azure-auth,external-parser] --overlay-ports=${{ github.workspace }}/ports/reinforcement-learning --triplet=${{ matrix.config.vcpkg_target_triplet }}
+
       # prepare binaries and package
       - name: Copy binaries (windows)
         if: startsWith(matrix.config.os, 'windows') == true
         run: |
           mkdir ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}
-          copy ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+          copy ${{ env.VCPKG_RL_TOOLS_INSTALL }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
           mkdir ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}
-          copy ${{ env.RLSIM_BIN_SRC_PATH }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
+          copy ${{ env.VCPKG_RL_TOOLS_INSTALL }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
+
       - name: Copy binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
           mkdir -p ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}
-          cp ${{ env.VW_BIN_SRC_PATH }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
+          cp ${{ env.VCPKG_RL_TOOLS_INSTALL }}/${{ matrix.config.vw_bin_src }} ${{ env.VW_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.vw_bin_dest }}
           mkdir -p ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}
-          cp ${{ env.RLSIM_BIN_SRC_PATH }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
+          cp ${{ env.VCPKG_RL_TOOLS_INSTALL }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
+
       - name: Save VW Parser Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: rl-binaries-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
+          name: rl-binaries-${{ matrix.config.os_name }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
   # build debug and release assemblies on linux used by all supported platforms.
@@ -164,24 +153,14 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
-      # vw binary pareser packages are organized by build type and os name
-      VW_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/vw-bin/${{ matrix.build.build_type }}
-      # locally vw binaries are re-orgnized for the build.  all binaries
-      # are flattened in the build artifacts under vw-bin
-      VW_BINARY_PATH: ${{github.workspace}}/vw-bin
-      # rlsim binaries are organized by build type and os name
-      RLSIM_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/rl_sim/${{ matrix.build.build_type }}
-      # locally vw binaries are re-orgnized for the build.  all binaries
-      # are flattened in the build artifacts under assembly/rl_sim and will become part of build-artifacts-*
-      RLSIM_BINARY_PATH: ${{github.workspace}}/artifacts/assembly/rl_sim
-      # base directory for the assemebly artifacts
-      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/assembly
-      NUGET_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/nuget
+      VW_BINARY_PATH: ${{github.workspace}}/src/artifacts/vw-bin
+      RLSIM_BINARY_PATH: ${{github.workspace}}/src/artifacts/rl-sim
+      BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/src/artifacts/assembly
+      NUGET_ARTIFACTS_PATH: ${{github.workspace}}/src/artifacts/nuget
       VERSION: ${{ needs.generate_version.outputs.version }}
       INFO_VERSION: ${{ needs.generate_version.outputs.info_version }}
 
     steps:
-      # there's no need to check submodules since they are not needed in this job
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
@@ -197,38 +176,41 @@ jobs:
           merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
-      - name: Reorganize Binaries
+      - name: Reoganize Artifacts
         run: |
-          mkdir -p ${{ env.VW_BINARY_PATH }}
-          cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
-          mkdir -p ${{ env.RLSIM_BINARY_PATH }}
-          cp ${{ env.RLSIM_ARTIFACTS_PATH }}/**/* ${{ env.RLSIM_BINARY_PATH }}
+          mv ${{ env.VW_BINARY_PATH }}/*/* ${{ env.VW_BINARY_PATH }}
+          find ${{ env.VW_BINARY_PATH }} -mindepth 1 -type d -exec rm -rf {} +
+          mv ${{ env.RLSIM_BINARY_PATH }}/*/* ${{ env.RLSIM_BINARY_PATH }}
+          find ${{ env.RLSIM_BINARY_PATH }} -mindepth 1 -type d -exec rm -rf {} +
+
+      - name: List Restored Artifacts
+        run: ls -lR ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build Common
-        run: dotnet build -c ${{ matrix.build.build_type }} Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
+        run: dotnet build -c ${{ matrix.build.build_type }} src/Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
       - name: Publish Common
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} src/Common/Common.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common
       - name: Pack Nuget
-        run: dotnet pack Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=${{ env.VERSION }} -p:PackageSourcePath=${{ env.BUILD_ARTIFACTS }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }} -v d
+        run: dotnet pack src/Common/Common.csproj --no-build -c ${{ matrix.build.build_type }} -p:PackageVersion=${{ env.VERSION }} -p:PackageSourcePath=${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Common -p:TargetFramework=${{ env.TARGET_FRAMEWORK }} -o ${{ env.NUGET_ARTIFACTS_PATH }}
 
       - name: Build OnlineTrainer
-        run: dotnet build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
+        run: dotnet build -c ${{ matrix.build.build_type }} src/OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }} -p:AssemblyVersion=${{ env.VERSION }} -p:FileVersion=${{ env.VERSION }} -p:InformationalVersion=${{ env.INFO_VERSION }}
       - name: Publish OnlineTrainer
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} src/OnlineTrainerExe/OnlineTrainerExe.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/OnlineTrainer
 
       - name: Build Tests
-        run: dotnet build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
+        run: dotnet build -c ${{ matrix.build.build_type }} src/Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
       - name: Publish Tests
-        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
+        run: dotnet publish --no-build -c ${{ matrix.build.build_type }} src/Tests/Tests.csproj -o ${{ env.BINARY_ARTIFACTS_BASE_PATH }}/Tests
 
-      - name: List Assembly Artifacts
+      - name: List All Artifacts
         run: ls -lR ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ matrix.build.build_type }}
-          path: ${{ env.BINARY_ARTIFACTS_BASE_PATH }}
+          path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Nuget Artifacts
         uses: actions/upload-artifact@v4
@@ -252,7 +234,7 @@ jobs:
           - { build_type: "debug" }
           - { build_type: "release" }
     env:
-      TEST_ARTIFACTS_BASE_PATH: ${{github.workspace}}/artifacts/${{ matrix.build.build_type }}
+      TEST_ARTIFACTS_BASE_PATH: ${{github.workspace}}/src/artifacts/${{ matrix.build.build_type }}
 
     steps:
       - uses: actions/checkout@v4
@@ -272,11 +254,11 @@ jobs:
       - name: Prepare VW binaries (${{ matrix.config.os_name }})
         if: startsWith(matrix.config.os, 'windows') == false
         run: |
-          chmod +x ${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }}
-          echo "${{ env.BUILD_ARTIFACTS }}/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
+          chmod +x ${{ env.BUILD_ARTIFACTS }}/assembly/Tests/vw-bin/${{ matrix.config.vw_bin }}
+          echo "${{ env.BUILD_ARTIFACTS }}/assembly/Tests/vw-bin/${{ matrix.config.vw_bin }} set to executable"
 
       - name: Run Tests
-        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
+        run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/assembly/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./src/test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
 
       - name: Save Test Artifacts
         uses: actions/upload-artifact@v4
@@ -290,7 +272,7 @@ jobs:
     name: docker-image-ubuntu-latest-release
     runs-on: ubuntu-latest
     env:
-      DOCKER_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/docker
+      DOCKER_ARTIFACTS_PATH: ${{github.workspace}}/src/artifacts/docker
      
     steps:
       - uses: actions/checkout@v4
@@ -310,7 +292,7 @@ jobs:
       - run: mkdir -p ${{ env.DOCKER_ARTIFACTS_PATH }}
 
       - name: Build Docker Image
-        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=artifacts/OnlineTrainer --build-arg RLSIM_SRC_PATH=artifacts/rl_sim -f ./OnlineTrainerExe/Dockerfile .
+        run: docker build -t learning-loop:latest --build-arg TRAINER_SRC_PATH=src/artifacts/assembly/OnlineTrainer --build-arg RLSIM_SRC_PATH=src/artifacts/rl-sim -f docker/ubuntu.dockerfile .
 
       - name: Docker Image tar
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
@@ -357,7 +339,7 @@ jobs:
         run: ls -l ${{ env.BUILD_ARTIFACTS }}
 
       - name: Build ConsoleJoiner Example
-        run: dotnet build -c ${{ matrix.build.build_type }} examples/ConsoleJoiner/ConsoleJoiner.csproj
+        run: dotnet build -c ${{ matrix.build.build_type }} src/examples/ConsoleJoiner/ConsoleJoiner.csproj
      
   # analyze the csharp trainer code using codeql
   analyze-trainer-csharp:
@@ -370,11 +352,7 @@ jobs:
       # required to fetch internal or private CodeQL packs
       packages: read
     env:
-      # vw binary pareser packages are organized by build type and os name
-      VW_ARTIFACTS_PATH: ${{github.workspace}}/artifacts/vw-bin/debug
-      # locally vw binaries are re-orgnized for the build.  all binaries
-      # are flattened in the build artifacts under vw-bin
-      VW_BINARY_PATH: ${{github.workspace}}/vw-bin
+      VW_BINARY_PATH: ${{github.workspace}}/src/artifacts/vw-bin
 
     steps:
       # there's no need to check submodules since they are not needed in this job
@@ -396,11 +374,6 @@ jobs:
           merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
-      - name: Reorganize VW Binaries
-        run: |
-          mkdir -p ${{ env.VW_BINARY_PATH }}
-          cp ${{ env.VW_ARTIFACTS_PATH }}/**/* ${{ env.VW_BINARY_PATH }}
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -408,13 +381,13 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Build Common
-        run: dotnet build -c debug Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
+        run: dotnet build -c debug src/Common/Common.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Build OnlineTrainer
-        run: dotnet build -c debug OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
+        run: dotnet build -c debug src/OnlineTrainerExe/OnlineTrainerExe.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Build Tests
-        run: dotnet build -c debug Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
+        run: dotnet build -c debug src/Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -437,7 +410,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.event.pull_request.head.sha }}
-          fetch-depth: 0
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
@@ -460,7 +432,7 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Build ConsoleJoiner Example
-        run: dotnet build -c debug examples/ConsoleJoiner/ConsoleJoiner.csproj
+        run: dotnet build -c debug src/examples/ConsoleJoiner/ConsoleJoiner.csproj
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

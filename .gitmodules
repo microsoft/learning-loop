@@ -1,3 +1,0 @@
-[submodule "ext_libs/reinforcement_learning"]
-	path = ext_libs/reinforcement_learning
-	url = https://github.com/VowpalWabbit/reinforcement_learning.git
