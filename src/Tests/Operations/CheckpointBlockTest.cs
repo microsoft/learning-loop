@@ -14,6 +14,7 @@ using Microsoft.DecisionService.Common.Storage;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Tests.Operations
 {
@@ -118,10 +119,26 @@ namespace Tests.Operations
         public async Task CheckpointBlock_HandlesInvalidWarmstartModelUrlAsync()
         {
             var block = CreateCheckpointBlock(new DateTime(2017, 08, 14, 0, 0, 0));
-            var checkpoint = await block.GetOrUpdateAsync(new Uri("https://fake.blob.core.windows.net/fake/fake.trainer.vw"), null);
+            var checkpoint = await block.GetOrUpdateAsync(new Uri("https://fake.blob.core.windows.net/fake/fake.trainer.vw"), "HTTP", null);
             var defaultCheckpoint = new ModelCheckpoint();
             Assert.AreEqual(defaultCheckpoint.Timestamp, checkpoint.Timestamp);
             Assert.AreEqual(defaultCheckpoint.Model, checkpoint.Model);
+        }
+
+        [TestMethod, Description("Test that the checkpoint block handles warmstart model url with Azure Storage.")]
+        public async Task CheckpointBlock_HandlesWarmstartModelUrlWithAzureStorageAsync()
+        {
+            byte[] aModel = new byte[] { 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20 }; 
+            this.mockModelBlob.Setup(x => x.DownloadAsync(It.IsAny<CancellationToken>())).ReturnsAsync(new BinaryData(aModel));
+            this.mockModelBlob.Setup(x => x.ExistsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);    
+                
+            var block = CreateCheckpointBlock(new DateTime(2017, 08, 14, 0, 0, 0));
+            var checkpoint = await block.GetOrUpdateAsync(new Uri("https://memstore/testcontainer/fake.trainer.vw"), "AzureStorage", null);
+            var defaultCheckpoint = new ModelCheckpoint();
+            Assert.AreEqual(defaultCheckpoint.Timestamp, checkpoint.Timestamp);
+            this.mockBlobContainer.Verify(container => container.GetBlobClient(It.Is<string>(s => s == "fake.trainer.vw")), Times.Once);
+            this.mockModelBlob.Verify(blob => blob.DownloadAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.IsTrue(aModel.SequenceEqual(checkpoint.Model));
         }
 
         private CheckpointBlock CreateCheckpointBlock(DateTime configurationDate)

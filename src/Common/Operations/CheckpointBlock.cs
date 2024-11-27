@@ -64,7 +64,7 @@ namespace Microsoft.DecisionService.OnlineTrainer.Operations
         /// <summary>
         /// Get current checkpoint or return warmstart values
         /// </summary>
-        public async Task<ModelCheckpoint> GetOrUpdateAsync(Uri warmstartModelUrl, DateTime? warmstartStartDateTime)
+        public async Task<ModelCheckpoint> GetOrUpdateAsync(Uri warmstartModelUrl, string? warmstartModelSource, DateTime? warmstartStartDateTime) 
         {
             //try to download the existing checkpoint
             ModelCheckpoint checkpoint = await this.checkpointBlockHelper.GetCheckpointAsync(this.options.LastConfigurationEditDate, this.options.CancellationToken);
@@ -85,11 +85,14 @@ namespace Microsoft.DecisionService.OnlineTrainer.Operations
                 try
                 {
                     // download model
-                    using (var client = new HttpClient())
+                    string source = warmstartModelSource ?? "azurestorage";
+                    source = source.ToLowerInvariant();
+                    checkpoint.Model = source switch
                     {
-                        checkpoint.Model = await client.GetByteArrayAsync(warmstartModelUrl);
-                    }
-
+                        "azurestorage" => await GetModelFromAzureStorageAsync(warmstartModelUrl),
+                        "http" => await GetModelFromHttpAsync(warmstartModelUrl),
+                        _ => throw new ArgumentException("Invalid warmstart model source", nameof(warmstartModelSource))
+                    };
                     checkpoint.WarmstartModelUrl = warmstartModelUrl.ToString();
                     this.appIdLogger?.LogInformation("Last warmstart model: {Url}", checkpoint.WarmstartModelUrl);
                 }
@@ -108,6 +111,26 @@ namespace Microsoft.DecisionService.OnlineTrainer.Operations
             }
 
             return checkpoint;
+        }
+        
+        private async Task<byte[]> GetModelFromHttpAsync(Uri warmstartModelUrl)
+        {
+            using var client = new HttpClient();
+            return await client.GetByteArrayAsync(warmstartModelUrl);
+        }
+
+        private async Task<byte[]> GetModelFromAzureStorageAsync(Uri warmstartModelUrl)
+        {
+            var container = this.options.ContainerClient ?? throw new ApplicationException($"ContainerClient is unexpectedly null. Unable to download model from ${warmstartModelUrl}");
+            // blob name is the path after the container name
+            string blobName = string.Join("", warmstartModelUrl.Segments[2..]);
+            var blob = container.GetBlobClient(blobName);
+            if (!await blob.ExistsAsync(this.options.CancellationToken))
+            {
+                throw new ApplicationException($"Blob does not exist: {blobName}");
+            }
+            var response = await blob.DownloadAsync(this.options.CancellationToken);
+            return response.ToArray();
         }
 
         /// <summary>

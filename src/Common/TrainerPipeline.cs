@@ -239,11 +239,10 @@ namespace Microsoft.DecisionService.Common.Trainer
             var options = this._trainerConfig.CurrentValue;
             var resumedModelCheckpoint = await checkpointBlock.GetOrUpdateAsync(
                options.WarmstartModelUrl,
+               options.WarmstartModelSource,
                options.WarmstartStartDateTime
             );
-
             _logger.LogInformation("resume trainer on checkpoint: {Checkpoint}", JsonConvert.SerializeObject(resumedModelCheckpoint));
-
             return resumedModelCheckpoint;
         }
 

@@ -13,6 +13,14 @@ Building Learning Loop is the same for all supported .NET platforms.
 
 1) Clone the repository
 
+    Clone VCPKG into a directory if it's not already on your system.
+  
+    ```sh
+    git clone https://github.com/microsoft/vcpkg.git <TARGET-VCPKG-PATH>
+    ```
+
+    Change directory to a location where you want clone learning-loop.
+
     ```sh
     git clone https://github.com/microsoft/learning-loop.git
     cd learning-loop/src
@@ -25,6 +33,7 @@ Building Learning Loop is the same for all supported .NET platforms.
       Replace \<TARGET-VCPKG-PATH\> with the path where you want to install VCPKG for building the reinforcement-learning port.
 
       ```sh
+      <TARGET-VCPKG-PATH>\bootstrap-vcpkg.bat
       cmake --preset=vs2017 -DVCPKG_ROOT="<TARGET-VCPKG-PATH>"
       ```
 
@@ -33,6 +42,7 @@ Building Learning Loop is the same for all supported .NET platforms.
       Replace \<TARGET-VCPKG-PATH\> with the path where you want to install VCPKG for building the reinforcement-learning port.
 
       ```sh
+      <TARGET-VCPKG-PATH>\bootstrap-vcpkg.sh
       cmake --preset=ninja -DVCPKG_ROOT="<TARGET-VCPKG-PATH>"
       ```
 

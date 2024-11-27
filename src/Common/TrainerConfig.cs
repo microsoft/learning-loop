@@ -39,6 +39,17 @@ public class TrainerConfig
         get => _explorationPercentage;
     }
 
+    // Source of the warmstart model. The default is AzureStorage.
+    // Valid values are:
+    // - AzureStorage (default) - The warmstart model is located in the loops storage account.
+    //        The format of the warmstart model AzureStorage is https://storageaccount.blob.core.windows.net/{appId}/warmstart/model.vw
+    //        where everything after the appId is the path to the warmstart model.
+    //
+    // - HTTP - The warmstart model is located at an HTTP endpoint.
+    // The location Url of the warmstart model is specified in WarmstartModelUrl.
+    public string? WarmstartModelSource { get; set; } = null;
+
+    // The URL of the warmstart model base on the WarmstartModelSource.
     public Uri? WarmstartModelUrl { get; set; } = null;
 
     public DateTime? WarmstartStartDateTime { get; set; } = null;
