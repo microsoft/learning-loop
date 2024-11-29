@@ -370,11 +370,16 @@ main() {
    imageRepoKind=$(get_image_repository_kind "$environmentParamsFile")
    imageRepoUsername=''
    imageRepoPassword=''
+
    if [ "$imageRepoKind" == 'dockerhub' ]; then
       read -sp 'Enter the username for the image registry: ' imageRepoUsername
       echo
-      read -sp 'Enter the password for the image registry: ' imageRepoPassword
-      echo
+      # Use an environment variable for the password
+      if [ -z "$IMAGE_REPO_PASSWORD" ]; then
+         echo -e "${RED}Error: IMAGE_REPO_PASSWORD environment variable is not set.${NC}" >&2
+         exit 1
+      fi
+      imageRepoPassword="$IMAGE_REPO_PASSWORD"
    fi;
 
    # deploy the environment resources
