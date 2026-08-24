@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set Version Number
         id: set_version
@@ -88,11 +88,11 @@ jobs:
       RLSIM_BINARY_ARTIFACTS_BASE_PATH: ${{github.workspace}}/src/artifacts/rl-sim/${{ matrix.config.os_name }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: cache vcpkg
         id: vcpkg-cache
-        uses: actions/cache@v3
+        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3.5.0
         with:
           path: |
             ${{ github.workspace }}/vcpkg
@@ -133,7 +133,7 @@ jobs:
           cp ${{ env.VCPKG_RL_TOOLS_INSTALL }}/${{ matrix.config.rlsim_bin_src }} ${{ env.RLSIM_BINARY_ARTIFACTS_BASE_PATH }}/${{ matrix.config.rlsim_bin_dest }}
 
       - name: Save VW Parser Binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rl-binaries-${{ matrix.config.os_name }}
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -161,16 +161,16 @@ jobs:
       INFO_VERSION: ${{ needs.generate_version.outputs.info_version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@871f041373faaad213a635d9afb62905ec029bbb # v1.10.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: rl-binaries-*
           merge-multiple: true
@@ -207,13 +207,13 @@ jobs:
         run: ls -lR ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Save Nuget Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: nuget-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.NUGET_ARTIFACTS_PATH }}
@@ -237,16 +237,16 @@ jobs:
       TEST_ARTIFACTS_BASE_PATH: ${{github.workspace}}/src/artifacts/${{ matrix.build.build_type }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
       - name: Download Tests Binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -261,7 +261,7 @@ jobs:
         run: dotnet vstest ${{ env.BUILD_ARTIFACTS }}/assembly/Tests/Tests.dll /ResultsDirectory:${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults --settings:./src/test.runsettings --collect:"XPlat Code Coverage" --logger:"trx;LogFilePrefix=testresult"
 
       - name: Save Test Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-artifacts-${{ matrix.config.os_name }}-${{ matrix.build.build_type }}
           path: ${{ env.TEST_ARTIFACTS_BASE_PATH }}/testresults
@@ -275,16 +275,16 @@ jobs:
       DOCKER_ARTIFACTS_PATH: ${{github.workspace}}/src/artifacts/docker
      
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Download Binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-release
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -298,7 +298,7 @@ jobs:
         run: docker save learning-loop:latest -o ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
 
       - name: Save Docker Zipped Iamge
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: docker-image-ubuntu-latest
           path: ${{ env.DOCKER_ARTIFACTS_PATH }}/learning-loop-ubuntu-latest.tar
@@ -320,17 +320,17 @@ jobs:
           - { build_type: "release" }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref }}
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Download Nuget
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: nuget-artifacts-${{ matrix.build.build_type }}
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -357,25 +357,25 @@ jobs:
     steps:
       # there's no need to check submodules since they are not needed in this job
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@871f041373faaad213a635d9afb62905ec029bbb # v1.10.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore Binary Parser Binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: rl-binaries-*
           merge-multiple: true
           path: ${{ env.BUILD_ARTIFACTS }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@42947a340483f03ba47bb1a039b2c519aab3df85 # v3.37.8
         with:
           languages: csharp
           config-file: ./.github/codeql/codeql-config.yml
@@ -390,7 +390,7 @@ jobs:
         run: dotnet build -c debug src/Tests/Tests.csproj -p:CIVWBinParserPath=${{ env.VW_BINARY_PATH }} -p:PackagingIntegration=${{ env.DELAY_SIGN_PROPS_PATH }}
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@42947a340483f03ba47bb1a039b2c519aab3df85 # v3.37.8
         with:
           category: csharp
 
@@ -407,17 +407,17 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.head_ref || github.ref || github.event.pull_request.head.sha }}
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Download Nuget
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: nuget-artifacts-debug
           path: ${{ env.BUILD_ARTIFACTS }}
@@ -426,7 +426,7 @@ jobs:
         run: ls -l ${{ env.BUILD_ARTIFACTS }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@42947a340483f03ba47bb1a039b2c519aab3df85 # v3.37.8
         with:
           languages: csharp
           config-file: ./.github/codeql/codeql-config.yml
@@ -435,6 +435,6 @@ jobs:
         run: dotnet build -c debug src/examples/ConsoleJoiner/ConsoleJoiner.csproj
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@42947a340483f03ba47bb1a039b2c519aab3df85 # v3.37.8
         with:
           category: csharp
